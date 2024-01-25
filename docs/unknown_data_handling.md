@@ -83,7 +83,8 @@ def build_candidates_set(test_ur, train_ur, config, drop_past_inter=True):
 
 ### DaisyRec Q2
 
-Taking the **Popularity** metric as an example, the intersection of the prediction and ground truth is done first before the metric is computed.
+Taking the **Popularity** metric as an example, the intersection of the prediction and ground truth is done first before the metric is computed. Irregardless of the user or item being known, the metric is still computed.
+$$\frac{1}{|U|} \sum_{u \in U } \frac{\sum_{i \in R_{u}} \phi(i)}{|R_{u}|}$$
 
 ```python
 def Popularity(test_ur, pred_ur, test_u, item_pop):
@@ -242,7 +243,104 @@ elif self.prepro.endswith('core'):
 5. Negative items are all items in universe that are not in positive set
 6. The final test set will contain both negative and positive samples defined above
    1. The case of unknown user and item will still be used in prediction
+7. Unknown users/item are still computed and depending on the rec-list provided, the score will vary
 
 ## Elliot
 
-## Rec
+### Elliot Q1
+
+The code below is a refresher on how the setting 3 split is done. A flag is created to filter test and train, where the flag acts as the global timeline. No other filtering is done to ensure that both user/item exist in train/test set.
+
+```python
+def splitting_passed_timestamp(self, d: pd.DataFrame, timestamp=1):
+    tuple_list = []
+    data = d.copy()
+    data["test_flag"] = data.apply(lambda x: x["timestamp"] >= timestamp, axis=1)
+    test = data[data["test_flag"] == True].drop(columns=["test_flag"]).reset_index(drop=True)
+    train = data[data["test_flag"] == False].drop(columns=["test_flag"]).reset_index(drop=True)
+    tuple_list.append((train, test))
+    return tuple_list
+```
+
+### Elliot Q2
+
+The cutoff is defined by the top-K items used to evaluate if there exists a cutoff. The relevance is defined by the test data being filtered by the relevance threshold.
+
+```python
+class Precision(BaseMetric):
+    def __init__(self, recommendations, config, params, eval_objects):
+        """
+        Constructor
+        :param recommendations: list of recommendations in the form {user: [(item1,value1),...]}
+        :param config: SimpleNameSpace that represents the configuration of the experiment
+        :param params: Parameters of the model
+        :param eval_objects: list of objects that may be useful for the computation of the different metrics
+        """
+        super().__init__(recommendations, config, params, eval_objects)
+        self._cutoff = self._evaluation_objects.cutoff
+        self._relevance = self._evaluation_objects.relevance.binary_relevance
+
+    def __user_precision(self, user_recommendations, user, cutoff):
+        """
+        Per User Precision
+        :param user_recommendations: list of user recommendation in the form [(item1,value1),...]
+        :param cutoff: numerical threshold to limit the recommendation list
+        :param user_relevant_items: list of user relevant items in the form [item1,...]
+        :return: the value of the Precision metric for the specific user
+        """
+        # For each item predicted for the target user, check if it is in the test set
+        # If in test set add 1 to the count. Find the overall number of relevant items and divide by cutoff
+        return sum([self._relevance.get_rel(user, i) for i, _ in user_recommendations[:cutoff]]) / cutoff
+
+    def eval_user_metric(self):
+        """
+        Evaluation function
+        :return: the overall averaged value of Precision
+        """
+        return {u: self.__user_precision(u_r, u, self._cutoff)
+             for u, u_r in self._recommendations.items() if len(self._relevance.get_user_rel(u))}
+```
+
+### Elliot Q3
+
+Code definition on how a negative sample is derived and computed against a positive sample. This is different from [above](#daisyrec)
+
+```python
+class AUC(BaseMetric):
+    def __init__(self, recommendations, config, params, eval_objects):
+        """
+        Constructor
+        :param recommendations: list of recommendations in the form {user: [(item1,value1),...]}
+        :param config: SimpleNameSpace that represents the configuration of the experiment
+        :param params: Parameters of the model
+        :param eval_objects: list of objects that may be useful for the computation of the different metrics
+        """
+        super().__init__(recommendations, config, params, eval_objects)
+        self._cutoff = self._evaluation_objects.cutoff
+        self._relevance = self._evaluation_objects.relevance.binary_relevance
+        self._num_items = self._evaluation_objects.num_items
+
+    @staticmethod
+    def __user_auc(user_recommendations, user_relevant_items, num_items, train_size):
+        """
+        Per User Computation of AUC values
+        :param user_recommendations: list of user recommendation in the form [(item1,value1),...]
+        :param user_relevant_items: list of user relevant items in the form [item1,...]
+        :param num_items: overall number of items considered in the training set
+        :param train_size: length of the user profile
+        :return: the list of the AUC values per each test item
+        """
+        neg_num = num_items - train_size - len(user_relevant_items) + 1
+        pos_ranks = [r for r, (i, _) in enumerate(user_recommendations) if i in user_relevant_items]
+        return [(neg_num - r_r + p_r) / (neg_num) for p_r, r_r in enumerate(pos_ranks)]
+```
+
+### Elliot Summary
+
+1. Pre filtering by rating relevance
+   1. Drops an interaction if the rating is below a constant defined, global average rating, user average rating
+2. Pre filtering by k core
+3. Pre filtering and selecting of only cold users
+4. The negative items in Elliot is computed based on hyper-param definition and is just a numeric figure unlike DaisyRec which tries to sample from possible items
+5. Unknown users/item are still computed and depending on the rec-list provided, the score will vary
+
