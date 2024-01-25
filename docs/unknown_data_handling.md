@@ -1,5 +1,22 @@
 # Unknown data handling
 
+- [Unknown data handling](#unknown-data-handling)
+  - [DaisyRec](#daisyrec)
+    - [DaisyRec Q1](#daisyrec-q1)
+    - [DaisyRec Q2](#daisyrec-q2)
+    - [DaisyRec Q3](#daisyrec-q3)
+    - [DaisyRec Summary](#daisyrec-summary)
+  - [Elliot](#elliot)
+    - [Elliot Q1](#elliot-q1)
+    - [Elliot Q2](#elliot-q2)
+    - [Elliot Q3](#elliot-q3)
+    - [Elliot Summary](#elliot-summary)
+  - [RecPack](#recpack)
+    - [RecPack Q1](#recpack-q1)
+    - [RecPack Q2](#recpack-q2)
+    - [RecPack Q3](#recpack-q3)
+    - [RecPack Summary](#recpack-summary)
+
 For systems which use setting 3, the following describes how the RS handles the unseen user/item in the test set.
 
 The following scenarios are considered
@@ -344,3 +361,160 @@ class AUC(BaseMetric):
 4. The negative items in Elliot is computed based on hyper-param definition and is just a numeric figure unlike DaisyRec which tries to sample from possible items
 5. Unknown users/item are still computed and depending on the rec-list provided, the score will vary
 
+## RecPack
+
+### RecPack Q1
+
+The function below splits the train and test set when called by [scenario.Timed](https://github.com/LienM/recpack/blob/d42997736d0d5dfda5127a7690c732465aa03df3/recpack/scenarios/timed.py#L17).
+
+```python
+class TimestampSplitter(Splitter):
+    """Split data so that the first return value contains interactions in ``[t-delta_in, t[``,
+    and the second those in ``[t, t+delta_out[``.
+
+    If ``delta_in`` or ``delta_out`` are omitted, they are assumed to have a value of infinity.
+    A user can occur in both return values.
+
+    :param t: Timestamp to split on in seconds since epoch.
+    :type t: int
+    :param delta_out: Seconds past t. Upper bound on the timestamp
+        of interactions in the second return value. Defaults to None (infinity).
+    :type delta_out: int, optional
+    :param delta_in: Seconds before t. Lower bound on the timestamp
+        of interactions in the first return value. Defaults to None (infinity).
+    :type delta_in: int, optional
+    """
+
+    def __init__(self, t, delta_out=None, delta_in=None):
+        super().__init__()
+        self.t = t
+        self.delta_out = delta_out
+        self.delta_in = delta_in
+
+    def split(self, data: InteractionMatrix) -> Tuple[InteractionMatrix, InteractionMatrix]:
+        """Splits data so that ``data_in`` contains interactions in ``[t-delta_in, t[``,
+        and ``data_out`` those in ``[t, t+delta_out[``.
+
+        :param data: Interaction matrix to be split. Must contain timestamps.
+        :type data: InteractionMatrix
+        :return: A 2-tuple containing the ``data_in`` and ``data_out`` matrices.
+        :rtype: Tuple[InteractionMatrix, InteractionMatrix]
+        """
+        assert data.has_timestamps
+
+        if self.delta_in is None:
+            # timestamp < t
+            data_in = data.timestamps_lt(self.t)
+        else:
+            # t-delta_in =< timestamp < t
+            data_in = data.timestamps_lt(self.t).timestamps_gte(self.t - self.delta_in)
+
+        if self.delta_out is None:
+            # timestamp >= t
+            data_out = data.timestamps_gte(self.t)
+        else:
+            # timestamp >= t and timestamp < t + delta_out
+            data_out = data.timestamps_gte(self.t).timestamps_lt(self.t + self.delta_out)
+
+        logger.debug(f"{self.identifier} - Split successful")
+
+        return data_in, data_out
+```
+
+### RecPack Q2
+
+The demo usecase of the algorithm can be found [here](https://github.com/LienM/recpack/blob/d42997736d0d5dfda5127a7690c732465aa03df3/examples/Demo.ipynb)
+
+Uses a pipeline to train, test and validate. The main method called is **pipeline.run**
+
+```python
+def run(self):
+    """Runs the pipeline."""
+    for algorithm_entry in tqdm(self.algorithm_entries):
+        # Check whether we need to optimize hyperparameters
+        if algorithm_entry.optimise:
+            params = self._optimise_hyperparameters(algorithm_entry)
+        else:
+            params = algorithm_entry.params
+
+        algorithm = ALGORITHM_REGISTRY.get(algorithm_entry.name)(**params)
+        if isinstance(algorithm, TorchMLAlgorithm):
+            self._train(algorithm, self.validation_training_data) # training with validation
+        else:
+            self._train(algorithm, self.full_training_data) # training without validation
+        # Make predictions
+        X_pred = self._predict_and_postprocess(algorithm, self.test_data_in)
+
+        for metric_entry in self.metric_entries:
+            metric_cls = METRIC_REGISTRY.get(metric_entry.name)
+            if metric_entry.K is not None:
+                metric = metric_cls(K=metric_entry.K)
+            else:
+                metric = metric_cls()
+            metric.calculate(self.test_data_out.binary_values, X_pred)
+            self._metric_acc.add(metric, algorithm.identifier, metric.name)
+```
+
+How each metric is computed would are as follow
+
+```python
+class PrecisionK(ListwiseMetricK):
+    """Computes the fraction of top-K recommendations that correspond
+    to true interactions.
+
+    Different from the definition for information retrieval
+    a recommendation algorithm is expected to always return K items
+    when the Top-K recommendations are requested.
+    When fewer than K items received scores, these are considered a miss.
+    As such recommending fewer items is not beneficial for a
+    recommendation algorithm.
+
+    :param K: Size of the recommendation list consisting of the Top-K item predictions.
+    :type K: int
+    """
+
+    def __init__(self, K):
+        super().__init__(K)
+
+    def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:
+        scores = scipy.sparse.lil_matrix(y_pred_top_K.shape)
+
+        # Elementwise multiplication of top K predicts and true interactions
+        scores[y_pred_top_K.multiply(y_true).astype(bool)] = 1
+
+        scores = scores.tocsr()
+
+        self.scores_ = csr_matrix(scores.sum(axis=1)) / self.K
+
+        return
+```
+
+### RecPack Q3
+
+With regards to positive and negative sampling
+
+```python
+class PositiveNegativeSampler(Sampler):
+    """Samples linked positive and negative interactions for users.
+
+    Provides a :meth:`sample` method that samples positives and negatives.
+    Positives are sampled uniformly from all positive interactions.
+    Negative samples are sampled either based on a uniform distribution
+    or a unigram distribution.
+
+    The uniform distrbution makes it so each item has the same probability to
+    be selected as negative.
+    With the unigram distribution, items are sampled according to their weighted
+    popularity.
+    """
+```
+
+### RecPack Summary
+
+1. Variety of pre-processing filters that are similar in nature to the other 2 RS
+   1. MinUsersPerItem - Require that a minimum number of users has interacted with an item
+   2. NMostPopular - Retain only the N most popular items.
+   3. MinItemsPerUser - Require that a user has interacted with a minimum number of items.
+   4. Deduplicate - Deduplicate entries with the same user and item. Removes all duplicated user-item pair
+2. As for positive negative sampling, for each positive sample a negative sample is generated
+3. Unknown user/item are still computed and taken as a miss
