@@ -37,13 +37,22 @@ Since these unknown users cannot be evaluated, they can first be
 
 The configuration file should be stored as a yaml file and should contain the following details
 
+- data_config
+    - dataset_url: str
+        - if the url is specified, the filepath will always be ignored and a new dataset will be downloaded
+    - train_filepath: str
+    - test_filepath: str
+    - split_type: [global_timeline|single_timeline|leave_one_out|random]
+    - window_size: int
+    - num_window_per_set: int
+    - train_data_sampled: bool
+        - To use a sample of training data for training model
+    - test_data_sampled: bool
+        - To use a sample of testing data for testing model
 - recommender_type: [KNN]
-- split_type: [global_timeline|single_timeline|leave_one_out|random]
-- train_data_sampled: bool
-- test_data_sampled: bool
-- dataset_url: str
-- window_size: int
-- num_window_per_set: int
+- evaluation_metrics: [precision|recall|NCDG]
+    - top_k: int
+        - hyperparam for top k applicable metric
 
 
 ```plantuml
@@ -73,35 +82,29 @@ Evaluator --> user
 
 # Loading dataset
 
-## Loading without error
+## Hanlding of config file for dataset
 
 ```plantuml
-@startuml Loading without error
-
-[-> Evaluator : Provide url
-Evaluator -> Loader : load(url)
+@startuml
+title Config file parsing
 activate Loader
-Loader -> Dataset
+Loader -> Loader : check url in config file
+alt exist url
+    Loader -> Dataset ++
+    Dataset -> Loader --
+else filepath specified
+    
+else invalid dataset
+    Loader -> 
+end
 
-activate Dataset
-Dataset -> Dataset : Download from url
-Dataset -> Dataset : Validate timestamp
-Dataset -> Dataset : Format into Dataframe
-Dataset --> Loader
-deactivate Dataset
-
-Loader -> Loader : Sort interaction
-Loader -> Loader : Filter
-
-Loader --> Evaluator
-deactivate Loader
 @enduml
 ```
 
-## Handling of dataset without timeline
+## Handling of dataset
 ```plantuml
-@startuml Loading without timeline
-title Handling dataset without timeline
+@startuml Loading with and without timeline
+title Loading with and without timeline
 Evaluator -> Loader : load(url)
 activate Loader
 Loader -> Dataset
@@ -122,6 +125,39 @@ else invalid timestamp
 
     Dataset -> Loader --: Raise error
     Loader -> Evaluator --: Raise InvalidDataset
+end
+
+@enduml
+```
+
+---
+
+# Splitting Dataset
+Note that we can have 2 types of spliitng for the global timeline
+1. To restrict the slide the entire training set window forward such that the number of windows per set is preserved
+2. To provide the test set as the training set for the next iteration
+
+```plantuml
+@startuml Splitting data
+title Splitting data
+activate Evaluator
+Evaluator -> Splitter ++ : split(split_type,window_size,num_window)
+Splitter -> Splitter : Determine split type
+Splitter -> Splitter : Check valid window size
+Splitter -> Splitter : Check valid window number per set
+
+alt No error raised
+    loop each window set
+        Splitter -> Dataset : Split dataset
+        Dataset --> Splitter : train_set,test_set
+    end
+
+    Splitter -->Evaluator --: list of train and test set
+    
+else Error raised
+    Splitter -[hidden]> Dataset
+    activate Splitter
+    Splitter -> Evaluator --: Raise Error 
 end
 
 @enduml
@@ -164,37 +200,6 @@ loop train_set,test_set
     end 
 
 end
-@enduml
-```
-
----
-
-# Splitting Dataset
-
-```plantuml
-@startuml Splitting data
-activate Evaluator
-Evaluator -> Splitter ++ : split(split_type,window_size,num_window)
-Splitter -> Splitter : Determine split type
-Splitter -> Splitter : Check valid window size
-Splitter -> Splitter : Check valid window number per set
-
-alt No error raised
-    loop each window set
-        Splitter -> Dataset : Split dataset
-        Dataset --> Splitter : train_set,test_set
-    end
-
-    Splitter -->Evaluator --: list of train and test set
-    
-else Error raised
-    Splitter -[hidden]> Dataset
-    activate Splitter
-    Splitter -> Evaluator --: Raise Error 
-end
-
-
-
 @enduml
 ```
 
