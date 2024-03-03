@@ -7,10 +7,10 @@
   - [Handling of unknown user](#handling-of-unknown-user)
 - [Evaluation flow](#evaluation-flow)
 - [Loading dataset](#loading-dataset)
-  - [Loading without error](#loading-without-error)
-  - [Handling of dataset without timeline](#handling-of-dataset-without-timeline)
-- [Evaluation mechanism](#evaluation-mechanism)
+  - [Hanlding of config file for dataset](#hanlding-of-config-file-for-dataset)
+  - [Handling of dataset](#handling-of-dataset)
 - [Splitting Dataset](#splitting-dataset)
+- [Evaluation mechanism](#evaluation-mechanism)
   - [Class diagram](#class-diagram)
 
 # Architecture
@@ -35,7 +35,9 @@ Since these unknown users cannot be evaluated, they can first be
 
 # Evaluation flow
 
-The configuration file should be stored as a yaml file and should contain the following details
+There should not be a central yaml or config file for the entire program since
+we want to create APIs that can be called. Thus, the program should be structured
+such that these forms the parameters of the function.
 
 - data_config
     - dataset_url: str
@@ -134,7 +136,9 @@ end
 
 # Splitting Dataset
 Note that we can have 2 types of spliitng for the global timeline
-1. To restrict the slide the entire training set window forward such that the number of windows per set is preserved
+
+1. To restrict the slide the entire training set window forward such that\
+    the number of windows per set is preserved
 2. To provide the test set as the training set for the next iteration
 
 ```plantuml
@@ -167,8 +171,9 @@ end
 
 # Evaluation mechanism
 
-Following from the paper. If the evaluation metric can happen at each window and an aggregated level,
-then for 
+Following from the paper. If the evaluation metric can happen at each window
+and an aggregated level, then for
+
 1. User level
     - Each window, and each user, we evaluate the result
 2. Aggregated level
