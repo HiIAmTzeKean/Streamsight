@@ -1,0 +1,28 @@
+version: 1
+formatters:
+  colored:
+    (): colorlog.ColoredFormatter
+    format: "%(log_color)s%(levelname)-8s%(reset)s %(blue)s%(message)s"
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    datefmt: "%Y-%m-%d %H:%M:%S"
+    class: logging.Formatter
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: colored
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: simple
+    filename: ./log/output.log
+loggers:
+  simpleExample:
+    level: DEBUG
+    handlers: [console,file]
+    propagate: no
+root:
+  level: DEBUG
+  handlers: [console,file]
