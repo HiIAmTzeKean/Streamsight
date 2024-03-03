@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "streamsight"
+version = "0.1.0"
+description = "RecSys evaluator system for recommenders in a fair manner."
+authors = ["Ng Tze Kean"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+colorama = "^0.4.6"
+colorlog = "^6.8.2"
+pyyaml = "^6.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
