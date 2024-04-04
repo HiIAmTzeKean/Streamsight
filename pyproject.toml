@@ -10,7 +10,11 @@ python = "^3.11"
 colorama = "^0.4.6"
 colorlog = "^6.8.2"
 pyyaml = "^6.0.1"
+scikit-learn = "^1.4.1.post1"
 
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.3"
 
 [build-system]
 requires = ["poetry-core"]
