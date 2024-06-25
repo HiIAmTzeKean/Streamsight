@@ -1,9 +1,15 @@
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Optional, Tuple
+import logging
+import operator
+from typing import Callable, Optional, Set, Tuple
+from scipy.sparse import csr_matrix
 
 import pandas as pd
 
+import numpy as np
+
+logger = logging.getLogger(__name__)
 
 class InteractionMatrix:
     """An InteractionMatrix contains interactions between users and items at a certain time.
@@ -118,12 +124,132 @@ class InteractionMatrix:
             shape=self.shape,
         )
 
+    @property
     def properties(self) -> InteractionMatrixProperties:
         return self.InteractionMatrixProperties(
             num_users=self.shape[0],
             num_items=self.shape[1]
         )
         
+    @property
+    def num_interactions(self) -> int:
+        """The total number of interactions.
+
+        :return: Total interaction count.
+        :rtype: int
+        """
+        return len(self._df)
+    
+    @property
+    def values(self) -> csr_matrix:
+        """All user-item interactions as a sparse matrix of size ``(|users|, |items|)``.
+
+        Each entry is the number of interactions between that user and item.
+        If there are no interactions between a user and item, the entry is 0.
+
+        :return: Interactions between users and items as a csr_matrix.
+        :rtype: csr_matrix
+        """
+        values = np.ones(self._df.shape[0])
+        indices = self._df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX]].values
+        indices = indices[:, 0], indices[:, 1]
+
+        matrix = csr_matrix((values, indices), shape=self.shape, dtype=np.int32)
+        return matrix
+        
+    def users_in(self, U: Set[int], inplace=False) -> Optional["InteractionMatrix"]:
+        """Keep only interactions by one of the specified users.
+
+        :param U: A Set or List of users to select the interactions from.
+        :type U: Union[Set[int], List[int]]
+        :param inplace: Apply the selection in place or not, defaults to False
+        :type inplace: bool, optional
+        :return: None if `inplace`, otherwise returns a new InteractionMatrix object
+        :rtype: Union[InteractionMatrix, None]
+        """
+        logger.debug("Performing users_in comparison")
+
+        mask = self._df[InteractionMatrix.USER_IX].isin(U)
+
+        return self._apply_mask(mask, inplace=inplace)
+    
+    def _apply_mask(self, mask, inplace=False) -> Optional["InteractionMatrix"]:
+        interaction_m = self if inplace else self.copy()
+
+        c_df = interaction_m._df[mask]
+
+        interaction_m._df = c_df
+        return None if inplace else interaction_m
+    
+    def _timestamps_cmp(self, op: Callable, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
+        """Filter interactions based on timestamp.
+        Keep only interactions for which op(t, timestamp) is True.
+
+        :param op: Comparison operator.
+        :type op: Callable
+        :param timestamp: Timestamp to compare against in seconds from epoch.
+        :type timestamp: float
+        :param inplace: Modify the data matrix in place. If False, returns a new object.
+        :type inplace: bool, optional
+        """
+        logger.debug(f"Performing {op.__name__}(t, {timestamp})")
+
+        mask = op(self._df[InteractionMatrix.TIMESTAMP_IX], timestamp)
+
+        return self._apply_mask(mask, inplace=inplace)
+
+    def timestamps_gt(self, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
+        """Select interactions after a given timestamp.
+
+        :param timestamp: The timestamp with which
+            the interactions timestamp is compared.
+        :type timestamp: float
+        :param inplace: Apply the selection in place if True, defaults to False
+        :type inplace: bool, optional
+        :return: None if `inplace`, otherwise returns a new InteractionMatrix object
+        :rtype: Union[InteractionMatrix, None]
+        """
+        return self._timestamps_cmp(operator.gt, timestamp, inplace)
+
+    def timestamps_lt(self, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
+        """Select interactions up to a given timestamp.
+
+        :param timestamp: The timestamp with which
+            the interactions timestamp is compared.
+        :type timestamp: float
+        :param inplace: Apply the selection in place if True, defaults to False
+        :type inplace: bool, optional
+        :return: None if `inplace`, otherwise returns a new InteractionMatrix object
+        :rtype: Union[InteractionMatrix, None]
+        """
+        return self._timestamps_cmp(operator.lt, timestamp, inplace)
+
+    def timestamps_gte(self, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
+        """Select interactions after and including a given timestamp.
+
+        :param timestamp: The timestamp with which
+            the interactions timestamp is compared.
+        :type timestamp: float
+        :param inplace: Apply the selection in place if True, defaults to False
+        :type inplace: bool, optional
+        :return: None if `inplace`, otherwise returns a new InteractionMatrix object
+        :rtype: Union[InteractionMatrix, None]
+        """
+        return self._timestamps_cmp(operator.ge, timestamp, inplace)
+
+    def timestamps_lte(self, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
+        """Select interactions up to and including a given timestamp.
+
+        :param timestamp: The timestamp with which
+            the interactions timestamp is compared.
+        :type timestamp: float
+        :param inplace: Apply the selection in place if True, defaults to False
+        :type inplace: bool, optional
+        :return: None if `inplace`, otherwise returns a new InteractionMatrix object
+        :rtype: Union[InteractionMatrix, None]
+        """
+        return self._timestamps_cmp(operator.le, timestamp, inplace)
+    
     def __add__(self, other):
         return self.union(other)
     

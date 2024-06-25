@@ -3,12 +3,12 @@
 - [FYP Draft 1](#fyp-draft-1)
 - [Architecture](#architecture)
 - [Assumptions](#assumptions)
+- [Questions/ Trailing solutions](#questions-trailing-solutions)
+- [Documentation](#documentation)
 - [Procedures](#procedures)
-  - [Handling of unknown user](#handling-of-unknown-user)
 - [Evaluation flow](#evaluation-flow)
 - [Loading dataset](#loading-dataset)
-  - [Hanlding of config file for dataset](#hanlding-of-config-file-for-dataset)
-  - [Handling of dataset](#handling-of-dataset)
+  - [Pipeline overview of loading dataset](#pipeline-overview-of-loading-dataset)
 - [Splitting Dataset](#splitting-dataset)
 - [Evaluation mechanism](#evaluation-mechanism)
   - [Class diagram](#class-diagram)
@@ -22,40 +22,25 @@ Proposed name: StreamSight
 - Dataset input must come with timestamp for partitioning
 - Models used must support provided API by SteamSight
 
+# Questions/ Trailing solutions
+
+What about unknown users that appear in the test set? Meaning they are not in
+training set, but in test set
+- We have 2 settings, to ignore these users during evaluation
+- or to set a default value for these users such as having the most popular item
+
+
+# Documentation
+
+The docstring used in the code base follows reST formatting. This is because
+it is compatible with Sphinx for documentation for easy documentation generation
+along the way.
+
 # Procedures
-
-## Handling of unknown user
-
-Definition of Unknown: User appears in the test set but is not seen before in the train set.
-
-Since these unknown users cannot be evaluated, they can first be
-
-1. Ignored
-2. Be always assigned a default value such as the most popular item
 
 # Evaluation flow
 
-There should not be a central yaml or config file for the entire program since
-we want to create APIs that can be called. Thus, the program should be structured
-such that these forms the parameters of the function.
-
-- data_config
-    - dataset_url: str
-        - if the url is specified, the filepath will always be ignored and a new dataset will be downloaded
-    - train_filepath: str
-    - test_filepath: str
-    - split_type: [global_timeline|single_timeline|leave_one_out|random]
-    - window_size: int
-    - num_window_per_set: int
-    - train_data_sampled: bool
-        - To use a sample of training data for training model
-    - test_data_sampled: bool
-        - To use a sample of testing data for testing model
-- recommender_type: [KNN]
-- evaluation_metrics: [precision|recall|NCDG]
-    - top_k: int
-        - hyperparam for top k applicable metric
-
+The flow of the 
 
 ```plantuml
 @startuml Overall flow
@@ -84,57 +69,42 @@ Evaluator --> user
 
 # Loading dataset
 
-## Hanlding of config file for dataset
+## Pipeline overview of loading dataset
+
+Pipeline builder provides the API to add the dataset of interest to the pipeline this. By calling `pipeline_builder.set_dataset(dataset)` we allow the user to specify the dataset to load. The dataset specified can be the class or a string argument.
+
+Once the pipeline builder has the specified arguments, calling `run()` on the pipeline will cause the dataset class to be instantiated and subsequently loaded.
 
 ```plantuml
 @startuml
-title Config file parsing
-activate Loader
-Loader -> Loader : check url in config file
-alt exist url
-    Loader -> Dataset ++
-    Dataset -> Loader --
-else filepath specified
-    
-else invalid dataset
-    Loader -> 
-end
-
-@enduml
-```
-
-## Handling of dataset
-```plantuml
-@startuml Loading with and without timeline
-title Loading with and without timeline
-Evaluator -> Loader : load(url)
-activate Loader
-Loader -> Dataset
-
-activate Dataset
-Dataset -> Dataset : Download from url
-Dataset -> Dataset : Validate timestamp
-alt valid timestamp
-    Dataset -> Dataset : Format into Dataframe
-    Dataset --> Loader --
-
-    Loader -> Loader : Filtering
-
-    Loader --> Evaluator --
-else invalid timestamp
-    Dataset -[hidden]> Loader ++
-    activate Dataset
-
-    Dataset -> Loader --: Raise error
-    Loader -> Evaluator --: Raise InvalidDataset
-end
-
+title Pipeline interaction with loader
+activate Pipeline
+Pipeline -> Pipeline ++: run()
+Pipeline -> Dataset ++
+Dataset -> Dataset ++ : load()
+Dataset -> Dataset: fetch_dataset()
+note right: called to download \n or load from storage
+Dataset -> Dataset -- : _dataframe_to_matrix()
+Dataset --> Pipeline -- : dataset
+Pipeline -[hidden]-> Pipeline --
 @enduml
 ```
 
 ---
 
 # Splitting Dataset
+
+We split the dataset into 2 broad category. (1) Full training dataset and (2) test data. For (1) we further split it into validation train and test data if the user specifies for validation set to be created. The validation train and test is a subset of (1) and for the final model, the full training dataset will be used.
+
+We assume that all datasets used will contain a timestamp. Instead of sorting the entire dataset then splitting by some index, we will simply use pandas build-in tools to aid us.
+
+We take an example of splitting based on a single global timeline. Given a timestamp `t` we will filter for all rows that have the timestamp less than `t` to be part of the in-set, or (1). And for all items greater equal to `t`, it will be contained in (2).
+
+We provide the capability to indicate a `delta_in` and `delta_out` such that the user can indicate the extent of time range for the dataset to be used. If not specified, it will be simply as explained above.
+
+
+Now we take the example of a sliding global timeline. The i
+
 Note that we can have 2 types of spliitng for the global timeline
 
 1. To restrict the slide the entire training set window forward such that\

@@ -1,6 +1,8 @@
+from abc import ABC, abstractmethod
 import logging
 import os
 from pathlib import Path
+from typing import Optional
 from urllib.request import urlretrieve
 
 import pandas as pd
@@ -19,7 +21,7 @@ trained and tested on.
 
 logger = logging.getLogger(__name__)
 
-class Dataset():
+class Dataset(ABC):
     """Represents a collaborative filtering dataset. Dataset must minimmally contain
     user, item and timestamp columns.
 
@@ -44,21 +46,26 @@ class Dataset():
     DEFAULT_BASE_PATH = "data"
     """Default base path where the dataset will be stored."""
     
-    def __init__(self, filename: str = None, base_path: str = None):
+    def __init__(self, filename: Optional[str] = None, base_path: Optional[str] = None):
         self.base_path = base_path if base_path else self.DEFAULT_BASE_PATH
-        logger.debug(f"Dataset {__class__.__name__} initialized with base_path {self.base_path}")
+        logger.debug(f"{self.name} being initialized with '{self.base_path}' as the base path.")
         
         self.filename = filename if filename else self.DEFAULT_FILENAME
         if not self.filename:
             raise ValueError("No filename specified, and no default known.")
         
         self._check_safe()
-        logger.debug("Dataset class initialized.")
-        
+        logger.debug(f"{self.name} is initialized.")
+    
+    @property
+    def name(self):
+        """Name of the object's class."""
+        return self.__class__.__name__
+     
     @property
     def file_path(self) -> str:
         """File path of the dataset."""
-        return os.path.join(self.base_path, self.filename)
+        return os.path.join(self.base_path, self.filename) # type: ignore
     
     def _check_safe(self):
         """Check if the directory is safe. If directory does not exit, create it."""
@@ -75,6 +82,7 @@ class Dataset():
         """
         if not os.path.exists(self.file_path) or force:
             self._download_dataset()
+        logger.debug(f"Data file is in memory and in dir specified.")
             
     def load(self) -> InteractionMatrix:
         """Loads data into an InteractionMatrix object.
@@ -85,10 +93,10 @@ class Dataset():
         :return: The resulting InteractionMatrix
         :rtype: InteractionMatrix
         """
-        logger.info(f"{self.__class__.__name__} loading dataset.")
+        logger.info(f"{self.name} is loading dataset...")
         df = self._load_dataframe()
         im = self._dataframe_to_matrix(df)
-        logger.info(f"{self.__class__.__name__} dataset loaded.")
+        logger.info(f"{self.name} dataset loaded.")
         return im
     
     def _dataframe_to_matrix(self, df: pd.DataFrame) -> InteractionMatrix:
@@ -118,9 +126,11 @@ class Dataset():
         :return: The filename where data was saved
         :rtype: str
         """
+        logger.debug(f"{self.name} will fetch dataset from remote url at {url}.")
         urlretrieve(url, filename)
         return filename
 
+    @abstractmethod
     def _load_dataframe(self) -> pd.DataFrame:
         """Load the raw dataset from file, and return it as a pandas DataFrame.
 
@@ -132,5 +142,7 @@ class Dataset():
         """
         raise NotImplementedError("Needs to be implemented")
     
+    
+    @abstractmethod
     def _download_dataset(self):
         raise NotImplementedError("Needs to be implemented")

@@ -1,8 +1,10 @@
+import logging
 import os
 import pandas as pd
 import numpy as np
-from streamsight.datasets.dataset import Dataset
+from streamsight.datasets.base import Dataset
 
+logger = logging.getLogger(__name__)
 
 class AmazonDataset(Dataset):
     USER_IX = "userId"
@@ -41,10 +43,11 @@ class AmazonDataset(Dataset):
         Downloads the csv file from the dataset URL and saves it to the file path.
         """
         if not self.DATASET_URL:
-            raise ValueError(f"{self.__class__.__name__} does not have URL specified.")
+            raise ValueError(f"{self.name} does not have URL specified.")
         
         self._fetch_remote(self.DATASET_URL,
                            os.path.join(self.base_path, f"{self.DEFAULT_FILENAME}"))
+
 
 class AmazonMusicDataset(AmazonDataset):
     """Handles Amazon Music dataset."""
@@ -53,6 +56,23 @@ class AmazonMusicDataset(AmazonDataset):
 
     DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Digital_Music.csv"
     """URL to fetch the dataset from."""
+    
+    def _load_dataframe(self) -> pd.DataFrame:
+        """Load the raw dataset from file, and return it as a pandas DataFrame.
+        
+        Transform the dataset downloaded to have integer user and item ids. This
+        is to allow for representation of the data in a more compact form later
+        on in the pipeline.
+
+        :return: The interaction data as a DataFrame with a row per interaction.
+        :rtype: pd.DataFrame
+        """
+        df = super()._load_dataframe()
+        
+        # map user and item ids to integers
+        df[self.USER_IX] = df[self.USER_IX].astype("category").cat.codes
+        df[self.ITEM_IX] = df[self.ITEM_IX].astype("category").cat.codes
+        return df
 
 class AmazonMovieDataset(AmazonDataset):
     """Handles Amazon Movie dataset."""
