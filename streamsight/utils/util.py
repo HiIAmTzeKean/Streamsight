@@ -115,3 +115,20 @@ def to_binary(X: csr_matrix) -> csr_matrix:
     X_binary = X.astype(bool).astype(X.dtype)
 
     return X_binary
+
+def invert(x: Union[np.ndarray, csr_matrix]) -> Union[np.ndarray, csr_matrix]:
+    """Invert an array.
+
+    :param x: [description]
+    :type x: [type]
+    :return: [description]
+    :rtype: [type]
+    """
+    if isinstance(x, np.ndarray):
+        ret = np.zeros(x.shape)
+    elif isinstance(x, csr_matrix):
+        ret = csr_matrix(x.shape)
+    else:
+        raise TypeError("Unsupported type for argument x.")
+    ret[x.nonzero()] = 1 / x[x.nonzero()]
+    return ret

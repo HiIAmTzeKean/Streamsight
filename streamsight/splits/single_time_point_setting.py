@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+
 import numpy as np
 
 from streamsight.matrix import InteractionMatrix
@@ -7,6 +8,7 @@ from streamsight.splits import Setting
 from streamsight.splits.splitters import TimestampSplitter
 
 logger = logging.getLogger(__name__)
+
 
 class SingleTimePointSetting(Setting):
     """Predict users' future interactions, given information about historical interactions.
@@ -112,7 +114,7 @@ class SingleTimePointSetting(Setting):
         delta_out: int = np.iinfo(np.int32).max,
         delta_in: int = np.iinfo(np.int32).max,
         validation: bool = False,
-        seed: int|None = None,
+        seed: int | None = None,
     ):
         super().__init__(validation=validation, seed=seed)
         self.t = t
@@ -122,19 +124,24 @@ class SingleTimePointSetting(Setting):
         """Interval size to be used for in-sample data."""
         self.t_validation = t_validation
         """Timestamp where the validation data is split from the training data."""
-        
-        if self.validation and not self.t_validation:
-            raise Exception("t_validation should be provided when requesting a validation dataset.")
-        if self.t_validation and not (self.t_validation < self.t):
-            logger.warning("t_validation should be smaller than t. Else there will be data leakage.")
 
-        logger.info(f"Splitting data at time {t} with delta_in interval {delta_in} and delta_out interval {delta_out}")
-        self.timestamp_splitter = TimestampSplitter(t, delta_out, delta_in)
+        if self.validation and not self.t_validation:
+            raise Exception(
+                "t_validation should be provided when requesting a validation dataset.")
+        if self.t_validation and not (self.t_validation < self.t):
+            logger.warning(
+                "t_validation should be smaller than t. Else there will be data leakage.")
+
+        logger.info(
+            f"Splitting data at time {t} with delta_in interval {delta_in} and delta_out interval {delta_out}")
+        self.splitter = TimestampSplitter(t, delta_out, delta_in)
 
         if self.validation:
             # Override the validation splitter to a timed splitter.
-            logger.info(f"Splitting data at time {t_validation} with delta_in interval {delta_in} and delta_out interval {delta_out}")
-            self.validation_time_splitter = TimestampSplitter(t_validation, delta_out, delta_in)
+            logger.info(
+                f"Splitting data at time {t_validation} with delta_in interval {delta_in} and delta_out interval {delta_out}")
+            self.validation_splitter = TimestampSplitter(
+                t_validation, delta_out, delta_in)
 
     def _split(self, data: InteractionMatrix):
         """Splits your dataset into a training, validation and test dataset
@@ -143,9 +150,10 @@ class SingleTimePointSetting(Setting):
         :param data: Interaction matrix to be split. Must contain timestamps.
         :type data: InteractionMatrix
         """
-        self._full_train_X, self._test_data_out = self.timestamp_splitter.split(data)
+        self._full_train_X, self._test_data_out = self.splitter.split(data)
         self._test_data_in = self._full_train_X.copy()
 
         if self.validation:
-            self._validation_train_X, self._validation_data_out = self.validation_time_splitter.split(self._full_train_X)
+            self._validation_train_X, self._validation_data_out = self.validation_splitter.split(
+                self._full_train_X)
             self._validation_data_in = self._validation_train_X.copy()
