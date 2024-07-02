@@ -1,4 +1,4 @@
-from streamsight.datasets.dataset import Dataset
+from streamsight.datasets.base import Dataset
 
 
 class YelpDataset(Dataset):
