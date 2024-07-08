@@ -3,11 +3,13 @@
 - [FYP Draft 1](#fyp-draft-1)
 - [Architecture](#architecture)
 - [Notation](#notation)
+- [Error handling practices](#error-handling-practices)
 - [Assumptions](#assumptions)
 - [Questions/ Trailing solutions](#questions-trailing-solutions)
   - [Scenario 1](#scenario-1)
 - [Documentation](#documentation)
 - [Procedures](#procedures)
+- [Block diagram](#block-diagram)
 - [Loading dataset](#loading-dataset)
   - [Pipeline overview of loading dataset](#pipeline-overview-of-loading-dataset)
 - [Splitting Dataset](#splitting-dataset)
@@ -36,6 +38,20 @@ where the norm for evaluation system uses only a single train and test set. In
 this implementation, there could be multiple rounds of training and this set
 that contains multiple training set will be termed as frame. Similar to how
 pandas uses frame to denote a multi-dimension series.
+
+# Error handling practices
+
+The package will log information in the API calls. We will handle errors in the
+following manner
+
+- Exceptions will be used when there is an error that occurs which violates an
+  assumption or assertion in the code. In these events, the code is unable to
+  continue to run.
+- A warning issued in the logging is to denote that an error has occurred and
+  nothing can be done about the issue. This could arise from ignoring earlier
+  warnings that were highlighted or an edge case encountered in the code
+- warning.warn() raised are warnings that can be avoided where the user can
+  modify the parameters highlighted
 
 # Assumptions
 
@@ -69,6 +85,49 @@ it is compatible with Sphinx for documentation for easy documentation generation
 along the way.
 
 # Procedures
+
+# Block diagram
+
+```plantuml
+@startuml
+:Specify background_t, window_size;
+:Sort interaction by timestamp;
+fork
+  :background_data;
+fork again
+  :List[ground_truth_data];
+fork again
+  :List[unlabelled_data];
+end fork
+:Store data in setting object;
+:API calls made by Algorithm to streamsight to get data;
+
+@enduml
+```
+
+We can use an example to explain the model above. Let us specify a time t=May as
+the month to splice the dataset. Then the months from Jan-Apr will be used for
+background data for the model. Let us also specify the window size as window_size=30days.
+Then every subsequent set used to evaluate the model will be the following month,
+and the next ground truth value released to the model will be done after the
+evaluation. For example, we will ask the model to predict the data points for
+May and subsequently we will release the ground truth to the model.
+
+```plantuml
+@startuml
+:Algorithm request for first set of data;
+:streamsight provides background_data;
+repeat
+:streamsight sends unlabelled_data;
+:Algorithm prompted to predict for users in unlabelled_data;
+:Algorithm returns prediction to streamsight;
+:Based on the ground_truth_data evaluate metrics;
+:Store metric in list;
+repeat while
+:Compute a global metric performance of Algorithm;
+@enduml
+
+```
 
 # Loading dataset
 
