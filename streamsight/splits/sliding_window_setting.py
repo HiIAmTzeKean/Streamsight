@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import List, Optional
 from warnings import warn
 
 import numpy as np
@@ -12,43 +12,33 @@ logger = logging.getLogger(__name__)
 
 
 class SlidingWindowSetting(Setting):
+    """Sliding window setting
+    
+    background_data
+    unlabeled_data
+    ground_truth_data
+    """
 
     def __init__(
         self,
         t: int,
-        t_validation_delta: Optional[int] = None,
         delta_out: int = np.iinfo(np.int32).max,
         delta_in: int = np.iinfo(np.int32).max,
-        validation: bool = False,
         window_size: int = np.iinfo(np.int32).max,  # in seconds
         seed: int | None = None,
     ):
-        super().__init__(validation=validation, seed=seed)
+        super().__init__(seed=seed)
         self.t = t
         self.delta_out = delta_out
         """Interval size to be used for out-sample data."""
         self.delta_in = delta_in
         """Interval size to be used for in-sample data."""
-        self.t_validation_delta = t_validation_delta
-        """Timestamp where the validation data is split from the training data."""
         self.window_size = window_size
         """Window size in seconds for spliiter to slide over the data."""
 
-        if self.validation and not self.t_validation_delta:
-            raise ValueError(
-                "t_validation_delta should be provided when requesting a validation dataset.")
-        if self.t_validation_delta and self.t_validation_delta > self.window_size:
-            logger.warning(
-                "t_validation_delta should be smaller than window_size. Else validation data set will be the same as the training data set.")
-
         logger.info(
             f"Splitting data till time {t} with delta_in interval {delta_in} , delta_out interval {delta_out}, interval size of {window_size} seconds.")
-        self.splitter = TimestampSplitter(window_size, delta_out, delta_in)
-        if self.validation:
-            # Override the validation splitter to a timed splitter.
-            # set the validation time splitter to 0 as it will be updated in the split method
-            self.validation_splitter = TimestampSplitter(
-                0, delta_out, delta_in)
+        self.splitter = TimestampSplitter(t, delta_out, delta_in)
 
     def _split(self, data: InteractionMatrix):
         """Splits your dataset into a training, validation and test dataset
@@ -59,6 +49,8 @@ class SlidingWindowSetting(Setting):
         """
         
         min_timestamp = data.min_timestamp
+
+        
         if not data.has_timestamps:
             raise ValueError(
                 "SingleTimePointSetting requires timestamp information in the InteractionMatrix.")
@@ -66,31 +58,25 @@ class SlidingWindowSetting(Setting):
             warn(
                 f"Splitting at time {self.t} is before the first timestamp in the data. No data will be in the training set.")
 
-        logger.debug(
-            f"Staring split with window size {min_timestamp} seconds")
-        self._full_train_X_frame, self._test_data_out_frame, self._test_data_in_frame = [], [], []
-        if self.validation:
-            self._validation_train_X_frame, self._validation_data_out_frame, self._validation_data_in_frame = [], [], []
+        self._background_data,remainder_data = self.splitter.split(data)
+        self._ground_truth_data_frame, self._unlabeled_data_frame = [], []
 
-        for sub_time in range(min_timestamp, self.t, self.window_size):
+        # sub_time is the sub time point that the splitter will slide over the data
+        sub_time = self.t
+        
+        while sub_time < remainder_data.max_timestamp:
+            sub_time += self.window_size
             logger.info(
                 f"Sliding split t={sub_time},delta_in={self.delta_in},delta_out={self.delta_out}")
             self.splitter.update_split_point(
                 sub_time, self.delta_out, self.delta_in)
-            data_in, data_out = self.splitter.split(data)
-            self._full_train_X_frame.append(data_in)
-            self._test_data_out_frame.append(data_out)
-            self._test_data_in_frame.append(data_in.copy())
-
-            if self.validation:
-                self.validation_splitter.update_split_point(
-                    sub_time-self.t_validation_delta, self.delta_out, self.delta_in)
-                data_in, data_out = self.validation_splitter.split(data_in)
-                self._validation_train_X_frame.append(data_in)
-                self._validation_data_out_frame.append(data_out)
-                self._validation_data_in_frame.append(data_in.copy())
+            
+            data_in, data_out = self.splitter.split(remainder_data)
+            self._unlabeled_data_frame.append(data_in)
+            self._ground_truth_data_frame.append(data_out)
 
         # update the number of folds
-        self.num_split_set = len(self._full_train_X_frame)
+        self.num_split_set = len(self._unlabeled_data_frame)
         logger.debug(
-            f"Finished split with window size {self.window_size} seconds. Number of splits: {self.num_split_set}")
+            f"Finished split with window size {self.window_size} seconds."\
+                "Number of splits: {self.num_split_set}")

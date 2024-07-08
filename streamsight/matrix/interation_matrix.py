@@ -473,6 +473,19 @@ class InteractionMatrix:
         """
         if not self.has_timestamps:
             raise AttributeError(
-                "InteractionMatrix is missing timestamps. " "Cannot sort user history without timestamps."
+                "InteractionMatrix is missing timestamps."
             )
         return self._df[self.TIMESTAMP_IX].min()
+    
+    @property
+    def max_timestamp(self) -> int:
+        """The latest timestamp in the interaction matrix.
+
+        :return: The latest timestamp.
+        :rtype: int
+        """
+        if not self.has_timestamps:
+            raise AttributeError(
+                "InteractionMatrix is missing timestamps."
+            )
+        return self._df[self.TIMESTAMP_IX].max()
