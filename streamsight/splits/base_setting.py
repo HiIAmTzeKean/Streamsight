@@ -116,6 +116,12 @@ class Setting(ABC):
         return [x[0] for x in self.evaluation_data_frame]
 
     @property
+    def unlabeled_data(self) -> Union[InteractionMatrix,List[InteractionMatrix]]:
+        if self.num_split_set == 1:
+            return self.unlabeled_data_series
+        return self.unlabeled_data_frame
+
+    @property
     @check_series
     def ground_truth_data_series(self) -> InteractionMatrix:
         """Held-out part of the test dataset"""

@@ -10,7 +10,7 @@ from streamsight.splits.splitters import TimestampSplitter
 
 logger = logging.getLogger(__name__)
 
-
+# TODO consider allowing unlabeled data and ground truth data to have different window size
 class SlidingWindowSetting(Setting):
     """Sliding window setting
     
