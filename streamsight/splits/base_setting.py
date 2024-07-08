@@ -224,6 +224,7 @@ class Setting(ABC):
         check_empty("Background set", n_background)
         check_ratio("Background set", n_background, self._num_full_interactions, 0.05)
         
+        # TODO check if len of ground truth and unlabeled is the same
         if self.num_split_set == 1:
             n_unlabel = self._unlabeled_data.num_interactions
             n_ground_truth = self._ground_truth_data.num_interactions
