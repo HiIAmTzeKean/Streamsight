@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from warnings import warn
 
 import numpy as np
 
@@ -34,7 +35,7 @@ class SlidingWindowSetting(Setting):
         """Window size in seconds for spliiter to slide over the data."""
 
         if self.validation and not self.t_validation_delta:
-            raise Exception(
+            raise ValueError(
                 "t_validation_delta should be provided when requesting a validation dataset.")
         if self.t_validation_delta and self.t_validation_delta > self.window_size:
             logger.warning(
@@ -56,15 +57,24 @@ class SlidingWindowSetting(Setting):
         :param data: Interaction matrix to be split. Must contain timestamps.
         :type data: InteractionMatrix
         """
+        
+        min_timestamp = data.min_timestamp
+        if not data.has_timestamps:
+            raise ValueError(
+                "SingleTimePointSetting requires timestamp information in the InteractionMatrix.")
+        if min_timestamp > self.t:
+            warn(
+                f"Splitting at time {self.t} is before the first timestamp in the data. No data will be in the training set.")
+
         logger.debug(
-            f"Staring split with window size {self.window_size} seconds")
+            f"Staring split with window size {min_timestamp} seconds")
         self._full_train_X_frame, self._test_data_out_frame, self._test_data_in_frame = [], [], []
         if self.validation:
             self._validation_train_X_frame, self._validation_data_out_frame, self._validation_data_in_frame = [], [], []
 
-        for sub_time in range(self.window_size, self.t, self.window_size):
+        for sub_time in range(min_timestamp, self.t, self.window_size):
             logger.info(
-                f"Splitting data at time {sub_time} with delta_in interval {self.delta_in} and delta_out interval {self.delta_out}")
+                f"Sliding split t={sub_time},delta_in={self.delta_in},delta_out={self.delta_out}")
             self.splitter.update_split_point(
                 sub_time, self.delta_out, self.delta_in)
             data_in, data_out = self.splitter.split(data)

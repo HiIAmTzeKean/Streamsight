@@ -463,3 +463,16 @@ class InteractionMatrix:
         :rtype: bool
         """
         return self.TIMESTAMP_IX in self._df
+    
+    @property
+    def min_timestamp(self) -> int:
+        """The earliest timestamp in the interaction matrix.
+
+        :return: The earliest timestamp.
+        :rtype: int
+        """
+        if not self.has_timestamps:
+            raise AttributeError(
+                "InteractionMatrix is missing timestamps. " "Cannot sort user history without timestamps."
+            )
+        return self._df[self.TIMESTAMP_IX].min()

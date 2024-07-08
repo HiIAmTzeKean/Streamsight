@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from warnings import warn
 
 import numpy as np
 
@@ -126,7 +127,7 @@ class SingleTimePointSetting(Setting):
         """Timestamp where the validation data is split from the training data."""
 
         if self.validation and not self.t_validation:
-            raise Exception(
+            raise ValueError(
                 "t_validation should be provided when requesting a validation dataset.")
         if self.t_validation and not (self.t_validation < self.t):
             logger.warning(
@@ -150,6 +151,13 @@ class SingleTimePointSetting(Setting):
         :param data: Interaction matrix to be split. Must contain timestamps.
         :type data: InteractionMatrix
         """
+        if not data.has_timestamps:
+            raise ValueError(
+                "SingleTimePointSetting requires timestamp information in the InteractionMatrix.")
+        if data.min_timestamp > self.t:
+            warn(
+                f"Splitting at time {self.t} is before the first timestamp in the data. No data will be in the training set.")
+            
         self._full_train_X, self._test_data_out = self.splitter.split(data)
         self._test_data_in = self._full_train_X.copy()
 
