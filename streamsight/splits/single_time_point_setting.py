@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from warnings import warn
 
 import numpy as np
 
@@ -113,35 +114,19 @@ class SingleTimePointSetting(Setting):
         t_validation: Optional[int] = None,
         delta_out: int = np.iinfo(np.int32).max,
         delta_in: int = np.iinfo(np.int32).max,
-        validation: bool = False,
         seed: int | None = None,
     ):
-        super().__init__(validation=validation, seed=seed)
+        super().__init__(seed=seed)
         self.t = t
         self.delta_out = delta_out
         """Interval size to be used for out-sample data."""
         self.delta_in = delta_in
         """Interval size to be used for in-sample data."""
-        self.t_validation = t_validation
-        """Timestamp where the validation data is split from the training data."""
-
-        if self.validation and not self.t_validation:
-            raise Exception(
-                "t_validation should be provided when requesting a validation dataset.")
-        if self.t_validation and not (self.t_validation < self.t):
-            logger.warning(
-                "t_validation should be smaller than t. Else there will be data leakage.")
 
         logger.info(
             f"Splitting data at time {t} with delta_in interval {delta_in} and delta_out interval {delta_out}")
         self.splitter = TimestampSplitter(t, delta_out, delta_in)
 
-        if self.validation:
-            # Override the validation splitter to a timed splitter.
-            logger.info(
-                f"Splitting data at time {t_validation} with delta_in interval {delta_in} and delta_out interval {delta_out}")
-            self.validation_splitter = TimestampSplitter(
-                t_validation, delta_out, delta_in)
 
     def _split(self, data: InteractionMatrix):
         """Splits your dataset into a training, validation and test dataset
@@ -150,10 +135,13 @@ class SingleTimePointSetting(Setting):
         :param data: Interaction matrix to be split. Must contain timestamps.
         :type data: InteractionMatrix
         """
-        self._full_train_X, self._test_data_out = self.splitter.split(data)
-        self._test_data_in = self._full_train_X.copy()
+        if not data.has_timestamps:
+            raise ValueError(
+                "SingleTimePointSetting requires timestamp information in the InteractionMatrix.")
+        if data.min_timestamp > self.t:
+            warn(
+                f"Splitting at time {self.t} is before the first timestamp in the data. No data will be in the training set.")
+        
+        self._background_data, self._ground_truth_data = self.splitter.split(data)
+        self._unlabeled_data = self._background_data.copy()
 
-        if self.validation:
-            self._validation_train_X, self._validation_data_out = self.validation_splitter.split(
-                self._full_train_X)
-            self._validation_data_in = self._validation_train_X.copy()

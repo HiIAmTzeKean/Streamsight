@@ -1,12 +1,13 @@
+from abc import ABC, abstractmethod
 import logging
-from typing import List, Optional, Set, Tuple, Union
+from typing import Optional, Set, Tuple
 
 import numpy as np
 from streamsight.matrix.interation_matrix import InteractionMatrix
 
 logger = logging.getLogger(__name__)
 
-class Splitter():
+class Splitter(ABC):
     """Splitter class for splitting datasets into two based on a splitting condition.
     """
     def __init__(self):
@@ -24,6 +25,7 @@ class Splitter():
         paramstring = ",".join((f"{k}={v}" for k, v in self.__dict__.items()))
         return self.name + f"({paramstring})"
     
+    @abstractmethod
     def split(self, data: InteractionMatrix) -> Tuple[InteractionMatrix, InteractionMatrix]:
         """Splits dataset into two based on a splitting condition.
 
@@ -94,7 +96,7 @@ class TimestampSplitter(Splitter):
         self.t_upper = t_upper
     
     def update_split_point(self, t, t_lower=None, t_upper=None):
-        logger.debug(f"{self.identifier} - Updating split point to {t} with t_lower={t_lower} and t_upper={t_upper}")
+        logger.debug(f"{self.identifier} - Updating split point to t={t},t_lower={t_lower},t_upper={t_upper}")
         self.t = t
         self.t_lower = t_lower
         self.t_upper = t_upper
