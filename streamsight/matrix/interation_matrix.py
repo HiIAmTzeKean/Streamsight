@@ -160,14 +160,6 @@ class InteractionMatrix:
 
     def nonzero(self) -> Tuple[List[int], List[int]]:
         return self.values.nonzero()
-
-    def _apply_mask(self, mask, inplace=False) -> Optional["InteractionMatrix"]:
-        interaction_m = self if inplace else self.copy()
-
-        c_df = interaction_m._df[mask]
-
-        interaction_m._df = c_df
-        return None if inplace else interaction_m
     
     def users_in(self, U: Set[int], inplace=False) -> Optional["InteractionMatrix"]:
         """Keep only interactions by one of the specified users.
