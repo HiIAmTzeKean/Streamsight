@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
 import logging
 import numpy as np
-from typing import Iterator, List, Optional, Tuple, Union
+from typing import Generator, List, Optional, Tuple, Union
 from warnings import warn
 
-from streamsight.splits.splitters import StrongGeneralizationSplitter
 from streamsight.matrix import InteractionMatrix
 
 logger = logging.getLogger(__name__)
@@ -53,6 +52,7 @@ class Setting(ABC):
         Defaults to None, so random seed will be generated.
     :type seed: int, optional
     """
+    
 
     def __init__(self, seed: int | None = None):
         if seed is None:
@@ -69,6 +69,8 @@ class Setting(ABC):
         self._ground_truth_data: InteractionMatrix
         self._ground_truth_data_frame: List[InteractionMatrix]
         self._background_data: InteractionMatrix
+        self._data_timestamp_limit: Union[int, List[int]]
+        """This is the limit of the data in the corresponding split."""
 
     @abstractmethod
     def _split(self, data_m: InteractionMatrix) -> None:
@@ -111,6 +113,11 @@ class Setting(ABC):
             "Split before trying to access the background_data property.")
 
     @property
+    def num_split(self) -> int:
+        """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
+        return self.num_split_set
+
+    @property
     @check_series
     def unlabeled_data_series(self) -> InteractionMatrix:
         """Fold-in part of the test dataset"""
@@ -133,6 +140,7 @@ class Setting(ABC):
         """Held-out part of the test dataset"""
         return self.evaluation_data_series[1]
 
+    #TODO consider cache property to avoid multiple calls
     @property
     def ground_truth_data_frame(self) -> List[InteractionMatrix]:
         """Held-out part of the test dataset"""
@@ -149,7 +157,7 @@ class Setting(ABC):
         if self.num_split_set == 1:
             raise SeriesExpectedError()
 
-        # ? is this necessary? we can get the model to handle this
+        #? is this necessary? we can get the model to handle this
         datasets = []
         for dataset_idx in range(self.num_split_set):
             in_users = self._unlabeled_data_frame[dataset_idx].active_users
@@ -202,7 +210,7 @@ class Setting(ABC):
 
         Makes sure all expected attributes are set.
         """
-
+        logger.debug("Checking split attributes.")
         assert (hasattr(self, "_background_data")
                 and self._background_data is not None)
 
@@ -211,6 +219,7 @@ class Setting(ABC):
 
         assert (hasattr(self, "_ground_truth_data") and self._ground_truth_data is not None) \
             or (hasattr(self, "_ground_truth_data_frame") and self._ground_truth_data_frame is not None)
+        logger.debug("Split attributes are set.")
 
         self._check_size()
 
@@ -218,7 +227,7 @@ class Setting(ABC):
         """
         Warns user if any of the sets is unusually small or empty
         """
-
+        logger.debug("Checking size of split sets.")
         def check_ratio(name, count, total, threshold):
             if (count + 1e-9) / (total + 1e-9) < threshold:
                 warn(
@@ -234,7 +243,7 @@ class Setting(ABC):
         check_ratio("Background set", n_background,
                     self._num_full_interactions, 0.05)
 
-        # TODO check if len of ground truth and unlabeled is the same
+        #TODO check if len of ground truth and unlabeled is the same
         if self.num_split_set == 1:
             n_unlabel = self._unlabeled_data.num_interactions
             n_ground_truth = self._ground_truth_data.num_interactions
@@ -248,40 +257,44 @@ class Setting(ABC):
                 n_unlabel = self._unlabeled_data_frame[dataset_idx].num_interactions
                 n_ground_truth = self._ground_truth_data_frame[dataset_idx].num_interactions
 
-                check_empty("Unlabeled set", n_unlabel)
-                check_empty("Ground truth set", n_ground_truth)
+                check_empty(f"Unlabeled set[{dataset_idx}]", n_unlabel)
+                check_empty(f"Ground truth set[{dataset_idx}]", n_ground_truth)
+        logger.debug("Size of split sets are checked.")
 
     def _unlabeled_data_generator(self):
-        def create_generator():
-            if self.num_split_set == 1:
-                yield self.unlabeled_data_series
-            else:
-                for data in self.unlabeled_data_frame:
-                    yield data
-        self.unlabeled_data_iter = create_generator()
+        self.unlabeled_data_iter:Generator[InteractionMatrix] = self._create_generator("unlabeled_data_series", "unlabeled_data_frame")
         
+    def _create_generator(self,series:str,frame:str):
+        """Creates generator for provided series or frame attribute name
 
-    def next_unlabeled_data(self, reset=False):
+        :param series: _description_
+        :type series: str
+        :param frame: _description_
+        :type frame: str
+        :yield: _description_
+        :rtype: _type_
+        """
+        if self.num_split_set == 1:
+            yield getattr(self, series)
+        else:
+            for data in getattr(self, frame):
+                yield data
+
+    def next_unlabeled_data(self, reset=False) -> Optional[InteractionMatrix]:
         # Create generator if it does not exist or reset is True
         if reset or not hasattr(self, "unlabeled_data_iter"):
             self._unlabeled_data_generator()
         
         try:
-            next(self.unlabeled_data_iter)
+            return next(self.unlabeled_data_iter)
         except StopIteration:
             logger.debug("End of unlabeled data reached. To reset, set reset=True")
             return None
 
     def _ground_truth_data_generator(self):
-        def create_generator():
-            if self.num_split_set == 1:
-                yield self.ground_truth_data_series
-            else:
-                for data in self.ground_truth_data_frame:
-                    yield data
-        self.ground_truth_data_iter = create_generator()
+        self.ground_truth_data_iter:Generator[InteractionMatrix] = self._create_generator("ground_truth_data_series", "ground_truth_data_frame")
         
-    def next_ground_truth_data(self, reset=False):
+    def next_ground_truth_data(self, reset=False) -> Optional[InteractionMatrix]:
         # Create generator if it does not exist or reset is True
         if reset or not hasattr(self, "ground_truth_data_iter"):
             self._ground_truth_data_generator()
@@ -291,3 +304,25 @@ class Setting(ABC):
         except StopIteration:
             logger.debug("End of ground truth data reached. To reset, set reset=True")
             return None
+    
+    #TODO consider better naming    
+    def _next_data_timestamp_limit_generator(self):
+        self.data_timestamp_limit_iter:Generator[int] = self._create_generator("_data_timestamp_limit", "_data_timestamp_limit")
+    
+    def next_data_timestamp_limit(self, reset=False):
+        if reset or not hasattr(self, "data_timestamp_limit_iter"):
+            self._next_data_timestamp_limit_generator()
+            
+        try:
+            return next(self.data_timestamp_limit_iter)
+        except StopIteration:
+            logger.debug("End of data timestamp_limit reached.")
+            warn("Reset the generators by calling reset_data_generators()")
+            return None
+    
+    def reset_data_generators(self):
+        logger.info("Resetting data generators.")
+        self._unlabeled_data_generator()
+        self._ground_truth_data_generator()
+        self._next_data_timestamp_limit_generator()
+        logger.info("Data generators are reset.")
