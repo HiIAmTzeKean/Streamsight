@@ -4,11 +4,13 @@ import logging.config
 from pathlib import Path
 import yaml
 
-from streamsight.utils.directory_tools import safe_dir
+from streamsight.utils.directory_tools import create_config_yaml, safe_dir
 
 cwd = os.getcwd()
-# LOGGING_CONFIG = os.path.join(cwd,"streamsight/LOGGING_CONFIG.yaml")
 LOGGING_CONFIG = "LOGGING_CONFIG.yaml"
+
+if not os.path.exists(LOGGING_CONFIG):
+    create_config_yaml(LOGGING_CONFIG)
 
 with open(LOGGING_CONFIG, 'r') as stream:
     config = yaml.load(stream, Loader=yaml.FullLoader)
