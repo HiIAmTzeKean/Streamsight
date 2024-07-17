@@ -15,55 +15,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import Normalizer
 
 from streamsight.algorithms.base import Algorithm
-from streamsight.utils.util import get_top_K_values, invert, to_binary
-
-
-def compute_conditional_probability(X: csr_matrix, pop_discount: float = 0) -> csr_matrix:
-    """Compute conditional probability like similarity.
-
-    Computation using equation (3) from the original ItemKNN paper.
-    'Item-based top-n recommendation algorithms.'
-    Deshpande, Mukund, and George Karypis
-
-    .. math ::
-        sim(i,j) = \\frac{\\sum\\limits_{u \\in U} \\mathbb{I}_{u,i} X_{u,j}}{Freq(i) \\times Freq(j)^{\\alpha}}
-
-    Where :math:`\\mathbb{I}_{ui}` is 1 if the user u has visited item i, and 0 otherwise.
-    And alpha is the pop_discount parameter.
-    Note that this is a non-symmetric similarity measure.
-    Given that X is a binary matrix, and alpha is set to 0,
-    this simplifies to pure conditional probability.
-
-    .. math::
-        sim(i,j) = \\frac{Freq(i \\land j)}{Freq(i)}
-
-    :param X: user x item matrix with scores per user, item pair.
-    :type X: csr_matrix
-    :param pop_discount: Parameter defining popularity discount. Defaults to 0
-    :type pop_discount: float, Optional.
-    """
-    # matrix with co_mat_i,j =  SUM(1_u,i * X_u,j for each user u)
-    # If the input matrix is binary, this is the cooccurence count matrix.
-    co_mat = to_binary(X).T @ X
-
-    # Compute the inverse of the item frequencies
-    A = invert(diags(to_binary(X).sum(axis=0).A[0]).tocsr())
-
-    if pop_discount:
-        # This has all item similarities
-        # Co_mat is weighted by both the frequencies of item i
-        # and the frequency of item j to the pop_discount power.
-        # If pop_discount = 1, this similarity is symmetric again.
-        item_cond_prob_similarities = A @ co_mat @ A.power(pop_discount)
-    else:
-        # Weight the co_mat with the amount of occurences of item i.
-        item_cond_prob_similarities = A @ co_mat
-
-    # Set diagonal to 0, because we don't support self similarity
-    item_cond_prob_similarities.setdiag(0)
-
-    return item_cond_prob_similarities
-
+from streamsight.utils.util import get_top_K_values
 
 def compute_cosine_similarity(X: csr_matrix) -> csr_matrix:
     """Compute the cosine similarity between the items in the matrix.
@@ -81,33 +33,6 @@ def compute_cosine_similarity(X: csr_matrix) -> csr_matrix:
     # Set diagonal to 0, because we don't want to support self similarity
 
     return item_cosine_similarities
-
-
-def compute_pearson_similarity(X: csr_matrix) -> csr_matrix:
-    """Compute the pearson correlation as a similarity between each item in the matrix.
-
-    Self similarity is removed.
-    When computing similarity, the avg of nonzero entries per user is used.
-
-    :param X: Rating or psuedo rating matrix.
-    :type X: csr_matrix
-    :return: similarity matrix.
-    :rtype: csr_matrix
-    """
-
-    if (X == 1).sum() == X.nnz:
-        raise ValueError("Pearson similarity can not be computed on a binary matrix.")
-
-    count_per_item = (X > 0).sum(axis=0).A
-
-    avg_per_item = X.sum(axis=0).A.astype(float)
-
-    avg_per_item[count_per_item > 0] = avg_per_item[count_per_item > 0] / count_per_item[count_per_item > 0]
-
-    X = X - (X > 0).multiply(avg_per_item)
-
-    # Given the rescaled matrix, the pearson correlation is just cosine similarity on this matrix.
-    return compute_cosine_similarity(X)
 
 
 class ItemKNN(Algorithm):
@@ -171,32 +96,12 @@ class ItemKNN(Algorithm):
     def __init__(
         self,
         K=200,
-        similarity: str = "cosine",
-        pop_discount: Optional[float] = None,
         normalize_X: bool = False,
         normalize_sim: bool = False
     ):
         super().__init__()
         self.K = K
-
-        if similarity not in self.SUPPORTED_SIMILARITIES:
-            raise ValueError(f"similarity {similarity} not supported")
-        self.similarity = similarity
-
-        if self.similarity != "conditional_probability" and pop_discount:
-            warnings.warn(
-                "Argument pop_discount is incompatible with all similarity \
-                functions except conditional probability. \
-                This argument will be ignored, \
-                popularity discounting won't be applied.",
-                UserWarning,
-            )
-
-        if type(pop_discount) == float and (pop_discount < 0 or pop_discount > 1):
-            raise ValueError("Invalid value for pop_discount. Value should be between 0 and 1.")
-
-        self.pop_discount = pop_discount
-
+        
         self.normalize_X = normalize_X
         # Sim_normalize takes precedence.
         self.normalize_sim = normalize_sim
@@ -210,10 +115,7 @@ class ItemKNN(Algorithm):
         if self.normalize_X:
             X = transformer.transform(X)
 
-        if self.similarity == "cosine":
-            item_similarities = compute_cosine_similarity(X)
-        elif self.similarity == "conditional_probability":
-            item_similarities = compute_conditional_probability(X, self.pop_discount)
+        item_similarities = compute_cosine_similarity(X)
 
         item_similarities = get_top_K_values(item_similarities, K=self.K)
 
@@ -243,42 +145,3 @@ class ItemKNN(Algorithm):
             scores = csr_matrix(scores)
 
         return scores
-
-def get_K_values(X: csr_matrix, K: int, pdf: np.ndarray) -> csr_matrix:
-    """Select K values random values for every row in X,
-    sampled according to the probabilities in pdf.
-    All other values in the row are set to zero.
-
-    :param X: Matrix from which we will select K values in every row.
-    :type X: csr_matrix
-    :param K: Amount of values to select.
-    :type K: int
-    :param pdf: np.ndarray of probabilities of items in X, given another item.
-        Rows should sum to 1.
-    :type pdf: np.ndarray
-    :return: Matrix with K values per row.
-    :rtype: csr_matrix
-    """
-    items = np.arange(0, X.shape[1], dtype=int)
-
-    U, I, V = [], [], []
-
-    for row_ix in range(0, X.shape[0]):
-        # Select one more, so that we can eliminate the item itself.
-        selected_K = np.random.choice(items, size=K + 1, p=pdf[row_ix, :], replace=False)
-
-        try:
-            # Eliminate the item itself if it was selected.
-            mismatch = np.where(selected_K == row_ix)[0][0]
-        except IndexError:
-            # If it was not selected, just eliminate the last item.
-            mismatch = -1
-
-        selected_K = np.delete(selected_K, mismatch)
-
-        U.extend([row_ix] * K)
-        I.extend(selected_K)
-        V.extend([1] * K)
-
-    data_K = csr_matrix((V, (U, I)), shape=X.shape)
-    return data_K.multiply(X)

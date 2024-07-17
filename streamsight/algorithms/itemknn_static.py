@@ -8,8 +8,13 @@ from streamsight.matrix.util import Matrix
 logger = logging.getLogger(__name__)
 
 class ItemKNNStatic(ItemKNN):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        K=200,
+        normalize_X: bool = False,
+        normalize_sim: bool = False
+    ):
+        super().__init__(K, normalize_X, normalize_sim)
         self.fit_complete = False
     
     def fit(self, X: InteractionMatrix) -> "Algorithm":
@@ -22,4 +27,5 @@ class ItemKNNStatic(ItemKNN):
         self._check_fit_complete()
         end = time.time()
         logger.info(f"Fitting {self.name} complete - Took {end - start :.3}s")
+        self.fit_complete = True
         return self

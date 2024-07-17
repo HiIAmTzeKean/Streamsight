@@ -8,5 +8,10 @@ from streamsight.matrix.util import Matrix
 logger = logging.getLogger(__name__)
 
 class ItemKNNRolling(ItemKNN):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        K=200,
+        normalize_X: bool = False,
+        normalize_sim: bool = False
+    ):
+        super().__init__(K, normalize_X, normalize_sim)
