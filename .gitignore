@@ -175,6 +175,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 .vscode/settings.json
-data/amazon_digitalmusic_dataset.csv
-examples/data/amazon_digitalmusic_dataset.csv
 examples/download_dataset.ipynb
+**/LOGGING_CONFIG.yaml
+**/data/**.csv
