@@ -126,8 +126,12 @@ repeat
 repeat while
 :Compute a global metric performance of Algorithm;
 @enduml
-
 ```
+
+We can take the table below as an example of how the metric will be displayed
+in the system.
+
+![[metric_table.svg]]
 
 # Loading dataset
 

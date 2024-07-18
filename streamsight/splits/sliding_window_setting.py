@@ -60,23 +60,31 @@ class SlidingWindowSetting(Setting):
 
         self._background_data,remainder_data = self.splitter.split(data)
         self._ground_truth_data_frame, self._unlabeled_data_frame = [], []
+        self._data_timestamp_limit = []
 
-        # sub_time is the sub time point that the splitter will slide over the data
+        # sub_time is the subjugate time point that the splitter will slide over the data
         sub_time = self.t
+        self._data_timestamp_limit.append(sub_time)
+        # we slide over the next point such that we start one window after
+        # the background data in the unlabeled data
+        sub_time += self.window_size
         
+        #? use for loop instead?
         while sub_time < remainder_data.max_timestamp:
-            sub_time += self.window_size
-            logger.info(
+            self._data_timestamp_limit.append(sub_time)
+            logger.debug(
                 f"Sliding split t={sub_time},delta_in={self.delta_in},delta_out={self.delta_out}")
+            
             self.splitter.update_split_point(
                 sub_time, self.delta_out, self.delta_in)
             
             data_in, data_out = self.splitter.split(remainder_data)
             self._unlabeled_data_frame.append(data_in)
             self._ground_truth_data_frame.append(data_out)
+            sub_time += self.window_size
 
         # update the number of folds
         self.num_split_set = len(self._unlabeled_data_frame)
-        logger.debug(
-            f"Finished split with window size {self.window_size} seconds."\
-                "Number of splits: {self.num_split_set}")
+        logger.info(
+            f"Finished split with window size {self.window_size} seconds.\n"
+                f"Number of splits: {self.num_split_set}")

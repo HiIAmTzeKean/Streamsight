@@ -126,6 +126,7 @@ class SingleTimePointSetting(Setting):
         logger.info(
             f"Splitting data at time {t} with delta_in interval {delta_in} and delta_out interval {delta_out}")
         self.splitter = TimestampSplitter(t, delta_out, delta_in)
+        self._data_timestamp_limit = t 
 
 
     def _split(self, data: InteractionMatrix):
