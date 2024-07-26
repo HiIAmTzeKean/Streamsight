@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 class Dataset(ABC):
     """Represents a collaborative filtering dataset. Dataset must minimmally contain
     user, item and timestamp columns.
+    
+    Assumption
+    ----------
+    New user, item ids contained increment in the order of time.
 
     :param filename: Name of the file, if no name is provided the dataset default will be used if known.
         If the dataset does not have a default filename, a ValueError will be raised.
@@ -87,8 +91,8 @@ class Dataset(ABC):
     def load(self) -> InteractionMatrix:
         """Loads data into an InteractionMatrix object.
 
-        Data is loaded into a DataFrame using the `_load_dataframe` function.
-        Resulting DataFrame is parsed into an `InteractionMatrix` object.
+        Data is loaded into a DataFrame using the ``_load_dataframe`` function.
+        Resulting DataFrame is parsed into an ``InteractionMatrix`` object.
 
         :return: The resulting InteractionMatrix
         :rtype: InteractionMatrix
@@ -108,7 +112,7 @@ class Dataset(ABC):
         :rtype: InteractionMatrix
         """
         if not self.USER_IX or not self.ITEM_IX or not self.TIMESTAMP_IX:
-            raise ValueError("USER_IX, ITEM_IX or TIMESTAMP_IX not set.")
+            raise AttributeError("USER_IX, ITEM_IX or TIMESTAMP_IX not set.")
         return InteractionMatrix(
             df,
             user_ix=self.USER_IX,
