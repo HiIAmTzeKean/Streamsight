@@ -1,13 +1,14 @@
-from copy import deepcopy
-from dataclasses import asdict, dataclass
 import logging
 import operator
+from copy import deepcopy
+from dataclasses import asdict, dataclass
 from typing import Callable, Iterator, List, Optional, Set, Tuple, Union
-from scipy.sparse import csr_matrix
-
-import pandas as pd
+from warnings import warn
 
 import numpy as np
+import pandas as pd
+from scipy.sparse import csr_matrix
+
 from streamsight.utils.util import to_binary
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ class InteractionMatrix:
     :param user_ix: User ids column name.
     :type user_ix: str
     :param timestamp_ix: Interaction timestamps column name.
-    :type timestamp_ix: str, optional
+    :type timestamp_ix: str
     :param shape: The desired shape of the matrix, i.e. the number of users and items.
         If no shape is specified, the number of users will be equal to the
         maximum user id plus one, the number of items to the maximum item
@@ -79,20 +80,26 @@ class InteractionMatrix:
         num_users = n_users_df if shape is None else shape[0]
         num_items = n_items_df if shape is None else shape[1]
 
-        if n_users_df > num_users:
+        self._check_shape(n_users_df,num_users,n_items_df,num_items)
+        self.shape = (int(num_users), int(num_items))
+        
+    def _check_shape(self,unique_users,global_users,unique_items,global_items):
+        if unique_users > global_users:
             raise ValueError(
                 "Provided shape does not match dataframe, can't have fewer rows than maximal user identifier."
-                f" {num_users} < {n_users_df}"
+                f" {global_users} < {unique_users}"
             )
-
-        if n_items_df > num_items:
+        if unique_items > global_items:
             raise ValueError(
                 "Provided shape does not match dataframe, can't have fewer columns than maximal item identifier."
-                f" {num_items} < {n_items_df}"
+                f" {global_items} < {unique_items}"
             )
 
-        self.shape = (int(num_users), int(num_items))
-
+    def mask_shape(self,known_user,known_item):
+        # Masks global user and item ids to released user and item ids
+        cur_user,cur_item = self.shape
+        self.shape = (min(cur_user,known_user),min(cur_item,known_item))
+        
     def copy(self) -> "InteractionMatrix":
         """Create a deep copy of this InteractionMatrix.
 
@@ -134,7 +141,7 @@ class InteractionMatrix:
     
     @property
     def values(self) -> csr_matrix:
-        """All user-item interactions as a sparse matrix of size ``(|users|, |items|)``.
+        """All user-item interactions as a sparse matrix of size (|`global_users`|, |`global_items`|).
 
         Each entry is the number of interactions between that user and item.
         If there are no interactions between a user and item, the entry is 0.
@@ -144,7 +151,7 @@ class InteractionMatrix:
         """
         values = np.ones(self._df.shape[0])
         indices = self._df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX]].values
-        indices = indices[:, 0], indices[:, 1]
+        indices = (indices[:, 0], indices[:, 1])
 
         matrix = csr_matrix((values, indices), shape=self.shape, dtype=np.int32)
         return matrix
@@ -257,7 +264,6 @@ class InteractionMatrix:
     def __add__(self, other):
         return self.union(other)
     
-
     def items_in(self, I: Union[Set[int], List[int]], inplace=False) -> Optional["InteractionMatrix"]:
         """Keep only interactions with the specified items.
 
@@ -293,9 +299,9 @@ class InteractionMatrix:
         unknown_interaction_ids = set(interaction_ids).difference(self._df[InteractionMatrix.INTERACTION_IX].unique())
 
         if unknown_interaction_ids:
-            warnings.warn(f"IDs {unknown_interaction_ids} not present in data")
+            warn(f"IDs {unknown_interaction_ids} not present in data")
         if not interaction_ids:
-            warnings.warn("No interaction IDs given, returning empty InteractionMatrix.")
+            warn("No interaction IDs given, returning empty InteractionMatrix.")
 
         return self._apply_mask(mask, inplace=inplace)
 
@@ -330,6 +336,34 @@ class InteractionMatrix:
         interaction_m._df = c_df
 
         return None if inplace else interaction_m
+
+    def get_user_n_last_interaction(self,n_seq_data:int=1,timestamp_limit:Optional[int]=None) -> "InteractionMatrix":
+        """Select the last n interactions for each user.
+
+        :param n_seq_data: The number of last interactions to select.
+        :type n_seq_data: int, optional
+        :param timestamp_limit: The timestamp limit to select the last interactions.
+        :type timestamp_limit: int, optional
+        :return: New InteractionMatrix
+            object with the selected interactions
+        :rtype: InteractionMatrix
+        """
+        logger.debug("Performing get_user_n_last_interaction comparison")
+
+        if not self.has_timestamps:
+            raise AttributeError(
+                "InteractionMatrix is missing timestamps."
+                "Cannot select last interactions without timestamps."
+            )
+        if timestamp_limit is None:
+            timestamp_limit = self.max_timestamp
+            
+        interaction_m = self.copy()
+        mask = interaction_m._df[InteractionMatrix.TIMESTAMP_IX] < timestamp_limit
+        c_df = interaction_m._df[mask].groupby(InteractionMatrix.USER_IX).tail(n_seq_data)
+        interaction_m._df = c_df
+
+        return interaction_m
 
     @property
     def binary_values(self) -> csr_matrix:

@@ -19,7 +19,7 @@ def to_csr_matrix(
     """
     if isinstance(X, (tuple, list)):
         return type(X)(to_csr_matrix(x, binary=binary) for x in X)
-    if isinstance(X, csr_matrix):
+    elif isinstance(X, csr_matrix):
         res = X
     elif isinstance(X, InteractionMatrix):
         res = X.values
