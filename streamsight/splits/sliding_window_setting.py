@@ -6,85 +6,81 @@ import numpy as np
 
 from streamsight.matrix import InteractionMatrix
 from streamsight.splits import Setting
-from streamsight.splits.splitters import TimestampSplitter
+from streamsight.splits.splitters import NPastInteractionTimestampSplitter, TimestampSplitter
 
 logger = logging.getLogger(__name__)
 
 # TODO consider allowing unlabeled data and ground truth data to have different window size
+
+
 class SlidingWindowSetting(Setting):
     """Sliding window setting
-    
-    background_data
-    unlabeled_data
-    ground_truth_data
+
+    background_data ``[0, t)``
+    unlabeled_data (n_prev_interaction, n_last_masked)
+    ground_truth_data (n_last_masked)
     """
 
     def __init__(
         self,
-        t: int,
+        background_t: int,
         delta_out: int = np.iinfo(np.int32).max,
         delta_in: int = np.iinfo(np.int32).max,
         window_size: int = np.iinfo(np.int32).max,  # in seconds
+        n_seq_data: int = 1,
         seed: int | None = None,
     ):
         super().__init__(seed=seed)
-        self.t = t
+        self._sliding_window_setting = True
+        self.t = background_t
         self.delta_out = delta_out
         """Interval size to be used for out-sample data."""
         self.delta_in = delta_in
         """Interval size to be used for in-sample data."""
         self.window_size = window_size
         """Window size in seconds for spliiter to slide over the data."""
-
-        logger.info(
-            f"Splitting data till time {t} with delta_in interval {delta_in} , delta_out interval {delta_out}, interval size of {window_size} seconds.")
-        self.splitter = TimestampSplitter(t, delta_out, delta_in)
+        self.n_seq_data = n_seq_data
+        """Number of last interactions to provide as unlabeled data for model to make prediction."""
+        self._background_splitter = TimestampSplitter(
+            background_t, delta_out, delta_in)
+        self._window_splitter = NPastInteractionTimestampSplitter(
+            background_t, window_size, n_seq_data)
 
     def _split(self, data: InteractionMatrix):
-        """Splits your dataset into a training, validation and test dataset
-            based on the timestamp of the interaction.
+        """Splits dataset into a background, unlabeled and ground truth data.
 
         :param data: Interaction matrix to be split. Must contain timestamps.
         :type data: InteractionMatrix
         """
-        
-        min_timestamp = data.min_timestamp
-
-        
         if not data.has_timestamps:
             raise ValueError(
                 "SingleTimePointSetting requires timestamp information in the InteractionMatrix.")
-        if min_timestamp > self.t:
+        if data.min_timestamp > self.t:
             warn(
-                f"Splitting at time {self.t} is before the first timestamp in the data. No data will be in the training set.")
-
-        self._background_data,remainder_data = self.splitter.split(data)
+                f"Splitting at time {self.t} is before the first timestamp in the data. No data will be in the background(training) set.")
+            
+        self._background_data, remainder_data = self._background_splitter.split(data)
         self._ground_truth_data_frame, self._unlabeled_data_frame = [], []
         self._data_timestamp_limit = []
 
         # sub_time is the subjugate time point that the splitter will slide over the data
         sub_time = self.t
-        self._data_timestamp_limit.append(sub_time)
-        # we slide over the next point such that we start one window after
-        # the background data in the unlabeled data
-        sub_time += self.window_size
+        max_timestamp = data.max_timestamp
         
-        #? use for loop instead?
-        while sub_time < remainder_data.max_timestamp:
+        while sub_time < max_timestamp:
             self._data_timestamp_limit.append(sub_time)
+            sub_time += self.window_size
+            # the set used for eval will always have a timestamp greater than
+            # data released such that it is unknown to the model
             logger.debug(
                 f"Sliding split t={sub_time},delta_in={self.delta_in},delta_out={self.delta_out}")
+            # TODO right now there is data leakage where the global_user and item base is leaked 
+            self._window_splitter.update_split_point(sub_time)
+            past_interaction, future_interaction = self._window_splitter.split(remainder_data)
+            self._unlabeled_data_frame.append(past_interaction)
+            self._ground_truth_data_frame.append(future_interaction)
             
-            self.splitter.update_split_point(
-                sub_time, self.delta_out, self.delta_in)
-            
-            data_in, data_out = self.splitter.split(remainder_data)
-            self._unlabeled_data_frame.append(data_in)
-            self._ground_truth_data_frame.append(data_out)
-            sub_time += self.window_size
-
-        # update the number of folds
-        self.num_split_set = len(self._unlabeled_data_frame)
+        self._num_split_set = len(self._unlabeled_data_frame)
         logger.info(
-            f"Finished split with window size {self.window_size} seconds.\n"
-                f"Number of splits: {self.num_split_set}")
+            f"Finished split with window size {self.window_size} seconds. "
+            f"Number of splits: {self._num_split_set}")

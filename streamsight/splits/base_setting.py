@@ -5,38 +5,38 @@ from typing import Generator, List, Optional, Tuple, Union
 from warnings import warn
 
 from streamsight.matrix import InteractionMatrix
+from streamsight.splits.util import FrameExpectedError, SeriesExpectedError
 
 logger = logging.getLogger(__name__)
 
 
-class FrameExpectedError(Exception):
-    def __init__(self, message: Optional[str] = None):
-        if not message:
-            message = "Setting is done with multiple splits. A frame should be used instead. Try calling the attribute with '_frame' suffix."
-        self.message = message
-        super().__init__(self.message)
-
-
-class SeriesExpectedError(Exception):
-    def __init__(self, message: Optional[str] = None):
-        if not message:
-            message = "Setting is done with single split. Try calling the attribute without '_frame' suffix."
-        self.message = message
-        super().__init__(self.message)
-
-
 def check_series(func):
     def check_single_split(self):
-        if self.num_split_set > 1:
+        if self._sliding_window_setting:
             raise FrameExpectedError()
         return func(self)
     return check_single_split
 
+def check_frame(func):
+    def check_single_split(self):
+        if not self._sliding_window_setting:
+            raise SeriesExpectedError()
+        return func(self)
+    return check_single_split
+
+def check_split_complete(func,name):
+    def check_split_for_func(self,name):
+        if not self.is_ready:
+            raise KeyError(
+                f"Split before trying to access {name} property.")
+        return func(self)
+    return check_split_for_func
+
 
 class Setting(ABC):
-    """Base class for defining an evaluation scenario.
+    """Base class for defining an evaluation setting.
 
-    A scenario is a set of steps that splits data into training,
+    A setting is a set of steps that splits data into training,
     validation and test datasets.
     The test dataset is made up of two components:
     a fold-in set of interactions that is used to predict another held-out
@@ -45,28 +45,23 @@ class Setting(ABC):
     should follow the same splitting strategy as
     the one used to create training and test datasets from the full dataset.
 
-    :param validation: Create validation datasets when True,
-        else split into training and test datasets.
-    :type validation: boolean, optional
-    :param seed: Seed for randomisation parts of the scenario.
+    :param seed: Seed for randomisation parts of the setting.
         Defaults to None, so random seed will be generated.
     :type seed: int, optional
     """
-    
-
-    def __init__(self, seed: int | None = None):
+    def __init__(self, seed: Optional[int]= None):
         if seed is None:
             # Set seed if it was not set before.
             seed = np.random.get_state()[1][0]
         self.seed = seed
-        self.num_split_set = 1
+        self._num_split_set = 1
+        self._sliding_window_setting = False
         """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
         self._num_full_interactions: int
-        self._unlabeled_data: InteractionMatrix
+        self._split_complete = False
+        self._unlabeled_data_series: InteractionMatrix
         self._unlabeled_data_frame: List[InteractionMatrix]
-        self._ground_truth_data: InteractionMatrix
-        self._ground_truth_data_frame: List[InteractionMatrix]
-        self._ground_truth_data: InteractionMatrix
+        self._ground_truth_data_series: InteractionMatrix
         self._ground_truth_data_frame: List[InteractionMatrix]
         self._background_data: InteractionMatrix
         self._data_timestamp_limit: Union[int, List[int]]
@@ -76,8 +71,8 @@ class Setting(ABC):
     def _split(self, data_m: InteractionMatrix) -> None:
         """Abstract method to be implemented by the scenarios.
 
-        Splits the data and assigns to :attr:`background_data`,
-        :attr:`ground_truth_data, :attr:`unlabeled_data`
+        Splits the data and assigns to :attr:``background_data``,
+        :attr:``ground_truth_data``, :attr:``unlabeled_data``
 
         :param data_m: Interaction matrix to be split.
         :type data_m: InteractionMatrix
@@ -86,8 +81,8 @@ class Setting(ABC):
     def split(self, data_m: InteractionMatrix) -> None:
         """Splits ``data_m`` according to the scenario.
 
-        After splitting properties :attr:`training_data`,
-        :attr:`validation_data` and :attr:`test_data` can be used
+        After splitting properties :attr:``training_data``,
+        :attr:``validation_data`` and :attr:``test_data`` can be used
         to retrieve the splitted data.
 
         :param data_m: Interaction matrix that should be split.
@@ -98,6 +93,8 @@ class Setting(ABC):
 
         logger.debug("Checking split attribute and sizes.")
         self._check_split()
+        
+        self._split_complete = True
 
     @property
     def background_data(self) -> InteractionMatrix:
@@ -107,30 +104,45 @@ class Setting(ABC):
         :return: Interaction Matrix of training interactions.
         :rtype: Union[InteractionMatrix, List[InteractionMatrix]]
         """
-        if hasattr(self, "_background_data"):
-            return self._background_data
-        raise KeyError(
-            "Split before trying to access the background_data property.")
+        if not self.is_ready:
+            raise KeyError(
+                "Split before trying to access the background_data property.")
+        return self._background_data
 
+    def data_timestamp_limit(self) -> Union[int, List[int]]:
+        """The timestamp limit of the data in the corresponding split.
+
+        :return: Timestamp limit of the data in the corresponding split.
+        :rtype: Union[int, List[int]]
+        """
+        
+        return self._data_timestamp_limit
+        
     @property
     def num_split(self) -> int:
         """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
-        return self.num_split_set
+        return self._num_split_set
 
+    @property
+    def is_ready(self):
+        """Flag on setting if it is ready to be used for evaluation."""
+        return self._split_complete
+    
     @property
     @check_series
     def unlabeled_data_series(self) -> InteractionMatrix:
         """Fold-in part of the test dataset"""
-        return self.evaluation_data_series[0]
+        return self._unlabeled_data_series
 
     @property
+    @check_frame
     def unlabeled_data_frame(self) -> List[InteractionMatrix]:
         """Fold-in part of the test dataset"""
-        return [x[0] for x in self.evaluation_data_frame]
+        return self._unlabeled_data_frame
 
     @property
     def unlabeled_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
-        if self.num_split_set == 1:
+        if not self._sliding_window_setting:
             return self.unlabeled_data_series
         return self.unlabeled_data_frame
 
@@ -138,69 +150,47 @@ class Setting(ABC):
     @check_series
     def ground_truth_data_series(self) -> InteractionMatrix:
         """Held-out part of the test dataset"""
-        return self.evaluation_data_series[1]
+        return self._ground_truth_data_series
 
     #TODO consider cache property to avoid multiple calls
     @property
+    @check_frame
     def ground_truth_data_frame(self) -> List[InteractionMatrix]:
         """Held-out part of the test dataset"""
-        return [x[1] for x in self.evaluation_data_frame]
+        return self._ground_truth_data_frame
 
     @property
     def ground_truth_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
-        if self.num_split_set == 1:
+        if not self._sliding_window_setting:
             return self.ground_truth_data_series
         return self.ground_truth_data_frame
 
     @property
     def evaluation_data_frame(self) -> List[Tuple[InteractionMatrix, InteractionMatrix]]:
-        if self.num_split_set == 1:
+        if not self._sliding_window_setting:
             raise SeriesExpectedError()
 
-        #? is this necessary? we can get the model to handle this
         datasets = []
-        for dataset_idx in range(self.num_split_set):
-            in_users = self._unlabeled_data_frame[dataset_idx].active_users
-            out_users = self._ground_truth_data_frame[dataset_idx].active_users
-
-            matching = list(in_users.intersection(out_users))
-            datasets.append((self._unlabeled_data_frame[dataset_idx].users_in(
-                matching), self._ground_truth_data_frame[dataset_idx].users_in(matching)))
+        for dataset_idx in range(self._num_split_set):
+            datasets.append((self._unlabeled_data_frame[dataset_idx], self._ground_truth_data_frame[dataset_idx]))
         return datasets
 
     @property
     def evaluation_data_series(self) -> Tuple[InteractionMatrix, InteractionMatrix]:
-        """The test dataset. Consist of a fold-in and hold-out set of interactions.
-
-        Data is processed such that both matrices contain the exact same users.
-        Users that were present in only one of the matrices
-        and not in the other are removed.
-
-        :return: Test data matrices as InteractionMatrix in, InteractionMatrix out.
-        :rtype: Tuple[InteractionMatrix, InteractionMatrix]
-        """
-        in_users = self._unlabeled_data.active_users
-        out_users = self._ground_truth_data.active_users
-
-        matching = list(in_users.intersection(out_users))
         return (
-            self._unlabeled_data.users_in(matching),
-            self._ground_truth_data.users_in(matching)
+            self._unlabeled_data_series,
+            self._ground_truth_data_series
         )
 
     @property
-    def ground_truth(self) -> Union[Tuple[InteractionMatrix, InteractionMatrix], List[Tuple[InteractionMatrix, InteractionMatrix]]]:
-        """The test dataset. Consist of a fold-in and hold-out set of interactions.
-
-        Data is processed such that both matrices contain the exact same users.
-        Users that were present in only one of the matrices
-        and not in the other are removed.
+    def evaluation_data(self) -> Union[Tuple[InteractionMatrix, InteractionMatrix], List[Tuple[InteractionMatrix, InteractionMatrix]]]:
+        """The evaluation dataset. Consist of the unlabled data and ground truth set of interactions.
 
         :return: Test data matrices as InteractionMatrix in, InteractionMatrix out.
         :rtype: Tuple[InteractionMatrix, InteractionMatrix]
         """
         # make sure users match.
-        if self.num_split_set == 1:
+        if not self._sliding_window_setting:
             return self.evaluation_data_series
         else:
             return self.evaluation_data_frame
@@ -214,10 +204,10 @@ class Setting(ABC):
         assert (hasattr(self, "_background_data")
                 and self._background_data is not None)
 
-        assert (hasattr(self, "_unlabeled_data") and self._unlabeled_data is not None) \
+        assert (hasattr(self, "_unlabeled_data_series") and self._unlabeled_data_series is not None) \
             or (hasattr(self, "_unlabeled_data_frame") and self._unlabeled_data_frame is not None)
 
-        assert (hasattr(self, "_ground_truth_data") and self._ground_truth_data is not None) \
+        assert (hasattr(self, "_ground_truth_data_series") and self._ground_truth_data_series is not None) \
             or (hasattr(self, "_ground_truth_data_frame") and self._ground_truth_data_frame is not None)
         logger.debug("Split attributes are set.")
 
@@ -244,16 +234,16 @@ class Setting(ABC):
                     self._num_full_interactions, 0.05)
 
         #TODO check if len of ground truth and unlabeled is the same
-        if self.num_split_set == 1:
-            n_unlabel = self._unlabeled_data.num_interactions
-            n_ground_truth = self._ground_truth_data.num_interactions
+        if not self._sliding_window_setting:
+            n_unlabel = self._unlabeled_data_series.num_interactions
+            n_ground_truth = self._ground_truth_data_series.num_interactions
 
             check_empty("Unlabeled set", n_unlabel)
             check_empty("Ground truth set", n_ground_truth)
             check_ratio("Ground truth set", n_ground_truth, n_unlabel, 0.05)
 
         else:
-            for dataset_idx in range(self.num_split_set):
+            for dataset_idx in range(self._num_split_set):
                 n_unlabel = self._unlabeled_data_frame[dataset_idx].num_interactions
                 n_ground_truth = self._ground_truth_data_frame[dataset_idx].num_interactions
 
@@ -274,7 +264,7 @@ class Setting(ABC):
         :yield: _description_
         :rtype: _type_
         """
-        if self.num_split_set == 1:
+        if not self._sliding_window_setting:
             yield getattr(self, series)
         else:
             for data in getattr(self, frame):

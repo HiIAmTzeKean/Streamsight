@@ -78,12 +78,9 @@ class SingleTimePointSetting(Setting):
         Alice                       X
         Carol                       X   X
 
-    :param t: Timestamp to split target dataset :attr:`test_data_out`
+    :param background_t: Timestamp to split target dataset :attr:`test_data_out`
         from the remainder of the data.
-    :type t: int
-    :param t_validation: Timestamp to split :attr:`validation_data_out`
-        from :attr:`validation_training_data`. Required if validation is True.
-    :type t_validation: int, optional
+    :type background_t: int
     :param delta_out: Size of interval in seconds for
         both :attr:`validation_data_out` and :attr:`test_data_out`.
         Both sets will contain interactions that occurred within ``delta_out`` seconds
@@ -110,23 +107,22 @@ class SingleTimePointSetting(Setting):
 
     def __init__(
         self,
-        t: int,
-        t_validation: Optional[int] = None,
+        background_t: int,
         delta_out: int = np.iinfo(np.int32).max,
         delta_in: int = np.iinfo(np.int32).max,
-        seed: int | None = None,
+        seed: int | None = None
     ):
         super().__init__(seed=seed)
-        self.t = t
+        self.t = background_t
         self.delta_out = delta_out
         """Interval size to be used for out-sample data."""
         self.delta_in = delta_in
         """Interval size to be used for in-sample data."""
 
         logger.info(
-            f"Splitting data at time {t} with delta_in interval {delta_in} and delta_out interval {delta_out}")
-        self.splitter = TimestampSplitter(t, delta_out, delta_in)
-        self._data_timestamp_limit = t 
+            f"Splitting data at time {background_t} with delta_in interval {delta_in} and delta_out interval {delta_out}")
+        self._splitter = TimestampSplitter(background_t, delta_out, delta_in)
+        self._data_timestamp_limit = background_t 
 
 
     def _split(self, data: InteractionMatrix):
@@ -143,6 +139,6 @@ class SingleTimePointSetting(Setting):
             warn(
                 f"Splitting at time {self.t} is before the first timestamp in the data. No data will be in the training set.")
         
-        self._background_data, self._ground_truth_data = self.splitter.split(data)
-        self._unlabeled_data = self._background_data.copy()
+        self._background_data, self._ground_truth_data_series = self._splitter.split(data)
+        self._unlabeled_data_series = self._background_data.copy()
 
