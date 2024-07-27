@@ -25,7 +25,15 @@ class TestSlidingWindowSetting():
     def test_split_properties(self, splitter: Setting,  matrix: InteractionMatrix):
         splitter._split(matrix)
         assert splitter._num_split_set == 2
-
+        
+    def test_access_split_attributes_before_split(self, splitter: Setting):
+        with pytest.raises(KeyError) as e_info:
+            splitter.background_data
+        with pytest.raises(KeyError) as e_info:
+            splitter.unlabeled_data
+        with pytest.raises(KeyError) as e_info:
+            splitter.ground_truth_data
+            
     def test_background_data(self, splitter: Setting, matrix: InteractionMatrix):
         expected_background_data = matrix.timestamps_lt(BACKGROUND_T)
 
@@ -35,15 +43,14 @@ class TestSlidingWindowSetting():
             expected_background_data._df)
 
     def test_ground_truth_data(self, splitter: Setting, matrix: InteractionMatrix):
-        splitter._split(matrix)
-        print(splitter.ground_truth_data_frame[0])
-        print("test")
-
+        expected_ground_truth_data_0 = matrix.timestamps_gte(BACKGROUND_T).timestamps_lt(BACKGROUND_T + WINDOW_SIZE)
+        expected_ground_truth_data_1 = matrix.timestamps_gte(BACKGROUND_T + WINDOW_SIZE).timestamps_lt(BACKGROUND_T + 2*WINDOW_SIZE)
+        splitter.split(matrix)
+        assert splitter.ground_truth_data[0]._df.equals(
+            expected_ground_truth_data_0._df)
+        assert splitter.ground_truth_data[1]._df.equals(
+            expected_ground_truth_data_1._df)
+        
     def test_data_time_limit(self, splitter: Setting, matrix: InteractionMatrix):
-        splitter._split(matrix)
+        splitter.split(matrix)
         assert splitter.data_timestamp_limit == [4, 7]
-    def test_frame_error_thrown(self, splitter: Setting, matrix: InteractionMatrix):
-        with pytest.raises(FrameExpectedError) as e_info:
-            splitter.ground_truth_data_series
-        with pytest.raises(FrameExpectedError) as e_info:
-            splitter.unlabeled_data_series

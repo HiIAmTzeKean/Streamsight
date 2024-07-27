@@ -19,8 +19,6 @@ def dataset(dataset_path, filename):
             base_path=dataset_path, filename=filename)
 
 class TestAmazonMusicDataset:
-    d: Dataset
-
     def test_amazon_music_load_dataframe(self, dataset):
         df = dataset._load_dataframe()
         assert type(df) == pd.DataFrame
