@@ -2,7 +2,7 @@ import logging
 import operator
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from typing import Callable, Iterator, List, Optional, Set, Tuple, Union
+from typing import Callable, Iterator, List, Literal, Optional, Set, Tuple, Union, overload
 from warnings import warn
 
 import numpy as np
@@ -209,6 +209,10 @@ class InteractionMatrix:
 
         return self._apply_mask(mask, inplace=inplace)
 
+    @overload
+    def timestamps_gt(self, timestamp: float) -> "InteractionMatrix": ...
+    @overload
+    def timestamps_gt(self, timestamp: float, inplace: Literal[True]) -> None: ...
     def timestamps_gt(self, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
         """Select interactions after a given timestamp.
 
@@ -222,6 +226,10 @@ class InteractionMatrix:
         """
         return self._timestamps_cmp(operator.gt, timestamp, inplace)
 
+    @overload
+    def timestamps_lt(self, timestamp: float) -> "InteractionMatrix": ...
+    @overload
+    def timestamps_lt(self, timestamp: float, inplace: Literal[True]) -> None: ...
     def timestamps_lt(self, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
         """Select interactions up to a given timestamp.
 
@@ -235,6 +243,10 @@ class InteractionMatrix:
         """
         return self._timestamps_cmp(operator.lt, timestamp, inplace)
 
+    @overload
+    def timestamps_gte(self, timestamp: float) -> "InteractionMatrix": ...
+    @overload
+    def timestamps_gte(self, timestamp: float, inplace: Literal[True]) -> None: ...
     def timestamps_gte(self, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
         """Select interactions after and including a given timestamp.
 
@@ -248,6 +260,10 @@ class InteractionMatrix:
         """
         return self._timestamps_cmp(operator.ge, timestamp, inplace)
 
+    @overload
+    def timestamps_lte(self, timestamp: float) -> "InteractionMatrix": ...
+    @overload
+    def timestamps_lte(self, timestamp: float, inplace: Literal[True]) -> None: ...
     def timestamps_lte(self, timestamp: float, inplace: bool = False) -> Optional["InteractionMatrix"]:
         """Select interactions up to and including a given timestamp.
 
