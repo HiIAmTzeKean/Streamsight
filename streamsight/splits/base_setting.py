@@ -10,25 +10,11 @@ from streamsight.splits.util import FrameExpectedError, SeriesExpectedError
 logger = logging.getLogger(__name__)
 
 
-def check_series(func):
-    def check_single_split(self):
-        if self._sliding_window_setting:
-            raise FrameExpectedError()
-        return func(self)
-    return check_single_split
-
-def check_frame(func):
-    def check_single_split(self):
-        if not self._sliding_window_setting:
-            raise SeriesExpectedError()
-        return func(self)
-    return check_single_split
-
-def check_split_complete(func,name):
-    def check_split_for_func(self,name):
+def check_split_complete(func):
+    def check_split_for_func(self):
         if not self.is_ready:
             raise KeyError(
-                f"Split before trying to access {name} property.")
+                f"Split before trying to access {func.__name__} property.")
         return func(self)
     return check_split_for_func
 
@@ -49,7 +35,8 @@ class Setting(ABC):
         Defaults to None, so random seed will be generated.
     :type seed: int, optional
     """
-    def __init__(self, seed: Optional[int]= None):
+
+    def __init__(self, seed: Optional[int] = None):
         if seed is None:
             # Set seed if it was not set before.
             seed = np.random.get_state()[1][0]
@@ -93,31 +80,29 @@ class Setting(ABC):
 
         logger.debug("Checking split attribute and sizes.")
         self._check_split()
-        
+
         self._split_complete = True
 
     @property
+    @check_split_complete
     def background_data(self) -> InteractionMatrix:
-        """The full training dataset, which should be used for a final training
-        after hyper parameter optimisation.
+        """Background data that can be provided for the model for the initial training.
 
         :return: Interaction Matrix of training interactions.
-        :rtype: Union[InteractionMatrix, List[InteractionMatrix]]
+        :rtype: InteractionMatrix
         """
-        if not self.is_ready:
-            raise KeyError(
-                "Split before trying to access the background_data property.")
         return self._background_data
 
+    @property
+    @check_split_complete
     def data_timestamp_limit(self) -> Union[int, List[int]]:
         """The timestamp limit of the data in the corresponding split.
 
         :return: Timestamp limit of the data in the corresponding split.
         :rtype: Union[int, List[int]]
         """
-        
         return self._data_timestamp_limit
-        
+
     @property
     def num_split(self) -> int:
         """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
@@ -127,62 +112,41 @@ class Setting(ABC):
     def is_ready(self):
         """Flag on setting if it is ready to be used for evaluation."""
         return self._split_complete
-    
-    @property
-    @check_series
-    def unlabeled_data_series(self) -> InteractionMatrix:
-        """Fold-in part of the test dataset"""
-        return self._unlabeled_data_series
 
     @property
-    @check_frame
-    def unlabeled_data_frame(self) -> List[InteractionMatrix]:
-        """Fold-in part of the test dataset"""
+    @check_split_complete
+    def unlabeled_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
+        if not self._sliding_window_setting:
+            return self._unlabeled_data_series
         return self._unlabeled_data_frame
 
     @property
-    def unlabeled_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
+    @check_split_complete
+    def ground_truth_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
         if not self._sliding_window_setting:
-            return self.unlabeled_data_series
-        return self.unlabeled_data_frame
-
-    @property
-    @check_series
-    def ground_truth_data_series(self) -> InteractionMatrix:
-        """Held-out part of the test dataset"""
-        return self._ground_truth_data_series
-
-    #TODO consider cache property to avoid multiple calls
-    @property
-    @check_frame
-    def ground_truth_data_frame(self) -> List[InteractionMatrix]:
-        """Held-out part of the test dataset"""
+            return self._ground_truth_data_series
         return self._ground_truth_data_frame
 
     @property
-    def ground_truth_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
-        if not self._sliding_window_setting:
-            return self.ground_truth_data_series
-        return self.ground_truth_data_frame
-
-    @property
-    def evaluation_data_frame(self) -> List[Tuple[InteractionMatrix, InteractionMatrix]]:
+    def _evaluation_data_frame(self) -> List[Tuple[InteractionMatrix, InteractionMatrix]]:
         if not self._sliding_window_setting:
             raise SeriesExpectedError()
 
         datasets = []
         for dataset_idx in range(self._num_split_set):
-            datasets.append((self._unlabeled_data_frame[dataset_idx], self._ground_truth_data_frame[dataset_idx]))
+            datasets.append(
+                (self._unlabeled_data_frame[dataset_idx], self._ground_truth_data_frame[dataset_idx]))
         return datasets
 
     @property
-    def evaluation_data_series(self) -> Tuple[InteractionMatrix, InteractionMatrix]:
+    def _evaluation_data_series(self) -> Tuple[InteractionMatrix, InteractionMatrix]:
         return (
             self._unlabeled_data_series,
             self._ground_truth_data_series
         )
 
     @property
+    @check_split_complete
     def evaluation_data(self) -> Union[Tuple[InteractionMatrix, InteractionMatrix], List[Tuple[InteractionMatrix, InteractionMatrix]]]:
         """The evaluation dataset. Consist of the unlabled data and ground truth set of interactions.
 
@@ -191,9 +155,9 @@ class Setting(ABC):
         """
         # make sure users match.
         if not self._sliding_window_setting:
-            return self.evaluation_data_series
+            return self._evaluation_data_series
         else:
-            return self.evaluation_data_frame
+            return self._evaluation_data_frame
 
     def _check_split(self):
         """Checks that the splits have been done properly.
@@ -218,6 +182,7 @@ class Setting(ABC):
         Warns user if any of the sets is unusually small or empty
         """
         logger.debug("Checking size of split sets.")
+
         def check_ratio(name, count, total, threshold):
             if (count + 1e-9) / (total + 1e-9) < threshold:
                 warn(
@@ -233,7 +198,7 @@ class Setting(ABC):
         check_ratio("Background set", n_background,
                     self._num_full_interactions, 0.05)
 
-        #TODO check if len of ground truth and unlabeled is the same
+        # TODO check if len of ground truth and unlabeled is the same
         if not self._sliding_window_setting:
             n_unlabel = self._unlabeled_data_series.num_interactions
             n_ground_truth = self._ground_truth_data_series.num_interactions
@@ -252,9 +217,10 @@ class Setting(ABC):
         logger.debug("Size of split sets are checked.")
 
     def _unlabeled_data_generator(self):
-        self.unlabeled_data_iter:Generator[InteractionMatrix] = self._create_generator("unlabeled_data_series", "unlabeled_data_frame")
-        
-    def _create_generator(self,series:str,frame:str):
+        self.unlabeled_data_iter: Generator[InteractionMatrix] = self._create_generator(
+            "_unlabeled_data_series", "_unlabeled_data_frame")
+
+    def _create_generator(self, series: str, frame: str):
         """Creates generator for provided series or frame attribute name
 
         :param series: _description_
@@ -274,42 +240,46 @@ class Setting(ABC):
         # Create generator if it does not exist or reset is True
         if reset or not hasattr(self, "unlabeled_data_iter"):
             self._unlabeled_data_generator()
-        
+
         try:
             return next(self.unlabeled_data_iter)
         except StopIteration:
-            logger.debug("End of unlabeled data reached. To reset, set reset=True")
+            logger.debug(
+                "End of unlabeled data reached. To reset, set reset=True")
             return None
 
     def _ground_truth_data_generator(self):
-        self.ground_truth_data_iter:Generator[InteractionMatrix] = self._create_generator("ground_truth_data_series", "ground_truth_data_frame")
-        
+        self.ground_truth_data_iter: Generator[InteractionMatrix] = self._create_generator(
+            "_ground_truth_data_series", "_ground_truth_data_frame")
+
     def next_ground_truth_data(self, reset=False) -> Optional[InteractionMatrix]:
         # Create generator if it does not exist or reset is True
         if reset or not hasattr(self, "ground_truth_data_iter"):
             self._ground_truth_data_generator()
-        
+
         try:
             return next(self.ground_truth_data_iter)
         except StopIteration:
-            logger.debug("End of ground truth data reached. To reset, set reset=True")
+            logger.debug(
+                "End of ground truth data reached. To reset, set reset=True")
             return None
-    
-    #TODO consider better naming    
+
+    # TODO consider better naming
     def _next_data_timestamp_limit_generator(self):
-        self.data_timestamp_limit_iter:Generator[int] = self._create_generator("_data_timestamp_limit", "_data_timestamp_limit")
-    
+        self.data_timestamp_limit_iter: Generator[int] = self._create_generator(
+            "_data_timestamp_limit", "_data_timestamp_limit")
+
     def next_data_timestamp_limit(self, reset=False):
         if reset or not hasattr(self, "data_timestamp_limit_iter"):
             self._next_data_timestamp_limit_generator()
-            
+
         try:
             return next(self.data_timestamp_limit_iter)
         except StopIteration:
             logger.debug("End of data timestamp_limit reached.")
             warn("Reset the generators by calling reset_data_generators()")
             return None
-    
+
     def reset_data_generators(self):
         logger.info("Resetting data generators.")
         self._unlabeled_data_generator()

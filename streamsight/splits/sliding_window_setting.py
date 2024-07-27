@@ -24,25 +24,25 @@ class SlidingWindowSetting(Setting):
     def __init__(
         self,
         background_t: int,
-        delta_out: int = np.iinfo(np.int32).max,
-        delta_in: int = np.iinfo(np.int32).max,
         window_size: int = np.iinfo(np.int32).max,  # in seconds
         n_seq_data: int = 1,
-        seed: int | None = None,
+        seed: Optional[int] = None,
     ):
         super().__init__(seed=seed)
         self._sliding_window_setting = True
         self.t = background_t
-        self.delta_out = delta_out
-        """Interval size to be used for out-sample data."""
-        self.delta_in = delta_in
-        """Interval size to be used for in-sample data."""
+        # ? is there a value in putting this here rather then in the loader
+        # self.min_timestamp_threshold = min_timestamp_threshold
+        # """Minimum timestamp value for the overall data to be used."""
+        # self.max_timestamp_threshold = max_timestamp_threshold
+        # """Maximum timestamp value for the overall data to be used."""
         self.window_size = window_size
         """Window size in seconds for spliiter to slide over the data."""
         self.n_seq_data = n_seq_data
         """Number of last interactions to provide as unlabeled data for model to make prediction."""
+        
         self._background_splitter = TimestampSplitter(
-            background_t, delta_out, delta_in)
+            background_t, None, None)
         self._window_splitter = NPastInteractionTimestampSplitter(
             background_t, window_size, n_seq_data)
 
@@ -59,7 +59,7 @@ class SlidingWindowSetting(Setting):
             warn(
                 f"Splitting at time {self.t} is before the first timestamp in the data. No data will be in the background(training) set.")
             
-        self._background_data, remainder_data = self._background_splitter.split(data)
+        self._background_data, _ = self._background_splitter.split(data)
         self._ground_truth_data_frame, self._unlabeled_data_frame = [], []
         self._data_timestamp_limit = []
 
@@ -69,16 +69,14 @@ class SlidingWindowSetting(Setting):
         
         while sub_time < max_timestamp:
             self._data_timestamp_limit.append(sub_time)
-            sub_time += self.window_size
             # the set used for eval will always have a timestamp greater than
             # data released such that it is unknown to the model
-            logger.debug(
-                f"Sliding split t={sub_time},delta_in={self.delta_in},delta_out={self.delta_out}")
             # TODO right now there is data leakage where the global_user and item base is leaked 
             self._window_splitter.update_split_point(sub_time)
-            past_interaction, future_interaction = self._window_splitter.split(remainder_data)
+            past_interaction, future_interaction = self._window_splitter.split(data)
             self._unlabeled_data_frame.append(past_interaction)
             self._ground_truth_data_frame.append(future_interaction)
+            sub_time += self.window_size
             
         self._num_split_set = len(self._unlabeled_data_frame)
         logger.info(

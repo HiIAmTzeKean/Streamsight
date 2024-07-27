@@ -16,15 +16,15 @@ class SingleTimePointSetting(Setting):
 
     - :attr:`full_training_data` is constructed by using
       all interactions whose timestamps
-      are in the interval ``[t - delta_in, t)``
-    - :attr:`test_data_in` are events with timestamps in  ``[t - delta_in, t)``.
-    - :attr:`test_data_out` are events with timestamps in ``[t, t + delta_out]``.
+      are in the interval ``[t - delta_after_t, t)``
+    - :attr:`test_data_in` are events with timestamps in  ``[t - delta_after_t, t)``.
+    - :attr:`test_data_out` are events with timestamps in ``[t, t + delta_before_t]``.
     - :attr:`validation_training_data` are all interactions
-      with timestamps in ``[t_validation - delta_in, t_validation)``.
+      with timestamps in ``[t_validation - delta_after_t, t_validation)``.
     - :attr:`validation_data_in` are interactions with timestamps in
-      ``[t_validation - delta_in, t_validation)``
+      ``[t_validation - delta_after_t, t_validation)``
     - :attr:`validation_data_out` are interactions with timestamps in
-      ``[t_validation, min(t, t_validation + delta_out)]``.
+      ``[t_validation, min(t, t_validation + delta_before_t)]``.
 
     .. warning::
 
@@ -33,7 +33,7 @@ class SingleTimePointSetting(Setting):
     **Example**
 
     As an example, we split this data with ``t = 4``, ``t_validation = 2``
-    ``delta_in = None (infinity)``, ``delta_out = 2``, and ``validation = True``::
+    ``delta_after_t = None (infinity)``, ``delta_before_t = 2``, and ``validation = True``::
 
         time    0   1   2   3   4   5   6
         Alice   X   X               X
@@ -81,19 +81,19 @@ class SingleTimePointSetting(Setting):
     :param background_t: Timestamp to split target dataset :attr:`test_data_out`
         from the remainder of the data.
     :type background_t: int
-    :param delta_out: Size of interval in seconds for
+    :param delta_before_t: Size of interval in seconds for
         both :attr:`validation_data_out` and :attr:`test_data_out`.
-        Both sets will contain interactions that occurred within ``delta_out`` seconds
+        Both sets will contain interactions that occurred within ``delta_before_t`` seconds
         after the splitting timestamp.
         Defaults to maximal integer value (acting as infinity).
-    :type delta_out: int, optional
-    :param delta_in: Size of interval in seconds for
+    :type delta_before_t: int, optional
+    :param delta_after_t: Size of interval in seconds for
         :attr:`full_training_data`, :attr:`validation_training_data`,
         :attr:`validation_data_in` and :attr:`test_data_in`.
-        All sets will contain interactions that occurred within ``delta_out`` seconds
+        All sets will contain interactions that occurred within ``delta_before_t`` seconds
         before the splitting timestamp.
         Defaults to maximal integer value (acting as infinity).
-    :type delta_in: int, optional
+    :type delta_after_t: int, optional
     :param validation: Assign a portion of the full training dataset to validation data
         if True, else split without validation data
         into only a training and test dataset.
@@ -108,20 +108,20 @@ class SingleTimePointSetting(Setting):
     def __init__(
         self,
         background_t: int,
-        delta_out: int = np.iinfo(np.int32).max,
-        delta_in: int = np.iinfo(np.int32).max,
-        seed: int | None = None
+        delta_before_t: int = np.iinfo(np.int32).max,
+        delta_after_t: int = np.iinfo(np.int32).max,
+        seed: Optional[int] = None
     ):
         super().__init__(seed=seed)
         self.t = background_t
-        self.delta_out = delta_out
-        """Interval size to be used for out-sample data."""
-        self.delta_in = delta_in
-        """Interval size to be used for in-sample data."""
+        self.delta_before_t = delta_before_t
+        """Seconds before `t` timestamp value to be used in `background_set`."""
+        self.delta_after_t = delta_after_t
+        """Seconds after `t` timestamp value to be used in `ground_truth_data`."""
 
         logger.info(
-            f"Splitting data at time {background_t} with delta_in interval {delta_in} and delta_out interval {delta_out}")
-        self._splitter = TimestampSplitter(background_t, delta_out, delta_in)
+            f"Splitting data at time {background_t} with delta_after_t interval {delta_after_t} and delta_before_t interval {delta_before_t}")
+        self._splitter = TimestampSplitter(background_t, delta_before_t, delta_after_t)
         self._data_timestamp_limit = background_t 
 
 

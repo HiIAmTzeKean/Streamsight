@@ -134,9 +134,6 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
     
     :param t: Timestamp to split on in seconds since epoch.
     :type t: int
-    :param t_lower: Seconds before t. Lower bound on the timestamp
-        of interactions. Defaults to None (infinity).
-    :type t_lower: int, optional
     :param t_upper: Seconds past t. Upper bound on the timestamp
         of interactions. Defaults to None (infinity).
     :type t_upper: int, optional
@@ -157,7 +154,12 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
         self.t = t
 
     def split(self, data: InteractionMatrix) -> Tuple[InteractionMatrix, InteractionMatrix]:
-        future_interaction = data.timestamps_lt(self.t + self.t_upper).timestamps_gte(self.t)
+        if self.t_upper is None:
+            future_interaction = data.timestamps_gte(self.t).timestamps_gte(self.t)
+        else:
+            future_interaction = data.timestamps_lt(self.t + self.t_upper).timestamps_gte(self.t)
+        assert future_interaction is not None
+            
         past_interaction = data.get_user_n_last_interaction(self.n_seq_data,self.t)
         return past_interaction, future_interaction
 
