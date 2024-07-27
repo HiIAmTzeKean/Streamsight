@@ -50,11 +50,10 @@ class AmazonDataset(Dataset):
             names=[self.ITEM_IX, self.USER_IX, self.RATING_IX, self.TIMESTAMP_IX],
         )
         # sort by timestamp to incrementally assign user and item ids by timestamp
-        df.sort_values(by=[self.TIMESTAMP_IX], inplace=True, ignore_index=True)
-        
-        
-        df[self.USER_IX] = pd.CategoricalIndex(df[self.USER_IX],categories=df[self.USER_IX].unique()).codes
-        df[self.ITEM_IX] = pd.CategoricalIndex(df[self.ITEM_IX],categories=df[self.ITEM_IX].unique()).codes
+        # df.sort_values(by=[self.TIMESTAMP_IX], inplace=True, ignore_index=True)
+        # df[self.USER_IX] = pd.CategoricalIndex(df[self.USER_IX],categories=df[self.USER_IX].unique()).codes
+        # # dict( enumerate(df['x'].cat.categories ) )
+        # df[self.ITEM_IX] = pd.CategoricalIndex(df[self.ITEM_IX],categories=df[self.ITEM_IX].unique()).codes
         return df
 
 class AmazonMusicDataset(AmazonDataset):
