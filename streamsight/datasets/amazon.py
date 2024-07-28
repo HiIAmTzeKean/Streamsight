@@ -71,3 +71,19 @@ class AmazonMovieDataset(AmazonDataset):
 
     DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Movies_and_TV.csv"
     """URL to fetch the dataset from."""
+    
+class AmazonComputerDataset(AmazonDataset):
+    """Handles Amazon Computer dataset."""
+    DEFAULT_FILENAME = "amazon_computer_dataset.csv"
+    """Default filename that will be used if it is not specified by the user."""
+
+    DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Computers.csv"
+    """URL to fetch the dataset from."""
+    
+class AmazonCBookDataset(AmazonDataset):
+    """Handles Amazon Book dataset."""
+    DEFAULT_FILENAME = "amazon_book_dataset.csv"
+    """Default filename that will be used if it is not specified by the user."""
+
+    DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Books.csv"
+    """URL to fetch the dataset from."""
