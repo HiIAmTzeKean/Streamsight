@@ -68,9 +68,10 @@ class DataFramePreprocessor:
         user_index = pd.CategoricalIndex(df[self.user_ix],categories=df[self.user_ix].unique())
         self._user_id_mapping = dict(enumerate(user_index.drop_duplicates()))
         df[self.user_ix] = user_index.codes
-        item_index = pd.CategoricalIndex(df[self.user_ix],categories=df[self.user_ix].unique())
+        
+        item_index = pd.CategoricalIndex(df[self.item_ix],categories=df[self.item_ix].unique())
         self._item_id_mapping = dict(enumerate(item_index.drop_duplicates()))
-        df[self.user_ix] = item_index.codes
+        df[self.item_ix] = item_index.codes
 
     @property
     def item_id_mapping(self) -> pd.DataFrame:
