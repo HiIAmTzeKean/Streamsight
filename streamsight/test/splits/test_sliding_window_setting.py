@@ -1,9 +1,8 @@
 import pytest
 
 from streamsight.matrix.interation_matrix import InteractionMatrix
-from streamsight.splits.base_setting import Setting
-from streamsight.splits.sliding_window_setting import SlidingWindowSetting
-from streamsight.splits.util import FrameExpectedError
+from streamsight.setting.base_setting import Setting
+from streamsight.setting.sliding_window_setting import SlidingWindowSetting
 
 
 BACKGROUND_T = 4

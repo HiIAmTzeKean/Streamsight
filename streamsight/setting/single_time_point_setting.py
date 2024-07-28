@@ -5,8 +5,8 @@ from warnings import warn
 import numpy as np
 
 from streamsight.matrix import InteractionMatrix
-from streamsight.splits import Setting
-from streamsight.splits.splitters import TimestampSplitter
+from streamsight.setting import Setting
+from streamsight.setting.splitters import TimestampSplitter
 
 logger = logging.getLogger(__name__)
 

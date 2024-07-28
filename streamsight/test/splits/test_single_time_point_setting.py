@@ -1,9 +1,8 @@
 import pytest
 
 from streamsight.matrix.interation_matrix import InteractionMatrix
-from streamsight.splits.base_setting import Setting
-from streamsight.splits.single_time_point_setting import SingleTimePointSetting
-from streamsight.splits.util import SeriesExpectedError
+from streamsight.setting.base_setting import Setting
+from streamsight.setting.single_time_point_setting import SingleTimePointSetting
 
 BACKGROUND_T = 4
 SEED = 42

@@ -5,7 +5,6 @@ from typing import Generator, List, Optional, Tuple, Union
 from warnings import warn
 
 from streamsight.matrix import InteractionMatrix
-from streamsight.splits.util import FrameExpectedError, SeriesExpectedError
 
 logger = logging.getLogger(__name__)
 

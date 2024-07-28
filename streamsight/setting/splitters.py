@@ -159,7 +159,8 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
         else:
             future_interaction = data.timestamps_lt(self.t + self.t_upper).timestamps_gte(self.t)
         assert future_interaction is not None
-            
+        # TODO past interaction should only contain users/items that are in the ground truth
+        # ? i filtered by user interaction now, how should i know if its item
         past_interaction = data.get_user_n_last_interaction(self.n_seq_data,self.t)
         return past_interaction, future_interaction
 
