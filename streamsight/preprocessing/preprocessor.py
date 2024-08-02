@@ -1,7 +1,8 @@
 import logging
+from typing import Literal
 
 import pandas as pd
-from streamsight.matrix.interation_matrix import InteractionMatrix
+from streamsight.matrix import InteractionMatrix
 from streamsight.preprocessing.filter import Filter
 from tqdm.auto import tqdm
 
@@ -32,22 +33,27 @@ class DataFramePreprocessor:
         """
         self.filters.append(_filter)
 
+    def _print_log_message(
+        self,
+        step: Literal["before", "after"],
+        stage: Literal["preprocess", "filter"],
+        df: pd.DataFrame,
+    ):
+        logger.debug(f"\tinteractions {step} {stage}: {len(df.index)}")
+        logger.debug(f"\titems {step} {stage}: {df[self.item_ix].nunique()}")
+        logger.debug(f"\tusers {step} {stage}: {df[self.user_ix].nunique()}")
 
     def process(self, df: pd.DataFrame) -> InteractionMatrix:
-
-        logger.debug(f"\tinteractions before preprocess: {len(df.index)}")
-        logger.debug(f"\titems before preprocess: {df[self.item_ix].nunique()}")
-        logger.debug(f"\tusers before preprocess: {df[self.user_ix].nunique()}")
+        self._print_log_message("before", "preprocess", df)
 
         for filter in self.filters:
             logger.debug(f"applying filter: {filter}")
             df = filter.apply(df)
-            logger.debug(f"\tinteractions after filter: {len(df.index)}")
-            logger.debug(f"\titems after filter: {df[self.item_ix].nunique()}")
-            logger.debug(f"\tusers after filter: {df[self.user_ix].nunique()}")
-
+            self._print_log_message("after", "filter", df)
 
         self._update_id_mappings(df)
+        
+        self._print_log_message("after", "preprocess", df)
 
         # Convert input data into internal data objects
         interaction_m = InteractionMatrix(
@@ -56,7 +62,7 @@ class DataFramePreprocessor:
             self.user_ix,
             self.timestamp_ix
         )
-        
+
         return interaction_m
 
     def _update_id_mappings(self, df: pd.DataFrame):
@@ -68,7 +74,7 @@ class DataFramePreprocessor:
         user_index = pd.CategoricalIndex(df[self.user_ix],categories=df[self.user_ix].unique())
         self._user_id_mapping = dict(enumerate(user_index.drop_duplicates()))
         df[self.user_ix] = user_index.codes
-        
+
         item_index = pd.CategoricalIndex(df[self.item_ix],categories=df[self.item_ix].unique())
         self._item_id_mapping = dict(enumerate(item_index.drop_duplicates()))
         df[self.item_ix] = item_index.codes
