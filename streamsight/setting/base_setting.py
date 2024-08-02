@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 import logging
 import numpy as np
-from typing import Generator, List, Optional, Tuple, Union
+from typing import Generator, List, Literal, Optional, Tuple, Union
 from warnings import warn
 
 from streamsight.matrix import InteractionMatrix
+from streamsight.matrix import ItemUserBasedEnum
+from streamsight.setting.processor import PredictionDataProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -21,25 +23,28 @@ def check_split_complete(func):
 class Setting(ABC):
     """Base class for defining an evaluation setting.
 
-    A setting is a set of steps that splits data into training,
-    validation and test datasets.
-    The test dataset is made up of two components:
-    a fold-in set of interactions that is used to predict another held-out
-    set of interactions.
-    The creation of the validation dataset, from the full training dataset,
-    should follow the same splitting strategy as
-    the one used to create training and test datasets from the full dataset.
-
     :param seed: Seed for randomisation parts of the setting.
         Defaults to None, so random seed will be generated.
     :type seed: int, optional
+    :param item_user_based: Item or User based setting.
+        Defaults to "user".
+    :type item_user_based: Literal['user', 'item'], optional
     """
 
-    def __init__(self, seed: Optional[int] = None):
+    def __init__(
+        self,
+        seed: Optional[int] = None,
+        item_user_based: Literal['user', 'item'] = "user"
+    ):
         if seed is None:
             # Set seed if it was not set before.
             seed = np.random.get_state()[1][0]
         self.seed = seed
+        
+        self._check_valid_item_user_based(item_user_based)
+        self._item_user_based = ItemUserBasedEnum(item_user_based)
+        self.prediction_data_processor = PredictionDataProcessor(self._item_user_based)
+        
         self._num_split_set = 1
         self._sliding_window_setting = False
         """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
@@ -49,9 +54,19 @@ class Setting(ABC):
         self._unlabeled_data_frame: List[InteractionMatrix]
         self._ground_truth_data_series: InteractionMatrix
         self._ground_truth_data_frame: List[InteractionMatrix]
+        self._incremental_data_frame: List[InteractionMatrix]
+        """Data that is used to incrementally update the model. Unique to sliding window setting."""
         self._background_data: InteractionMatrix
         self._data_timestamp_limit: Union[int, List[int]]
         """This is the limit of the data in the corresponding split."""
+        self.n_seq_data: int
+        """Number of last sequential interactions to provide as unlabeled data for model to make prediction."""
+        self.top_K: int
+        """Number of interaction per user that should be selected for evaluation purposes."""
+        
+    def _check_valid_item_user_based(self, user_input):
+        if user_input not in ItemUserBasedEnum:
+            raise ValueError(f"Invalid value for item_user_based: {user_input}")
 
     @abstractmethod
     def _split(self, data_m: InteractionMatrix) -> None:
@@ -83,9 +98,20 @@ class Setting(ABC):
         self._split_complete = True
 
     @property
+    def is_item_user_based(self) -> str:
+        """Item or User based setting.
+
+        :return: Item or User based setting.
+        :rtype: ItemUserBasedEnum
+        """
+        return self._item_user_based.value
+        
+    @property
     @check_split_complete
     def background_data(self) -> InteractionMatrix:
-        """Background data that can be provided for the model for the initial training.
+        """Background data provided for the model for the initial training.
+        
+        This data is used as the initial set of interactions to train the model.
 
         :return: Interaction Matrix of training interactions.
         :rtype: InteractionMatrix
@@ -115,6 +141,16 @@ class Setting(ABC):
     @property
     @check_split_complete
     def unlabeled_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
+        """Unlabeled data for the model to make predictions on.
+        
+        Contains the user/item ID for prediction along with previous sequential
+        interactions of user-item on items if it exists. This data is used to
+        make predictions on the ground truth data.
+
+        :return: Either a single InteractionMatrix or a list of InteractionMatrix
+            if the setting is a sliding window setting.
+        :rtype: Union[InteractionMatrix, List[InteractionMatrix]]
+        """
         if not self._sliding_window_setting:
             return self._unlabeled_data_series
         return self._unlabeled_data_frame
@@ -122,41 +158,29 @@ class Setting(ABC):
     @property
     @check_split_complete
     def ground_truth_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
+        """Ground truth data to evaluate the model's predictions on.
+        
+        Contains the actual interactions of the user-item interaction that the
+        model is supposed to predict.
+
+        :return: _description_
+        :rtype: Union[InteractionMatrix, List[InteractionMatrix]]
+        """
         if not self._sliding_window_setting:
             return self._ground_truth_data_series
         return self._ground_truth_data_frame
 
     @property
-    def _evaluation_data_frame(self) -> List[Tuple[InteractionMatrix, InteractionMatrix]]:
-        if not self._sliding_window_setting:
-            raise SeriesExpectedError()
-
-        datasets = []
-        for dataset_idx in range(self._num_split_set):
-            datasets.append(
-                (self._unlabeled_data_frame[dataset_idx], self._ground_truth_data_frame[dataset_idx]))
-        return datasets
-
-    @property
-    def _evaluation_data_series(self) -> Tuple[InteractionMatrix, InteractionMatrix]:
-        return (
-            self._unlabeled_data_series,
-            self._ground_truth_data_series
-        )
-
-    @property
     @check_split_complete
-    def evaluation_data(self) -> Union[Tuple[InteractionMatrix, InteractionMatrix], List[Tuple[InteractionMatrix, InteractionMatrix]]]:
-        """The evaluation dataset. Consist of the unlabled data and ground truth set of interactions.
+    def incremental_data(self) -> List[InteractionMatrix]:
+        """Data that is used to incrementally update the model.
 
-        :return: Test data matrices as InteractionMatrix in, InteractionMatrix out.
-        :rtype: Tuple[InteractionMatrix, InteractionMatrix]
+        Unique to sliding window setting.
+
+        :return: _description_
+        :rtype: List[InteractionMatrix]
         """
-        # make sure users match.
-        if not self._sliding_window_setting:
-            return self._evaluation_data_series
-        else:
-            return self._evaluation_data_frame
+        return self._incremental_data_frame
 
     def _check_split(self):
         """Checks that the splits have been done properly.
@@ -216,8 +240,42 @@ class Setting(ABC):
         logger.debug("Size of split sets are checked.")
 
     def _unlabeled_data_generator(self):
+        """Creates generator for data
+        
+        ==
+        Note
+        ===
+        A private method is specifically created to abstract the creation of
+        the generator and to allow for easy resetting when needed.
+        """
         self.unlabeled_data_iter: Generator[InteractionMatrix] = self._create_generator(
             "_unlabeled_data_series", "_unlabeled_data_frame")
+    def _incremental_data_generator(self):
+        """Creates generator for data
+        
+        ==
+        Note
+        ===
+        A private method is specifically created to abstract the creation of
+        the generator and to allow for easy resetting when needed.
+        """
+        self.incremental_data_iter: Generator[InteractionMatrix] = self._create_generator(
+            "_incremental_data_frame", "_incremental_data_frame")
+    def _ground_truth_data_generator(self):
+        """Creates generator for data
+        
+        ==
+        Note
+        ===
+        A private method is specifically created to abstract the creation of
+        the generator and to allow for easy resetting when needed.
+        """
+        self.ground_truth_data_iter: Generator[InteractionMatrix] = self._create_generator(
+            "_ground_truth_data_series", "_ground_truth_data_frame")
+    # TODO consider better naming
+    def _next_data_timestamp_limit_generator(self):
+        self.data_timestamp_limit_iter: Generator[int] = self._create_generator(
+            "_data_timestamp_limit", "_data_timestamp_limit")
 
     def _create_generator(self, series: str, frame: str):
         """Creates generator for provided series or frame attribute name
@@ -247,10 +305,6 @@ class Setting(ABC):
                 "End of unlabeled data reached. To reset, set reset=True")
             return None
 
-    def _ground_truth_data_generator(self):
-        self.ground_truth_data_iter: Generator[InteractionMatrix] = self._create_generator(
-            "_ground_truth_data_series", "_ground_truth_data_frame")
-
     def next_ground_truth_data(self, reset=False) -> Optional[InteractionMatrix]:
         # Create generator if it does not exist or reset is True
         if reset or not hasattr(self, "ground_truth_data_iter"):
@@ -263,10 +317,17 @@ class Setting(ABC):
                 "End of ground truth data reached. To reset, set reset=True")
             return None
 
-    # TODO consider better naming
-    def _next_data_timestamp_limit_generator(self):
-        self.data_timestamp_limit_iter: Generator[int] = self._create_generator(
-            "_data_timestamp_limit", "_data_timestamp_limit")
+    def next_incremental_data(self, reset=False) -> Optional[InteractionMatrix]:
+        # Create generator if it does not exist or reset is True
+        if reset or not hasattr(self, "incremental_data_iter"):
+            self._incremental_data_generator()
+
+        try:
+            return next(self.incremental_data_iter)
+        except StopIteration:
+            logger.debug(
+                "End of incremental data reached. To reset, set reset=True")
+            return None
 
     def next_data_timestamp_limit(self, reset=False):
         if reset or not hasattr(self, "data_timestamp_limit_iter"):
