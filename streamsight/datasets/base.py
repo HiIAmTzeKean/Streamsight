@@ -7,9 +7,10 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 
-from streamsight.matrix.interation_matrix import InteractionMatrix
+from streamsight.matrix import InteractionMatrix
 from streamsight.preprocessing.filter import Filter
 from streamsight.preprocessing.preprocessor import DataFramePreprocessor
+from streamsight.utils.util import MyProgressBar
 
 """
 The purpose of dataset is to provide meta data and to contain the data of the
@@ -157,7 +158,7 @@ class Dataset(ABC):
         :rtype: str
         """
         logger.debug(f"{self.name} will fetch dataset from remote url at {url}.")
-        urlretrieve(url, filename)
+        urlretrieve(url, filename, MyProgressBar())
         return filename
 
     @abstractmethod

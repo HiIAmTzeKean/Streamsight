@@ -80,7 +80,7 @@ class AmazonComputerDataset(AmazonDataset):
     DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Computers.csv"
     """URL to fetch the dataset from."""
     
-class AmazonCBookDataset(AmazonDataset):
+class AmazonBookDataset(AmazonDataset):
     """Handles Amazon Book dataset."""
     DEFAULT_FILENAME = "amazon_book_dataset.csv"
     """Default filename that will be used if it is not specified by the user."""
