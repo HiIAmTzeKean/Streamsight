@@ -45,9 +45,9 @@ class TestSingleTimePointSettingForUser():
 
     def test_unlabeled_data(self, splitter_user:Setting, matrix:InteractionMatrix):
         expected_unlabeled_data = pd.DataFrame({
-            "ts":   [1, 2, 3, 4, 6, 7, 9],
-            "uid":   [1, 2, 3, 2, 4, 3, 5],
-            "iid":   [3, 1, 2, -1, -1, -1, -1],
+            "ts":   [1, 2, 4, 6, 7, 9],
+            "uid":   [2, 3, 2, 4, 3, 5],
+            "iid":   [1, 2, -1, -1, -1, -1],
         })
         splitter_user.split(matrix)
         assert splitter_user.unlabeled_data is not None
