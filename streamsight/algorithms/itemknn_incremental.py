@@ -2,19 +2,16 @@ import logging
 import time
 from streamsight.algorithms.base import Algorithm
 from streamsight.algorithms.itemknn import ItemKNN
-from streamsight.matrix.interation_matrix import InteractionMatrix
-from streamsight.matrix.util import Matrix
+from streamsight.matrix import InteractionMatrix
 
 logger = logging.getLogger(__name__)
 
 class ItemKNNIncremental(ItemKNN):
     def __init__(
         self,
-        K=200,
-        normalize_X: bool = False,
-        normalize_sim: bool = False
+        K=200
     ):
-        super().__init__(K, normalize_X, normalize_sim)
+        super().__init__(K)
         self.historical_data : InteractionMatrix
     
     def fit(self, X: InteractionMatrix) -> "Algorithm":

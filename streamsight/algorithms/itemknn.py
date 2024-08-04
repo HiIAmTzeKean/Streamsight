@@ -1,21 +1,10 @@
-# RecPack, An Experimentation Toolkit for Top-N Recommendation
-# Copyright (C) 2020  Froomle N.V.
-# License: GNU AGPLv3 - https://gitlab.com/recpack-maintainers/recpack/-/blob/master/LICENSE
-# Author:
-#   Lien Michiels
-#   Robin Verachtert
 
-import warnings
-from typing import Optional
-
-import numpy as np
-from scipy.sparse import diags
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import Normalizer
-
 from streamsight.algorithms.base import Algorithm
-from streamsight.utils.util import get_top_K_values
+from streamsight.algorithms.utils import get_top_K_values
+from streamsight.matrix import ItemUserBasedEnum
+
 
 def compute_cosine_similarity(X: csr_matrix) -> csr_matrix:
     """Compute the cosine similarity between the items in the matrix.
@@ -89,40 +78,21 @@ class ItemKNN(Algorithm):
     :type normalize_sim: bool, optional
     :raises ValueError: If an unsupported similarity measure is passed.
     """
-
-    SUPPORTED_SIMILARITIES = ["cosine", "conditional_probability"]
-    """The supported similarity options"""
-
+    ITEM_USER_BASED = ItemUserBasedEnum.ITEM
+    
     def __init__(
         self,
-        K=200,
-        normalize_X: bool = False,
-        normalize_sim: bool = False
+        K=200
     ):
         super().__init__()
         self.K = K
-        
-        self.normalize_X = normalize_X
-        # Sim_normalize takes precedence.
-        self.normalize_sim = normalize_sim
-
 
     def _fit(self, X: csr_matrix) -> None:
-        """Fit a cosine similarity matrix from item to item"""
-
-        transformer = Normalizer(norm="l1", copy=False)
-
-        if self.normalize_X:
-            X = transformer.transform(X)
-
+        """Fit a cosine similarity matrix from item to item
+        We assume that X is a binary matrix of shape (n_users, n_items)
+        """
         item_similarities = compute_cosine_similarity(X)
-
         item_similarities = get_top_K_values(item_similarities, K=self.K)
-
-        # j, M (*, j) = 1
-        if self.normalize_sim:
-            # Normalize such that sum per row = 1
-            item_similarities = transformer.transform(item_similarities)
 
         self.similarity_matrix_ = item_similarities
 
@@ -138,10 +108,4 @@ class ItemKNN(Algorithm):
         :rtype: csr_matrix
         """
         scores = X @ self.similarity_matrix_
-
-        # If self.similarity_matrix_ is not a csr matrix,
-        # scores will also not be a csr matrix
-        if not isinstance(scores, csr_matrix):
-            scores = csr_matrix(scores)
-
         return scores

@@ -1,22 +1,24 @@
-from abc import ABC, abstractmethod
 import logging
 import time
-from typing import Union
-import warnings
+from abc import ABC, abstractmethod
 
 from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
-from streamsight.matrix.interation_matrix import InteractionMatrix
+
+from streamsight.matrix import (InteractionMatrix, ItemUserBasedEnum,
+                                TimestampAttributeMissingError)
 from streamsight.matrix.util import to_csr_matrix
 
 logger = logging.getLogger(__name__)
-Matrix = Union[InteractionMatrix, csr_matrix]
+# Matrix = Union[InteractionMatrix, csr_matrix]
 
 
 class Algorithm(BaseEstimator,ABC):
     """Base class for all streamsight algorithm implementations."""
 
+    ITEM_USER_BASED: ItemUserBasedEnum
+    
     def __init__(self):
         super().__init__()
 
@@ -106,7 +108,7 @@ class Algorithm(BaseEstimator,ABC):
         if len(missing) > 0:
             logger.warning(f"{self.name} failed to recommend any items for {len(missing)} users. There are a total of {len(users)} users with history.")
 
-    def _transform_fit_input(self, X: Matrix) -> csr_matrix:
+    def _transform_fit_input(self, X: InteractionMatrix) -> csr_matrix:
         """Transform the training data to expected type
 
         Data will be turned into a binary csr matrix.
@@ -118,7 +120,7 @@ class Algorithm(BaseEstimator,ABC):
         """
         return to_csr_matrix(X, binary=True)
 
-    def _transform_predict_input(self, X: Matrix) -> csr_matrix:
+    def _transform_predict_input(self, X: InteractionMatrix) -> csr_matrix:
         """Transform the input of predict to expected type
 
         Data will be turned into a binary csr matrix.
@@ -130,7 +132,7 @@ class Algorithm(BaseEstimator,ABC):
         """
         return to_csr_matrix(X, binary=True)
 
-    def _assert_is_interaction_matrix(self, *matrices: Matrix) -> None:
+    def _assert_is_interaction_matrix(self, *matrices: InteractionMatrix) -> None:
         """Make sure that the passed matrices are all an InteractionMatrix."""
         for X in matrices:
             if type(X) != InteractionMatrix:
@@ -140,9 +142,9 @@ class Algorithm(BaseEstimator,ABC):
         """Make sure that the matrices all have timestamp information."""
         for X in matrices:
             if not X.has_timestamps:
-                raise ValueError(f"{self.name} requires timestamp information in the InteractionMatrix.")
+                raise TimestampAttributeMissingError()
 
-    def fit(self, X: Matrix) -> "Algorithm":
+    def fit(self, X: InteractionMatrix) -> "Algorithm":
         """Fit the model to the input interaction matrix.
 
         After fitting the model will be ready to use for prediction.
@@ -170,7 +172,7 @@ class Algorithm(BaseEstimator,ABC):
         logger.info(f"Fitting {self.name} complete - Took {end - start :.3}s")
         return self
 
-    def predict(self, X: Matrix) -> csr_matrix:
+    def predict(self, X: InteractionMatrix) -> csr_matrix:
         """Predicts scores, given the interactions in X
 
         Recommends items for each nonzero user in the X matrix.
@@ -182,16 +184,22 @@ class Algorithm(BaseEstimator,ABC):
         - checks the output using :meth:`_check_prediction` function
 
         :param X: interactions to predict from.
-        :type X: Matrix
+        :type X: InteractionMatrix
         :return: The recommendation scores in a sparse matrix format.
         :rtype: csr_matrix
         """
         self._check_fit_complete()
 
-        X = self._transform_predict_input(X)
+        # X will contain past sequential interaction and IDs to predict
+        to_predict_frame = X.get_prediction_data()
+        prev_interaction = X.get_interaction_data()
+        prev_interaction = self._transform_predict_input(prev_interaction)
 
-        X_pred = self._predict(X)
+        X_pred = self._predict(prev_interaction)
 
-        self._check_prediction(X_pred, X)
+        #TODO what to do with to_predict_frame
+        #? this is something that i do not really need to deal with since this is
+        #? the job of the algo and not the evaluator
+        # self._check_prediction(X_pred, X)
 
         return X_pred
