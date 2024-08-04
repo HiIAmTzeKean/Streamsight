@@ -1,1 +1,1 @@
-from streamsight.matrix.interation_matrix import InteractionMatrix
+from streamsight.matrix.interaction_matrix import InteractionMatrix, ItemUserBasedEnum, TimestampAttributeMissingError
