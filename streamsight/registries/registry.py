@@ -1,7 +1,9 @@
 from typing import Any, Dict, NamedTuple, Optional
+
 import streamsight.algorithms
-import streamsight.metrics
 import streamsight.datasets
+import streamsight.metrics
+
 
 class Registry:
     """
