@@ -1,11 +1,5 @@
-# RecPack, An Experimentation Toolkit for Top-N Recommendation
-# Copyright (C) 2020  Froomle N.V.
-# License: GNU AGPLv3 - https://gitlab.com/recpack-maintainers/recpack/-/blob/master/LICENSE
-# Author:
-#   Lien Michiels
-#   Robin Verachtert
-
 import logging
+from typing import Optional
 
 import numpy as np
 import scipy.sparse
@@ -31,7 +25,7 @@ class RecallK(ListwiseMetricK):
     :type K: int
     """
 
-    def __init__(self, K=10, timestamp_limit: int = None):
+    def __init__(self, K=10, timestamp_limit: Optional[int] = None):
         super().__init__(K,timestamp_limit)
 
     def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:

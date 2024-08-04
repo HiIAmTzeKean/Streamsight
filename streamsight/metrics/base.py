@@ -1,19 +1,12 @@
-# RecPack, An Experimentation Toolkit for Top-N Recommendation
-# Copyright (C) 2020  Froomle N.V.
-# License: GNU AGPLv3 - https://gitlab.com/recpack-maintainers/recpack/-/blob/master/LICENSE
-# Author:
-#   Lien Michiels
-#   Robin Verachtert
-
 import logging
-from typing import Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 from scipy.sparse import csr_matrix
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-from streamsight.utils.util import get_top_K_ranks
+from streamsight.algorithms.utils import get_top_K_ranks
 
 
 logger = logging.getLogger(__name__)
@@ -28,10 +21,13 @@ class Metric:
       - Aggregated result value can be retrieved using :attr:`value`
     """
 
-    def __init__(self, _timestamp_limit: int = None):
+    def __init__(self, timestamp_limit: Optional[int] = None):
         self._num_users = 0
         self._num_items = 0
-        self._timestamp_limit = _timestamp_limit
+        self._timestamp_limit = timestamp_limit
+        
+        self._scores: csr_matrix
+        self._value: float
         
     @property
     def identifier(self):
@@ -116,7 +112,7 @@ class Metric:
             raise AssertionError(f"Shape mismatch between y_true: {y_true.shape} and y_pred: {y_pred.shape}")
         return check
 
-    def _set_shape(self, y_true):
+    def _set_shape(self, y_true: csr_matrix) -> None:
         self._num_users, self._num_items = y_true.shape
 
     def _eliminate_empty_users(self, y_true: csr_matrix, y_pred: csr_matrix) -> Tuple[csr_matrix, csr_matrix]:
@@ -132,6 +128,7 @@ class Metric:
         :return: (y_true, y_pred), with zero users eliminated.
         :rtype: Tuple[csr_matrix, csr_matrix]
         """
+        # Get the rows (users) that are not empty
         nonzero_users = list(set(y_true.nonzero()[0]))
 
         self.user_id_map_ = np.array(nonzero_users)
@@ -158,7 +155,7 @@ class MetricTopK(Metric):
     :type K: int
     """
 
-    def __init__(self, K, timestamp_limit: int = None):
+    def __init__(self, K, timestamp_limit: Optional[int] = None):
         super().__init__(timestamp_limit)
         self.K = K
 

@@ -6,6 +6,7 @@
 #   Robin Verachtert
 
 import logging
+from typing import Optional
 
 import numpy as np
 import scipy.sparse
@@ -37,7 +38,7 @@ class PrecisionK(ListwiseMetricK):
     :type K: int
     """
     
-    def __init__(self, K=10, timestamp_limit: int = None):
+    def __init__(self, K=10, timestamp_limit: Optional[int] = None):
         super().__init__(K,timestamp_limit)
 
     def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:
