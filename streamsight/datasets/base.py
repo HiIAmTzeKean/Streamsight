@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from typing import Optional
 from urllib.request import urlretrieve
+from warnings import warn
 
 import pandas as pd
 
@@ -127,6 +128,7 @@ class Dataset(ABC):
             im = self.preprocessor.process(df)
         else:
             im = self._dataframe_to_matrix(df)
+            warn("No filters applied, user and item ids may not be incrementing in the order of time. Classes that use this dataset may not work as expected.")
         logger.info(f"{self.name} dataset loaded.")
         return im
     

@@ -26,9 +26,9 @@ class TestDataset(Dataset):
         :rtype: pd.DataFrame
         """
         input_dict = {
-            self.USER_IX: [1, 1, 2, 3, 2, 2, 4, 3, 3, 4, 5],
-            self.ITEM_IX: [1, 3, 1, 2, 2, 3, 2, 1, 3, 3, 1],
-            self.TIMESTAMP_IX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9],
+            self.USER_IX:      [1, 2, 3, 1, 2, 2, 4, 3, 3, 4, 5, 5, 5],
+            self.ITEM_IX:      [1, 1, 2, 3, 2, 3, 2, 1, 3, 3, 1, 2, 3],
+            self.TIMESTAMP_IX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 10, 10],
         }
 
         df = pd.DataFrame.from_dict(input_dict)
