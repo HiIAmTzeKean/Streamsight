@@ -4,17 +4,13 @@ from warnings import warn
 
 import numpy as np
 
-from streamsight.matrix import InteractionMatrix
-from streamsight.matrix import TimestampAttributeMissingError
+from streamsight.matrix import (InteractionMatrix,
+                                TimestampAttributeMissingError)
 from streamsight.setting import Setting
-from streamsight.setting.splitters import (
-    NPastInteractionTimestampSplitter,
-    TimestampSplitter,
-)
+from streamsight.setting.splitters import (NPastInteractionTimestampSplitter,
+                                           TimestampSplitter)
 
 logger = logging.getLogger(__name__)
-
-# TODO consider allowing unlabeled data and ground truth data to have different window size
 
 
 class SlidingWindowSetting(Setting):
@@ -90,7 +86,7 @@ class SlidingWindowSetting(Setting):
         sub_time = self.t
         max_timestamp = data.max_timestamp
 
-        while sub_time < max_timestamp:
+        while sub_time <= max_timestamp:
             self._data_timestamp_limit.append(sub_time)
             # the set used for eval will always have a timestamp greater than
             # data released such that it is unknown to the model

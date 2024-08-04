@@ -1,15 +1,20 @@
-from abc import ABC, abstractmethod
 import logging
-import numpy as np
+from abc import ABC, abstractmethod
 from typing import Generator, List, Literal, Optional, Tuple, Union
 from warnings import warn
 
-from streamsight.matrix import InteractionMatrix
-from streamsight.matrix import ItemUserBasedEnum
+import numpy as np
+
+from streamsight.matrix import InteractionMatrix, ItemUserBasedEnum
 from streamsight.setting.processor import PredictionDataProcessor
 
 logger = logging.getLogger(__name__)
 
+class EOWSetting(Exception):
+    """End of Window Setting Exception."""
+    def __init__(self, message="End of window setting reached. Call reset_data_generators() to start again."):
+        self.message = message
+        super().__init__(self.message)
 
 def check_split_complete(func):
     def check_split_for_func(self):
@@ -293,7 +298,7 @@ class Setting(ABC):
             for data in getattr(self, frame):
                 yield data
 
-    def next_unlabeled_data(self, reset=False) -> Optional[InteractionMatrix]:
+    def next_unlabeled_data(self, reset=False) -> InteractionMatrix:
         # Create generator if it does not exist or reset is True
         if reset or not hasattr(self, "unlabeled_data_iter"):
             self._unlabeled_data_generator()
@@ -301,11 +306,9 @@ class Setting(ABC):
         try:
             return next(self.unlabeled_data_iter)
         except StopIteration:
-            logger.debug(
-                "End of unlabeled data reached. To reset, set reset=True")
-            return None
+            raise EOWSetting()
 
-    def next_ground_truth_data(self, reset=False) -> Optional[InteractionMatrix]:
+    def next_ground_truth_data(self, reset=False) -> InteractionMatrix:
         # Create generator if it does not exist or reset is True
         if reset or not hasattr(self, "ground_truth_data_iter"):
             self._ground_truth_data_generator()
@@ -313,11 +316,9 @@ class Setting(ABC):
         try:
             return next(self.ground_truth_data_iter)
         except StopIteration:
-            logger.debug(
-                "End of ground truth data reached. To reset, set reset=True")
-            return None
+            raise EOWSetting()
 
-    def next_incremental_data(self, reset=False) -> Optional[InteractionMatrix]:
+    def next_incremental_data(self, reset=False) -> InteractionMatrix:
         # Create generator if it does not exist or reset is True
         if reset or not hasattr(self, "incremental_data_iter"):
             self._incremental_data_generator()
@@ -325,9 +326,7 @@ class Setting(ABC):
         try:
             return next(self.incremental_data_iter)
         except StopIteration:
-            logger.debug(
-                "End of incremental data reached. To reset, set reset=True")
-            return None
+            raise EOWSetting()
 
     def next_data_timestamp_limit(self, reset=False):
         if reset or not hasattr(self, "data_timestamp_limit_iter"):
@@ -336,9 +335,7 @@ class Setting(ABC):
         try:
             return next(self.data_timestamp_limit_iter)
         except StopIteration:
-            logger.debug("End of data timestamp_limit reached.")
-            warn("Reset the generators by calling reset_data_generators()")
-            return None
+            raise EOWSetting()
 
     def reset_data_generators(self):
         logger.info("Resetting data generators.")

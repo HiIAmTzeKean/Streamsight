@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
 import logging
+from abc import ABC, abstractmethod
 from typing import Optional, Set, Tuple
 
 import numpy as np
-from streamsight.matrix import InteractionMatrix
-from streamsight.matrix import ItemUserBasedEnum
+
+from streamsight.matrix import InteractionMatrix, ItemUserBasedEnum
 
 logger = logging.getLogger(__name__)
 
@@ -205,18 +205,22 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
             future_interaction = data.timestamps_lt(
                 self.t + self.t_upper
             ).timestamps_gte(self.t)
+        
+        # ? Is there a value in this
+        # if self.item_user_based == ItemUserBasedEnum.USER:
+        #     past_interaction = data.get_users_n_last_interaction(
+        #         self.n_seq_data, self.t, future_interaction.user_ids
+        #     )
+        # else:
+        #     # predict item based on user interaction
+        #     past_interaction = data.get_items_n_last_interaction(
+        #         self.n_seq_data, self.t
+        #     )
 
-        if self.item_user_based == ItemUserBasedEnum.USER:
-            past_interaction = data.get_users_n_last_interaction(
-                self.n_seq_data, self.t
+        past_interaction = data.get_users_n_last_interaction(
+                self.n_seq_data, self.t,future_interaction.user_ids
             )
-        else:
-            past_interaction = data.get_items_n_last_interaction(
-                self.n_seq_data, self.t
-            )
-
         logger.debug(f"{self.identifier} - Split successful")
-
         return past_interaction, future_interaction
 
 
