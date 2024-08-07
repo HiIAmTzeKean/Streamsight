@@ -61,12 +61,15 @@ class Metric:
         self._calculate(y_true, y_pred)
 
     @property
-    def results(self):
-        """Detailed results of the metric."""
-        return pd.DataFrame({"score": [self.value]})
+    def micro_result(self):
+        """Micro results of the metric.
+        
+        Returns the computation 
+        """
+        return pd.DataFrame({"score": [self.macro_result]})
 
     @property
-    def value(self) -> float:
+    def macro_result(self) -> float:
         """The global metric value."""
         if not hasattr(self, "_value"):
             raise ValueError("Metric has not been calculated yet.")
@@ -155,7 +158,7 @@ class MetricTopK(Metric):
     :type K: int
     """
 
-    def __init__(self, K, timestamp_limit: Optional[int] = None):
+    def __init__(self, K:int = 10, timestamp_limit: Optional[int] = None):
         super().__init__(timestamp_limit)
         self.K = K
 
@@ -229,7 +232,7 @@ class ElementwiseMetricK(MetricTopK):
         return ["user_id", "item_id", "score"]
 
     @property
-    def results(self) -> pd.DataFrame:
+    def micro_result(self) -> pd.DataFrame:
         """Get the detailed results for this metric.
 
         Contains an entry for every user-item pair in the Top-K recommendations list of every user.
@@ -263,7 +266,7 @@ class ElementwiseMetricK(MetricTopK):
         return pd.DataFrame(dict(zip(self.col_names, (users, items, values))))
 
     @property
-    def value(self):
+    def macro_result(self):
         """Global metric value obtained by summing up scores for every user then taking the average over all users."""
         return self._scores.sum(axis=1).mean()
 
@@ -290,7 +293,7 @@ class ListwiseMetricK(MetricTopK):
         return row, col
 
     @property
-    def results(self):
+    def micro_result(self):
         """Get the detailed results for this metric.
 
         Contains an entry for every user.
@@ -308,7 +311,7 @@ class ListwiseMetricK(MetricTopK):
         return pd.DataFrame(dict(zip(self.col_names, (users, values))))
 
     @property
-    def value(self):
+    def macro_result(self):
         """Global metric value obtained by taking the average over all users."""
         return self._scores.mean()
 
