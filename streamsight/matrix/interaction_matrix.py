@@ -1,7 +1,6 @@
 import logging
 import operator
 from copy import deepcopy
-from dataclasses import asdict, dataclass
 from enum import StrEnum
 from typing import (Callable, Iterator, List, Literal, Optional, Set, Tuple,
                     Union, overload)
@@ -11,22 +10,27 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 
+from streamsight.matrix.exception import TimestampAttributeMissingError
 from streamsight.utils.util import to_binary
 
 logger = logging.getLogger(__name__)
-
-
-class TimestampAttributeMissingError(Exception):
-    """Error raised when timestamp attribute is missing."""
-
-    def __init__(self, message: str = "InteractionMatrix is missing timestamps."):
-        super().__init__(message)
         
 class ItemUserBasedEnum(StrEnum):
     ITEM = "item"
     """Similarity between items to predict user preferences"""
     USER = "user"
     """Similarities between users to predict item preferences"""
+    
+    @classmethod
+    def has_value(cls, value: str):
+        """Check valid value for ItemUserBasedEnum
+
+        :param value: String value input
+        :type value: str
+        """
+        if value not in ItemUserBasedEnum:
+            return False
+        return True
     
 
 class InteractionMatrix:
@@ -94,27 +98,18 @@ class InteractionMatrix:
         if shape:
             self.shape = shape
 
+    def mask_shape(self, shape: Optional[Tuple[int, int]] = None,
+                #    drop_unknown: bool = False,
+                   drop_unknown_user: bool = False,
+                   drop_unknown_item: bool = False):
+        """Masks global user and item ID.
         
-    # def _check_shape(self,unique_users,global_users,unique_items,global_items):
-    #     if unique_users > global_users:
-    #         raise ValueError(
-    #             "Provided shape does not match dataframe, can't have fewer rows than maximal user identifier."
-    #             f" {global_users} < {unique_users}"
-    #         )
-    #     if unique_items > global_items:
-    #         raise ValueError(
-    #             "Provided shape does not match dataframe, can't have fewer columns than maximal item identifier."
-    #             f" {global_items} < {unique_items}"
-    #         )
-
-    def mask_shape(self, shape: Optional[Tuple[int, int]] = None):
-        """Masks global user and item ids
         To ensure released matrix released to the models only contains data
         that is intended to be released. This addresses the data leakage issue.
         
-        ##
+        =======
         Example
-        ##
+        =======
         
         Given the following case where the data is as follows::
         
@@ -122,21 +117,55 @@ class InteractionMatrix:
             > iid: [0, 1, 2, 3, -1]
             > ts : [0, 1, 2, 3, 4]
             
-        Where user 4 is the user to be predicted. then the shape of the matrix
-        will be (5, 4) and not (5, 5). This follows from the fact that there
-        are 5 users that are released to the model but only 4 items, where the
-        last item is the item to be predicted and thus should be treated as
-        unknown.
+        Where user 4 is the user to be predicted. Assuming that user 4 is an
+        unknown user, that is, the model has never seen user 4 before. The shape
+        of the matrix should be (4, 4). This must be defined by :attr:`shape`.
+        If the shape is defined, and it contains ID of unknown user/item, a warning
+        will be raised if :attr:`drop_unknown` is set to False. If :attr:`drop_unknown`
+        is set to True, the unknown user/item will be dropped from the data. All
+        user/item ID greater than `shape[0]` will be dropped. This follows from
+        the initial assumption that the user/item ID starts from 0 as defined in
+        the dataset class.
         
+        Else, the shape will be inferred from the data. The shape will be (5, 4).
+
+        :param shape: Shape of the known user and item base. This value is
+            usually set by the evaluator during the evaluation run. This value
+            can also be set manually but the programmer if there is a need to
+            alter the known user/item base. Defaults to None
+        :type shape: Optional[Tuple[int, int]], optional
+        :param drop_unknown_user: To drop unknown users in the dataset,
+            defaults to False
+        :type drop_unknown_user: bool, optional
+        :param drop_unknown_item: To drop unknown items in the dataset,
+            defaults to False
+        :type drop_unknown_item: bool, optional
         """
-        if shape:
-            self.shape = shape
+        if not shape:
+            known_user = self._df[self._df!=-1][InteractionMatrix.USER_IX].nunique()
+            known_item = self._df[self._df!=-1][InteractionMatrix.ITEM_IX].nunique()
+            self.shape = (known_user,known_item)
             return
         
-        known_user = self._df[self._df!=-1][InteractionMatrix.USER_IX].nunique()
-        known_item = self._df[self._df!=-1][InteractionMatrix.ITEM_IX].nunique()
-        self.shape = (known_user,known_item)
-                
+        self.shape = shape
+        
+        if drop_unknown_user:
+            self._df = self._df[self._df[InteractionMatrix.USER_IX]<shape[0]]
+        if drop_unknown_item:
+            self._df = self._df[self._df[InteractionMatrix.ITEM_IX]<shape[1]]
+
+        self._check_shape()
+        
+    def _check_shape(self):
+        if not hasattr(self, "shape"):
+            raise AttributeError("InteractionMatrix has no shape attribute. Please call mask_shape() first.")
+        if self.shape[0] < self._df[self._df!=-1][InteractionMatrix.USER_IX].nunique()\
+            or self.shape[1] < self._df[self._df!=-1][InteractionMatrix.ITEM_IX].nunique():
+            warn("Provided shape does not match dataframe, can't have "
+                 "fewer rows than maximal user identifier or columns than "
+                 "maximal item identifier.\n Call mask_shape() with drop "
+                 "drop_unknown=True to drop unknown users and items.")
+                      
     def copy(self) -> "InteractionMatrix":
         """Create a deep copy of this InteractionMatrix.
 
