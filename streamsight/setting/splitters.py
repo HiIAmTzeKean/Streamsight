@@ -1,8 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Set, Tuple
-
-import numpy as np
+from typing import Optional, Tuple
 
 from streamsight.matrix import InteractionMatrix, ItemUserBasedEnum
 
@@ -38,48 +36,10 @@ class Splitter(ABC):
         """
         raise NotImplementedError(f"{self.name} must implement the _split method.")
 
-
-class UserSplitter(Splitter):
-    """Split data by the user identifiers of the interactions.
-
-    Users in ``users_in`` are assigned to the first return value,
-    users in ``users_out`` are assigned to the second return value.
-
-    :param users_in: Users for whom the events are assigned to the `in_matrix`
-    :type users_in: Set[int]
-    :param users_out: Users for whom the events are assigned to the `out_matrix`
-    :type users_out: Set[int]
-    """
-
-    def __init__(
-        self,
-        users_in: Set[int],
-        users_out: Set[int],
-    ):
-        super().__init__()
-        self.users_in = users_in
-        self.users_out = users_out
-
-    def split(
-        self, data: InteractionMatrix
-    ) -> Tuple[InteractionMatrix, InteractionMatrix]:
-        """Splits data by the user identifiers of the interactions.
-
-        :param data: Interaction matrix to be split.
-        :type data: InteractionMatrix
-        :return: A 2-tuple: the first value contains
-            the interactions of ``users_in``,
-            the second the interactions of ``users_out``.
-        :rtype: Tuple[InteractionMatrix, InteractionMatrix]
-        """
-        data_in = data.users_in(self.users_in)
-        data_out = data.users_in(self.users_out)
-
-        return data_in, data_out
-
-
 class TimestampSplitter(Splitter):
-    """Split data so that the first return value contains interactions in
+    """Splits data by timestamp.
+    
+    Split data so that the first return value contains interactions in
     ``[t-t_lower, t)``, and the second those in ``[t, t+t_upper]``.
 
     If ``t_lower`` or ``t_upper`` are omitted, they are assumed to have a value of infinity.
@@ -89,7 +49,7 @@ class TimestampSplitter(Splitter):
     Attribute definition
     ====================
     - :attr:``past_interaction``: List of unlabeled data. Interval is ``[0, t)``.
-    - :attr:``future_interaction``: Data used for training the model. Interval is ``[t, t+t_upper)`` or [t,inf].
+    - :attr:``future_interaction``: Data used for training the model. Interval is ``[t, t+t_upper)`` or ``[t,inf]``.
 
     :param t: Timestamp to split on in seconds since epoch.
     :type t: int
@@ -145,17 +105,17 @@ class TimestampSplitter(Splitter):
 
 
 class NPastInteractionTimestampSplitter(TimestampSplitter):
-    """Splits the data into unlabeled and ground truth data based on a timestamp.
+    """Splits data with n past interactions based on a timestamp.
+    
+    Splits the data into unlabeled and ground truth data based on a timestamp.
     Historical data contains last ``n_seq_data`` interactions before the timestamp ``t``
     and the future interaction contains interactions after the timestamp ``t``.
 
     ====================
     Attribute definition
     ====================
-    - :attr:``past_interaction``: List of unlabeled data.
-        Interval is  ``[0, t)``.
-    - :attr:``future_interaction``: Data used for training the model.
-        Interval is ``[t, t+t_upper)`` or [t,inf].
+    - :attr:``past_interaction``: List of unlabeled data. Interval is ``[0, t)``.
+    - :attr:``future_interaction``: Data used for training the model. Interval is ``[t, t+t_upper)`` or ``[t,inf]``.
 
     :param t: Timestamp to split on in seconds since epoch.
     :type t: int
@@ -222,78 +182,3 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
             )
         logger.debug(f"{self.identifier} - Split successful")
         return past_interaction, future_interaction
-
-
-class StrongGeneralizationSplitter(Splitter):
-    """Randomly splits the users into two sets so that
-    interactions for a user will always occur only in one split.
-
-    :param in_frac: The fraction of interactions that are assigned
-        to the first value in the output tuple. Defaults to 0.7.
-    :type in_frac: float, optional
-    :param seed: Seed the random generator. Set this value
-        if you require reproducible results.
-    :type seed: int, optional
-    :param error_margin: The allowed error between ``in_frac``
-        and the actual split fraction. Defaults to 0.01.
-    :type error_margin: float, optional
-    """
-
-    def __init__(self, in_frac=0.7, seed=None, error_margin=0.01):
-        super().__init__()
-        self.in_frac = in_frac
-        self.out_frac = 1 - in_frac
-
-        if seed is None:
-            # Set seed if it was not set before.
-            seed = np.random.get_state()[1][0]
-
-        self.seed = seed
-        self.error_margin = error_margin
-
-    def split(self, data):
-        """Randomly splits the users into two sets so that
-            interactions for a user will always occur only in one split.
-
-        :param data: Interaction matrix to be split.
-        :type data: InteractionMatrix
-        :return: A 2-tuple containing the ``data_in`` and ``data_out`` matrices.
-        :rtype: Tuple[InteractionMatrix, InteractionMatrix]
-        """
-        sp_mat = data.values
-
-        users = list(set(sp_mat.nonzero()[0]))
-
-        nr_users = len(users)
-
-        # Seed to make testing possible
-        if self.seed is not None:
-            np.random.seed(self.seed)
-
-        # Try five times
-        for i in range(0, 5):
-            np.random.shuffle(users)
-
-            in_cut = int(np.floor(nr_users * self.in_frac))
-
-            users_in = users[:in_cut]
-            users_out = users[in_cut:]
-
-            total_interactions = sp_mat.nnz
-            data_in_cnt = sp_mat[users_in, :].nnz
-
-            real_frac = data_in_cnt / total_interactions
-
-            within_margin = np.isclose(real_frac, self.in_frac, atol=self.error_margin)
-
-            if within_margin:
-                logger.debug(f"{self.identifier} - Iteration {i} - Within margin")
-                break
-            else:
-                logger.debug(f"{self.identifier} - Iteration {i} - Not within margin")
-
-        u_splitter = UserSplitter(users_in, users_out)
-        ret = u_splitter.split(data)
-
-        logger.debug(f"{self.identifier} - Split successful")
-        return ret
