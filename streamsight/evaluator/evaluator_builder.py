@@ -1,9 +1,11 @@
 import logging
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 
-from streamsight.evaluator.evaulator import Evaluator
+from streamsight.evaluator.evaluator import Evaluator
 from streamsight.matrix import ItemUserBasedEnum
-from streamsight.registries.registry import ALGORITHM_REGISTRY, METRIC_REGISTRY, AlgorithmEntry, MetricEntry
+from streamsight.registries.registry import (ALGORITHM_REGISTRY,
+                                             METRIC_REGISTRY, AlgorithmEntry,
+                                             MetricEntry)
 from streamsight.setting.base_setting import Setting
 from streamsight.utils.util import arg_to_str
 
@@ -16,8 +18,11 @@ class EvaluatorBuilder(object):
     when the evaluator is executed.
     """
 
-    def __init__(self, item_user_based: ItemUserBasedEnum):
-        self.item_user_based = item_user_based
+    def __init__(self, item_user_based: Union[Literal["item","user"],ItemUserBasedEnum]):
+        if not ItemUserBasedEnum.has_value(item_user_based):
+            raise ValueError(f"{item_user_based} invalid value for item_user_based. Value should be in {ItemUserBasedEnum._member_names_}")
+        self.item_user_based = ItemUserBasedEnum(item_user_based)
+        
         self.algorithm_entries: List[AlgorithmEntry] = []
         """List of algorithms to evaluate"""
         self.metric_entries: Dict[str, MetricEntry] = dict()
