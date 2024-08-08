@@ -1,7 +1,8 @@
 import logging
-from enum import StrEnum
-from typing import List, Literal, Tuple, Union
+from typing import List, Literal, Optional, Tuple, Union
+from warnings import warn
 
+import pandas as pd
 from tqdm import tqdm
 
 from streamsight.algorithms.base import Algorithm
@@ -67,18 +68,29 @@ class Evaluator(object):
         """
         return (len(self.known_user), len(self.known_item))
 
-    def metric_results(self, level:Union[Literal["micro","macro"], MetricLevelEnum]="micro",only_current_frame=False):
+    def global_metric_results(self):
+        """Global results of the metrics computed.
+        
+        This property returns the global results of the metrics computed in the evaluator.
+        """
+        return self.metric_acc.df_global_metric()
+    
+    def metric_results(self,
+                       level:Union[Literal["micro","macro"], MetricLevelEnum]="macro",
+                       only_current_frame=False,
+                       filter_algo:Optional[str]=None) -> pd.DataFrame:
         """Results of the metrics computed.
         
         This property returns the results of the metrics computed in the evaluator.
         """
+        timestamp = None
         if only_current_frame:
-            pass
-        
-        if level == MetricLevelEnum.MIRCRO:
-            return self.metric_acc.micro_result(current=self._current_timestamp)
-        
-        return self.metric_acc.macro_result(current=self._current_timestamp)
+            timestamp = self._current_timestamp
+
+        return self.metric_acc.df_metric(level=level,
+                                         filter_algo=filter_algo,
+                                         filter_timestamp=timestamp)
+
     
     def _update_known_user_item_base(self, data:InteractionMatrix):
         """Updates the known user and item set with the data.
@@ -112,7 +124,25 @@ class Evaluator(object):
         for algorithm_entry in self.algorithm_entries:
             params = algorithm_entry.params
             self.algorithm.append(ALGORITHM_REGISTRY.get(algorithm_entry.name)(**params))
+            
+    def _ready_algo(self):
+        """Train the algorithms with the background data.
+        
+        This method should be called after `_instantiate_algorithm`. The
+        algorithms are trained with the background data, and the set of known
+        user/item is updated.
 
+        :raises ValueError: _description_
+        """
+        if not hasattr(self, "algorithm"):
+            raise ValueError("Algorithm not instantiated")
+        background_data = self.setting.background_data
+        self._update_known_user_item_base(background_data)
+        background_data.mask_shape(self.known_shape)
+        
+        for algo in self.algorithm:
+            algo.fit(background_data)
+    
     def _ready_evaluator(self):
         """Pre-phase of the evaluator. (Phase 1)
         
@@ -208,29 +238,22 @@ class Evaluator(object):
         
         if self._run_step > self.setting.num_split:
             logger.info(f"Finished running all steps, call `run_step(reset=True)` to run the evaluation again")
+            warn(f"Running this method again will not have any effect.")
             return
         logger.info(f"Running step {self._run_step}")
         self._evaluate_step()
         self._data_release_step()
-        
-    def _ready_algo(self):
-        """Train the algorithms with the background data.
-        
-        This method should be called after `_instantiate_algorithm`. The
-        algorithms are trained with the background data, and the set of known
-        user/item is updated.
-
-        :raises ValueError: _description_
-        """
-        if not hasattr(self, "algorithm"):
-            raise ValueError("Algorithm not instantiated")
-        background_data = self.setting.background_data
-        self._update_known_user_item_base(background_data)
-        background_data.mask_shape(self.known_shape)
-        
-        for algo in self.algorithm:
-            algo.fit(background_data)
     
+    def run_steps(self, num_steps:int):
+        """Run multiple steps of the evaluator.
+
+        :param num_steps: Number of steps to run
+        :type num_steps: int
+        """
+        for _ in tqdm(range(num_steps)):
+            self.run_step()
+        
+
     def run(self):
         """Run the evaluator across all steps and splits
         

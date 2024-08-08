@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, List, Literal, Optional, Union
+from warnings import warn
 
 from streamsight.evaluator.evaluator import Evaluator
 from streamsight.matrix import ItemUserBasedEnum
@@ -18,7 +19,11 @@ class EvaluatorBuilder(object):
     when the evaluator is executed.
     """
 
-    def __init__(self, item_user_based: Union[Literal["item","user"],ItemUserBasedEnum]):
+    def __init__(self,
+                 item_user_based: Union[Literal["item","user"],ItemUserBasedEnum],
+                 ignore_unknown_user: bool = True,
+                 ignore_unknown_item: bool = True):
+        
         if not ItemUserBasedEnum.has_value(item_user_based):
             raise ValueError(f"{item_user_based} invalid value for item_user_based. Value should be in {ItemUserBasedEnum._member_names_}")
         self.item_user_based = ItemUserBasedEnum(item_user_based)
@@ -29,6 +34,8 @@ class EvaluatorBuilder(object):
         """Dict of metrics to evaluate algorithm on.
         Using Dict instead of List for fast lookup"""
         self.setting: Setting
+        self.ignore_unknown_user = ignore_unknown_user
+        self.ignore_unknown_item = ignore_unknown_item
 
     def add_algorithm(self, algorithm: Union[str, type], params: Optional[Dict[str, int]] = None):
         algorithm = arg_to_str(algorithm)
@@ -75,9 +82,19 @@ class EvaluatorBuilder(object):
             raise RuntimeError(
                 "Setting is not ready, can't construct Evaluator. "
                 "Call split() on the setting first.")
+            
+        for algo in self.algorithm_entries:
+            if algo.params is not None and "K" in algo.params and algo.params["K"] != self.setting.top_K:
+                warn(f"Algorithm {algo.name} has K={algo.params['K']} but setting"
+                     f" is configured top_K={self.setting.top_K}. Mismatch in K will"
+                     " cause metric to evaluate on algorithm's K value but number of"
+                     " prediction requested from model will mismatch that K value")
+                
 
     def build(self):
         self._check_ready()
-        return Evaluator(self.algorithm_entries,
-                         list(self.metric_entries.values()),
-                         self.setting)
+        return Evaluator(algorithm_entries=self.algorithm_entries,
+                         metric_entries=list(self.metric_entries.values()),
+                         setting=self.setting,
+                         ignore_unknown_user=self.ignore_unknown_user,
+                         ignore_unknown_item=self.ignore_unknown_item)
