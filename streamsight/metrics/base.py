@@ -232,7 +232,7 @@ class ElementwiseMetricK(MetricTopK):
         return ["user_id", "item_id", "score"]
 
     @property
-    def micro_result(self) -> pd.DataFrame:
+    def micro_result(self) -> dict[str, np.ndarray]:
         """Get the detailed results for this metric.
 
         Contains an entry for every user-item pair in the Top-K recommendations list of every user.
@@ -263,7 +263,7 @@ class ElementwiseMetricK(MetricTopK):
 
         users = self._map_users(int_users)
 
-        return pd.DataFrame(dict(zip(self.col_names, (users, items, values))))
+        return dict(zip(self.col_names, (users, items, values)))
 
     @property
     def macro_result(self):
@@ -293,7 +293,7 @@ class ListwiseMetricK(MetricTopK):
         return row, col
 
     @property
-    def micro_result(self):
+    def micro_result(self) -> dict[str, np.ndarray]:
         """Get the detailed results for this metric.
 
         Contains an entry for every user.
@@ -308,7 +308,8 @@ class ListwiseMetricK(MetricTopK):
 
         users = self._map_users(int_users)
 
-        return pd.DataFrame(dict(zip(self.col_names, (users, values))))
+        return dict(zip(self.col_names, (users, values)))
+    
 
     @property
     def macro_result(self):
