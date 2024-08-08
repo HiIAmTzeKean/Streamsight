@@ -7,8 +7,7 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 
 from streamsight.matrix import (InteractionMatrix, ItemUserBasedEnum,
-                                TimestampAttributeMissingError)
-from streamsight.matrix.util import to_csr_matrix
+                                TimestampAttributeMissingError, to_csr_matrix)
 
 logger = logging.getLogger(__name__)
 # Matrix = Union[InteractionMatrix, csr_matrix]

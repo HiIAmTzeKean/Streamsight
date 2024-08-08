@@ -82,7 +82,7 @@ class ItemKNN(Algorithm):
     
     def __init__(
         self,
-        K=200
+        K=10
     ):
         super().__init__()
         self.K = K

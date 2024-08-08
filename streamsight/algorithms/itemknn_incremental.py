@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class ItemKNNIncremental(ItemKNN):
     def __init__(
         self,
-        K=200
+        K=10
     ):
         super().__init__(K)
         self.historical_data : InteractionMatrix
