@@ -11,7 +11,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix
 
 from streamsight.matrix.exception import TimestampAttributeMissingError
-from streamsight.utils.util import to_binary
+from streamsight.utils import to_binary
 
 logger = logging.getLogger(__name__)
         

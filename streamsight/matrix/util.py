@@ -1,9 +1,10 @@
-from typing import Tuple, Union
+from typing import Union
 
 from scipy.sparse import csr_matrix
 
-from streamsight.matrix import InteractionMatrix
 from streamsight.utils.util import to_binary
+
+from streamsight.matrix.interaction_matrix import InteractionMatrix
 
 Matrix = Union[InteractionMatrix, csr_matrix]
 
