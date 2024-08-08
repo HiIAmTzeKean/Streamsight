@@ -2,6 +2,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
+import time
 from typing import Optional
 from urllib.request import urlretrieve
 from warnings import warn
@@ -117,6 +118,7 @@ class Dataset(ABC):
         :rtype: InteractionMatrix
         """
         logger.info(f"{self.name} is loading dataset...")
+        start = time.time()
         df = self._load_dataframe()
         if apply_filters:
             logger.debug(f"{self.name} applying filters set.")
@@ -124,7 +126,9 @@ class Dataset(ABC):
         else:
             im = self._dataframe_to_matrix(df)
             warn("No filters applied, user and item ids may not be incrementing in the order of time. Classes that use this dataset may not work as expected.")
-        logger.info(f"{self.name} dataset loaded.")
+        
+        end = time.time()
+        logger.info(f"{self.name} dataset loaded - Took {end - start:.3}s")
         return im
     
     def _dataframe_to_matrix(self, df: pd.DataFrame) -> InteractionMatrix:
