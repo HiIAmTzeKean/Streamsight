@@ -94,6 +94,7 @@ class Setting(ABC):
         :param data_m: Interaction matrix that should be split.
         :type data: InteractionMatrix
         """
+        logger.info("Splitting data...")
         self._num_full_interactions = data_m.num_interactions
         self._split(data_m)
 
@@ -101,7 +102,7 @@ class Setting(ABC):
         self._check_split()
 
         self._split_complete = True
-
+        
     @property
     def is_item_user_based(self) -> str:
         """Item or User based setting.
