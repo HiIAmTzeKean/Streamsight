@@ -32,14 +32,21 @@ class PrecisionK(ListwiseMetricK):
 
     .. math::
 
-        \\text{Precision}(u) = \\frac{\\sum\\limits_{i \\in \\text{Top-K}(u)} y^{true}_{u,i}}{K}
+        \\text{Precision}(u) = \\frac{\\sum\\limits_{i \\in \\text{Top-K}(u)} y^{true}_{u,i}}{K}\\
+        
+        
+        Precision_{sys} - micro = \\frac{\\sum_{u \\in U} tp_u}{\\sum_{u \\in U} tp_u + \\sum_{u \\in U} fp_u}
+        
+    
+        Precision_{sys} - macro = \\frac{\\sum_{u \\in U} Precision_u}{|U|}
 
+    
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
     """
     
-    def __init__(self, K=10, timestamp_limit: Optional[int] = None):
-        super().__init__(K,timestamp_limit)
+    # def __init__(self, K=10, timestamp_limit: Optional[int] = None):
+    #     super().__init__(K,timestamp_limit)
 
     def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:
         scores = scipy.sparse.lil_matrix(y_pred_top_K.shape)

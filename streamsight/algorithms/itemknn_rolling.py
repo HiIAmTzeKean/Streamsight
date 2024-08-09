@@ -6,6 +6,6 @@ logger = logging.getLogger(__name__)
 class ItemKNNRolling(ItemKNN):
     def __init__(
         self,
-        K=200
+        K=10
     ):
         super().__init__(K)

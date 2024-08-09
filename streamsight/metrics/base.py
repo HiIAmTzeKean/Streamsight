@@ -1,10 +1,9 @@
 import logging
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 from scipy.sparse import csr_matrix
 import pandas as pd
-from sklearn.base import BaseEstimator
 
 from streamsight.algorithms.utils import get_top_K_ranks
 
@@ -21,13 +20,18 @@ class Metric:
       - Aggregated result value can be retrieved using :attr:`value`
     """
 
-    def __init__(self, timestamp_limit: Optional[int] = None):
+    def __init__(self,
+                 timestamp_limit: Optional[int] = None,
+                 cache: bool = False):
         self._num_users = 0
         self._num_items = 0
         self._timestamp_limit = timestamp_limit
+        self.cache = cache
         
         self._scores: csr_matrix
         self._value: float
+        self._y_true: csr_matrix = None
+        self._y_pred: csr_matrix = None
         
     @property
     def identifier(self):
@@ -57,16 +61,38 @@ class Metric:
         y_true, y_pred = self._eliminate_empty_users(y_true, y_pred)
         self._verify_shape(y_true, y_pred)
         self._set_shape(y_true)
-
         self._calculate(y_true, y_pred)
 
-    @property
-    def results(self):
-        """Detailed results of the metric."""
-        return pd.DataFrame({"score": [self.value]})
+    def cache_values(self, y_true, y_pred):
+        if not self.cache:
+            raise ValueError("Caching is disabled for this metric.")
+        
+        if self._y_true is None:
+            self._y_true = y_true
+            self._y_pred = y_pred
+            return
+        
+        # TODO is this most efficient?
+        self._y_true = csr_matrix(np.vstack((self._y_true.toarray(), y_true.toarray())))
+        self._y_pred = csr_matrix(np.vstack((self._y_pred.toarray(), y_pred.toarray())))
+    
+    def calculate_cached(self):
+        if not self.cache:
+            raise ValueError("Caching is disabled for this metric.")
+        
+        self.calculate(self._y_true, self._y_pred)
 
     @property
-    def value(self) -> float:
+    def micro_result(self) -> Dict[str, np.ndarray]:
+        """Micro results for the metric.
+        
+        :return: Detailed results for the metric.
+        :rtype: Dict[str, np.ndarray]
+        """
+        return {"score": [self.macro_result]}
+
+    @property
+    def macro_result(self) -> float:
         """The global metric value."""
         if not hasattr(self, "_value"):
             raise ValueError("Metric has not been calculated yet.")
@@ -155,8 +181,10 @@ class MetricTopK(Metric):
     :type K: int
     """
 
-    def __init__(self, K, timestamp_limit: Optional[int] = None):
-        super().__init__(timestamp_limit)
+    def __init__(self, K:int = 10,
+                 timestamp_limit: Optional[int] = None,
+                 cache: bool = False):
+        super().__init__(timestamp_limit, cache)
         self.K = K
 
     @property
@@ -175,7 +203,7 @@ class MetricTopK(Metric):
         row, col = self.y_pred_top_K_.nonzero()
         return row, col
 
-    def _calculate(self, y_true, y_pred_top_K):
+    def _calculate(self, y_true:csr_matrix, y_pred_top_K:csr_matrix):
         """Computes metric given true labels ``y_true`` and predicted scores ``y_pred``. Only Top-K recommendations are considered.
 
         To be implemented in the child class.
@@ -229,7 +257,7 @@ class ElementwiseMetricK(MetricTopK):
         return ["user_id", "item_id", "score"]
 
     @property
-    def results(self) -> pd.DataFrame:
+    def micro_result(self) -> dict[str, np.ndarray]:
         """Get the detailed results for this metric.
 
         Contains an entry for every user-item pair in the Top-K recommendations list of every user.
@@ -260,10 +288,10 @@ class ElementwiseMetricK(MetricTopK):
 
         users = self._map_users(int_users)
 
-        return pd.DataFrame(dict(zip(self.col_names, (users, items, values))))
+        return dict(zip(self.col_names, (users, items, values)))
 
     @property
-    def value(self):
+    def macro_result(self):
         """Global metric value obtained by summing up scores for every user then taking the average over all users."""
         return self._scores.sum(axis=1).mean()
 
@@ -290,7 +318,7 @@ class ListwiseMetricK(MetricTopK):
         return row, col
 
     @property
-    def results(self):
+    def micro_result(self) -> dict[str, np.ndarray]:
         """Get the detailed results for this metric.
 
         Contains an entry for every user.
@@ -305,35 +333,10 @@ class ListwiseMetricK(MetricTopK):
 
         users = self._map_users(int_users)
 
-        return pd.DataFrame(dict(zip(self.col_names, (users, values))))
+        return dict(zip(self.col_names, (users, values)))
+    
 
     @property
-    def value(self):
+    def macro_result(self):
         """Global metric value obtained by taking the average over all users."""
         return self._scores.mean()
-
-
-class GlobalMetricK(MetricTopK):
-    """
-    Base class for all metrics that can only be calculated
-    as a global value across all items and users.
-
-    Examples are: Coverage
-
-    :param K: Size of the recommendation list consisting of the Top-K item predictions.
-    :type K: int
-    """
-
-    pass
-
-
-class FittedMetric(Metric, BaseEstimator):
-    """
-    Base class for all metrics that need to be fit on a training set
-    before they can be used.
-
-    Examples are: IntraListDiversityK, IPSHitRateK
-    """
-
-    def fit(self, X: csr_matrix):
-        pass

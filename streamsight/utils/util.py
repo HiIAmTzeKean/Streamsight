@@ -1,9 +1,14 @@
 import logging
-from typing import Optional, Union
+import logging.config
+import os
+from typing import Union
 
 import numpy as np
 import progressbar
+import yaml
 from scipy.sparse import csr_matrix
+
+from streamsight.utils.directory_tools import create_config_yaml, safe_dir
 
 logger = logging.getLogger(__name__)
 
@@ -93,3 +98,17 @@ class MyProgressBar():
             self.pbar.update(downloaded)
         else:
             self.pbar.finish()
+
+
+def prepare_logger(path) -> dict:
+    if not os.path.exists(path):
+        create_config_yaml(path)
+
+    with open(path, 'r') as stream:
+        config = yaml.load(stream, Loader=yaml.FullLoader)
+
+    dir_name = os.path.dirname(config['handlers']['file']['filename'])
+    safe_dir(dir_name)
+
+    logging.config.dictConfig(config)
+    return config

@@ -1,24 +1,24 @@
-import os
+"""
+Streamsight
+"""
+
 import logging
 import logging.config
-from pathlib import Path
-import yaml
 
-from streamsight.utils.directory_tools import create_config_yaml, safe_dir
-
-cwd = os.getcwd()
+# from streamsight.utils.directory_tools import create_config_yaml, safe_dir
+from streamsight.utils import prepare_logger
 LOGGING_CONFIG = "LOGGING_CONFIG.yaml"
 
-if not os.path.exists(LOGGING_CONFIG):
-    create_config_yaml(LOGGING_CONFIG)
+# if not os.path.exists(LOGGING_CONFIG):
+#     create_config_yaml(LOGGING_CONFIG)
 
-with open(LOGGING_CONFIG, 'r') as stream:
-    config = yaml.load(stream, Loader=yaml.FullLoader)
+# with open(LOGGING_CONFIG, 'r') as stream:
+#     config = yaml.load(stream, Loader=yaml.FullLoader)
 
-dir_name = os.path.dirname(config['handlers']['file']['filename'])
-safe_dir(dir_name)
-
-logging.config.dictConfig(config)
+# dir_name = os.path.dirname(config['handlers']['file']['filename'])
+# safe_dir(dir_name)
+prepare_logger(LOGGING_CONFIG)
+# logging.config.dictConfig(config)
 
 logger = logging.getLogger(__name__)
 logger.debug("Logging is configured.")

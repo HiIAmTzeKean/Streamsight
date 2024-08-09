@@ -1,7 +1,8 @@
-from abc import ABC, abstractmethod
 import logging
 import os
+from abc import ABC, abstractmethod
 from pathlib import Path
+import time
 from typing import Optional
 from urllib.request import urlretrieve
 from warnings import warn
@@ -13,25 +14,20 @@ from streamsight.preprocessing.filter import Filter
 from streamsight.preprocessing.preprocessor import DataFramePreprocessor
 from streamsight.utils.util import MyProgressBar
 
-"""
-The purpose of dataset is to provide meta data and to contain the data of the
-dataset that we are interested in. It will provide the specific details such as
-url to dataset and the configurations to load the dataset.
-
-To support the incremental training of the model, the class will contain 2 attr,
-`train_set` and `test_set`. These sets are provided to the recommender to be
-trained and tested on.
-"""
-
 logger = logging.getLogger(__name__)
 
 class Dataset(ABC):
-    """Represents a collaborative filtering dataset. Dataset must minimmally contain
+    """Represents a collaborative filtering dataset. Dataset must minimally contain
     user, item and timestamp columns.
     
+    ===========
     Assumption
-    ----------
-    New user, item ids contained increment in the order of time.
+    ===========
+    User/item ID increments in the order of time. This is an assumption that will
+    be made for the purposes of splitting the dataset and eventually passing
+    the dataset to the model. The ID incrementing in the order of time allows us
+    to set the shape of the currently known user and item matrix allowing easier
+    manipulation of the data by the evaluator. 
 
     :param filename: Name of the file, if no name is provided the dataset default will be used if known.
         If the dataset does not have a default filename, a ValueError will be raised.
@@ -108,9 +104,9 @@ class Dataset(ABC):
     def load(self,apply_filters=True) -> InteractionMatrix:
         """Loads data into an InteractionMatrix object.
 
-        Data is loaded into a DataFrame using the ``_load_dataframe`` function.
-        Resulting DataFrame is parsed into an ``InteractionMatrix`` object. If
-        ``apply_filters`` is set to True, the filters set will be applied to the
+        Data is loaded into a DataFrame using the :func:`_load_dataframe` function.
+        Resulting DataFrame is parsed into an :class:`InteractionMatrix` object. If
+        :data:`apply_filters` is set to True, the filters set will be applied to the
         dataset and mapping of user and item ids will be done. This is advised
         even if there is no filter set, as it will ensure that the user and item
         ids are incrementing in the order of time.
@@ -122,6 +118,7 @@ class Dataset(ABC):
         :rtype: InteractionMatrix
         """
         logger.info(f"{self.name} is loading dataset...")
+        start = time.time()
         df = self._load_dataframe()
         if apply_filters:
             logger.debug(f"{self.name} applying filters set.")
@@ -129,7 +126,9 @@ class Dataset(ABC):
         else:
             im = self._dataframe_to_matrix(df)
             warn("No filters applied, user and item ids may not be incrementing in the order of time. Classes that use this dataset may not work as expected.")
-        logger.info(f"{self.name} dataset loaded.")
+        
+        end = time.time()
+        logger.info(f"{self.name} dataset loaded - Took {end - start:.3}s")
         return im
     
     def _dataframe_to_matrix(self, df: pd.DataFrame) -> InteractionMatrix:

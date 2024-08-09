@@ -34,6 +34,7 @@ class Setting(ABC):
     :param item_user_based: Item or User based setting.
         Defaults to "user".
     :type item_user_based: Literal['user', 'item'], optional
+    :raises ValueError: Invalid value for item_user_based
     """
 
     def __init__(
@@ -46,15 +47,18 @@ class Setting(ABC):
             seed = np.random.get_state()[1][0]
         self.seed = seed
         
-        self._check_valid_item_user_based(item_user_based)
+        # self._check_valid_item_user_based(item_user_based)
+        if not ItemUserBasedEnum.has_value(item_user_based):
+            raise ValueError(f"Invalid value for item_user_based: {item_user_based}")
         self._item_user_based = ItemUserBasedEnum(item_user_based)
         self.prediction_data_processor = PredictionDataProcessor(self._item_user_based)
         
         self._num_split_set = 1
+        
         self._sliding_window_setting = False
+        self._split_complete = False
         """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
         self._num_full_interactions: int
-        self._split_complete = False
         self._unlabeled_data_series: InteractionMatrix
         self._unlabeled_data_frame: List[InteractionMatrix]
         self._ground_truth_data_series: InteractionMatrix
@@ -69,10 +73,6 @@ class Setting(ABC):
         self.top_K: int
         """Number of interaction per user that should be selected for evaluation purposes."""
         
-    def _check_valid_item_user_based(self, user_input):
-        if user_input not in ItemUserBasedEnum:
-            raise ValueError(f"Invalid value for item_user_based: {user_input}")
-
     @abstractmethod
     def _split(self, data_m: InteractionMatrix) -> None:
         """Abstract method to be implemented by the scenarios.
@@ -94,6 +94,7 @@ class Setting(ABC):
         :param data_m: Interaction matrix that should be split.
         :type data: InteractionMatrix
         """
+        logger.info("Splitting data...")
         self._num_full_interactions = data_m.num_interactions
         self._split(data_m)
 
@@ -101,7 +102,7 @@ class Setting(ABC):
         self._check_split()
 
         self._split_complete = True
-
+        
     @property
     def is_item_user_based(self) -> str:
         """Item or User based setting.
@@ -110,7 +111,12 @@ class Setting(ABC):
         :rtype: ItemUserBasedEnum
         """
         return self._item_user_based.value
-        
+    
+    @property
+    def is_sliding_window_setting(self) -> bool:
+        """Flag to indicate if the setting is a sliding window setting."""
+        return self._sliding_window_setting
+    
     @property
     @check_split_complete
     def background_data(self) -> InteractionMatrix:
@@ -185,6 +191,9 @@ class Setting(ABC):
         :return: _description_
         :rtype: List[InteractionMatrix]
         """
+        if not self._sliding_window_setting:
+            raise AttributeError(
+                "Incremental data is only available for sliding window setting.")
         return self._incremental_data_frame
 
     def _check_split(self):
@@ -226,7 +235,6 @@ class Setting(ABC):
         check_ratio("Background set", n_background,
                     self._num_full_interactions, 0.05)
 
-        # TODO check if len of ground truth and unlabeled is the same
         if not self._sliding_window_setting:
             n_unlabel = self._unlabeled_data_series.num_interactions
             n_ground_truth = self._ground_truth_data_series.num_interactions
@@ -342,4 +350,5 @@ class Setting(ABC):
         self._unlabeled_data_generator()
         self._ground_truth_data_generator()
         self._next_data_timestamp_limit_generator()
+        self._incremental_data_generator()
         logger.info("Data generators are reset.")
