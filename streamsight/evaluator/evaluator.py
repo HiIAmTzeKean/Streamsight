@@ -6,8 +6,11 @@ import pandas as pd
 from tqdm import tqdm
 
 from streamsight.algorithms.base import Algorithm
-from streamsight.evaluator.util import MetricAccumulator, MetricLevelEnum
+from streamsight.evaluator.accumulator import (MacroMetricAccumulator,
+                                               MicroMetricAccumulator)
+from streamsight.evaluator.util import MetricLevelEnum
 from streamsight.matrix.interaction_matrix import InteractionMatrix
+from streamsight.metrics.base import Metric
 from streamsight.registries.registry import (ALGORITHM_REGISTRY,
                                              METRIC_REGISTRY, AlgorithmEntry,
                                              MetricEntry)
@@ -39,7 +42,8 @@ class Evaluator(object):
         self.metric_entries = metric_entries
         
         self.algorithm: List[Algorithm]
-        self.metric_acc: MetricAccumulator
+        self._micro_acc: MicroMetricAccumulator
+        self._macro_acc: MacroMetricAccumulator
         self.setting = setting
         """Accumulator for computed metrics"""
         
@@ -68,13 +72,6 @@ class Evaluator(object):
         """
         return (len(self.known_user), len(self.known_item))
 
-    def global_metric_results(self):
-        """Global results of the metrics computed.
-        
-        This property returns the global results of the metrics computed in the evaluator.
-        """
-        return self.metric_acc.df_global_metric()
-    
     def metric_results(self,
                        level:Union[Literal["micro","macro"], MetricLevelEnum]="macro",
                        only_current_frame=False,
@@ -87,10 +84,12 @@ class Evaluator(object):
         if only_current_frame:
             timestamp = self._current_timestamp
 
-        return self.metric_acc.df_metric(level=level,
-                                         filter_algo=filter_algo,
-                                         filter_timestamp=timestamp)
-
+        acc = self._macro_acc
+        if level == MetricLevelEnum.MICRO:
+            acc = self._micro_acc
+        
+        return acc.df_metric(filter_algo=filter_algo,
+                             filter_timestamp=timestamp)
     
     def _update_known_user_item_base(self, data:InteractionMatrix):
         """Updates the known user and item set with the data.
@@ -154,8 +153,19 @@ class Evaluator(object):
         self._instantiate_algorithm()
         self._ready_algo()
         logger.info(f"Algorithms trained with background data...")
-        self.metric_acc = MetricAccumulator()
+        
+        self._micro_acc = MicroMetricAccumulator()
+        self._macro_acc = MacroMetricAccumulator()
+        for algo in self.algorithm:
+            for metric_entry in self.metric_entries:
+                metric_cls = METRIC_REGISTRY.get(metric_entry.name)
+                if metric_entry.K is not None:
+                    metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=None,cache=True)
+                else:
+                    metric:Metric = metric_cls(timestamp_limit=None,cache=True)
+                self._macro_acc.add(metric=metric, algorithm_name=algo.identifier)
         logger.info(f"Metric accumulator instantiated...")
+        
         self.setting.reset_data_generators()
         logger.info(f"Setting data generators ready...")
     
@@ -186,15 +196,19 @@ class Evaluator(object):
         
         for algo in self.algorithm:
             X_pred = algo.predict(unlabeled_data)
-            
+            X_true = ground_truth_data.binary_values
             for metric_entry in self.metric_entries:
                 metric_cls = METRIC_REGISTRY.get(metric_entry.name)
                 if metric_entry.K is not None:
-                    metric = metric_cls(K=metric_entry.K, timestamp_limit=current_timestamp)
+                    metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=current_timestamp)
                 else:
-                    metric = metric_cls(timestamp_limit=current_timestamp)
-                metric.calculate(ground_truth_data.binary_values, X_pred)
-                self.metric_acc.add(metric=metric, algorithm_name=algo.identifier)
+                    metric:Metric = metric_cls(timestamp_limit=current_timestamp)
+                metric.calculate(X_true, X_pred)
+                self._micro_acc.add(metric=metric, algorithm_name=algo.identifier)
+            
+            # macro metric purposes
+            for item in self._macro_acc[algo.identifier]:
+                self._macro_acc[algo.identifier][item].cache_values(X_true,X_pred)
         
         self._reset_unknown_user_item_base()
     
@@ -251,8 +265,7 @@ class Evaluator(object):
         :type num_steps: int
         """
         for _ in tqdm(range(num_steps)):
-            self.run_step()
-        
+            self.run_step()      
 
     def run(self):
         """Run the evaluator across all steps and splits
