@@ -1,10 +1,3 @@
-# RecPack, An Experimentation Toolkit for Top-N Recommendation
-# Copyright (C) 2020  Froomle N.V.
-# License: GNU AGPLv3 - https://gitlab.com/recpack-maintainers/recpack/-/blob/master/LICENSE
-# Author:
-#   Lien Michiels
-#   Robin Verachtert
-
 import logging
 from typing import Optional
 
@@ -33,27 +26,19 @@ class PrecisionK(ListwiseMetricK):
     .. math::
 
         \\text{Precision}(u) = \\frac{\\sum\\limits_{i \\in \\text{Top-K}(u)} y^{true}_{u,i}}{K}\\
-        
-        
-        Precision_{sys} - micro = \\frac{\\sum_{u \\in U} tp_u}{\\sum_{u \\in U} tp_u + \\sum_{u \\in U} fp_u}
-        
     
-        Precision_{sys} - macro = \\frac{\\sum_{u \\in U} Precision_u}{|U|}
-
+    ref: RecPack
     
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
     """
-    
-    # def __init__(self, K=10, timestamp_limit: Optional[int] = None):
-    #     super().__init__(K,timestamp_limit)
 
     def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:
         scores = scipy.sparse.lil_matrix(y_pred_top_K.shape)
 
         # Elementwise multiplication of top K predicts and true interactions
         scores[y_pred_top_K.multiply(y_true).astype(bool)] = 1
-
+        # ? csr to lil is costly, other alternatives?
         scores = scores.tocsr()
 
         self._scores = csr_matrix(scores.sum(axis=1)) / self.K

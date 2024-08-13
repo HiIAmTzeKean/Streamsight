@@ -22,13 +22,12 @@ class RecallK(ListwiseMetricK):
 
         \\text{Recall}(u) = \\frac{\\sum\\limits_{i \\in \\text{Top-K}(u)} y^{true}_{u,i} }{\\sum\\limits_{j \\in I} y^{true}_{u,j}}
 
+    ref: RecPack
+    
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
     """
-
-    # def __init__(self, K=10, timestamp_limit: Optional[int] = None):
-    #     super().__init__(K,timestamp_limit)
-
+    
     def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:
         scores = scipy.sparse.lil_matrix(y_pred_top_K.shape)
 

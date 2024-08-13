@@ -2,10 +2,10 @@ import logging
 from typing import Dict, Optional, Tuple
 
 import numpy as np
-from scipy.sparse import csr_matrix
-import pandas as pd
+from scipy.sparse import csr_matrix, vstack
 
 from streamsight.algorithms.utils import get_top_K_ranks
+from streamsight.utils.util import add_columns_to_csr_matrix
 
 
 logger = logging.getLogger(__name__)
@@ -30,21 +30,29 @@ class Metric:
         
         self._scores: csr_matrix
         self._value: float
-        self._y_true: csr_matrix = None
-        self._y_pred: csr_matrix = None
+        self._y_true: csr_matrix
+        self._y_pred: csr_matrix
         
-    @property
-    def identifier(self):
-        """Identifier of the metric."""
-        if self._timestamp_limit is None:
-            return self.__class__.__name__ + "()"
-        
-        return self.__class__.__name__ + f"(t<={self._timestamp_limit})"
-    
     @property
     def name(self):
         """Name of the metric."""
         return self.__class__.__name__
+    
+    @property
+    def params(self):
+        """Parameters of the metric."""
+        return {"timestamp_limit": self._timestamp_limit}
+    
+    def get_params(self):
+        """Get the parameters of the metric."""
+        return self.params
+    
+    @property
+    def identifier(self):
+        """Name of the metric."""
+        # return f"{super().identifier[:-1]},K={self.K})"
+        paramstring = ",".join((f"{k}={v}" for k, v in self.get_params().items() if v is not None))
+        return self.__class__.__name__ + "(" + paramstring + ")"
 
     def _calculate(self, y_true, y_pred) -> None:
         raise NotImplementedError()
@@ -63,23 +71,32 @@ class Metric:
         self._set_shape(y_true)
         self._calculate(y_true, y_pred)
 
-    def cache_values(self, y_true, y_pred):
+    def cache_values(self, y_true:csr_matrix, y_pred:csr_matrix):
         if not self.cache:
             raise ValueError("Caching is disabled for this metric.")
         
-        if self._y_true is None:
+        if not hasattr(self, "_y_true") or not hasattr(self, "_y_pred"):
             self._y_true = y_true
             self._y_pred = y_pred
             return
         
-        # TODO is this most efficient?
-        self._y_true = csr_matrix(np.vstack((self._y_true.toarray(), y_true.toarray())))
-        self._y_pred = csr_matrix(np.vstack((self._y_pred.toarray(), y_pred.toarray())))
+        # reshape old y_true and y_pred to add the new columns
+        
+        # self._y_true = csr_matrix((self._y_true.data, self._y_true.indices, self._y_true.indptr),
+        #                           (self._y_true.shape[0], y_true.shape[1]))
+        #                           (self._y_pred.shape[0], y_pred.shape[1]))
+        if y_true.shape[1] > self._y_true.shape[1]:
+            self._y_true = add_columns_to_csr_matrix(self._y_true, y_true.shape[1]-self._y_true.shape[1])
+            self._y_pred = add_columns_to_csr_matrix(self._y_pred, y_pred.shape[1]-self._y_pred.shape[1])
+        #? np.vstack([self._y_true.toarray(), y_true.toarray()]) faster ?
+        self._y_true = vstack([self._y_true, y_true])
+        
+        # self._y_pred = csr_matrix((self._y_pred.data, self._y_pred.indices, self._y_pred.indptr),
+        self._y_pred = vstack([self._y_pred, y_pred])
     
     def calculate_cached(self):
         if not self.cache:
             raise ValueError("Caching is disabled for this metric.")
-        
         self.calculate(self._y_true, self._y_pred)
 
     @property
@@ -89,7 +106,7 @@ class Metric:
         :return: Detailed results for the metric.
         :rtype: Dict[str, np.ndarray]
         """
-        return {"score": [self.macro_result]}
+        return {"score": np.array(self.macro_result)}
 
     @property
     def macro_result(self) -> float:
@@ -116,7 +133,7 @@ class Metric:
         return self._num_users
 
     @property
-    def _indices(self) -> Tuple[np.array, np.array]:
+    def _indices(self) -> Tuple[np.ndarray, np.ndarray]:
         """Indices in the prediction matrix for which scores were computed."""
         row, col = np.indices((self._num_users, self._num_items))
 
@@ -193,9 +210,9 @@ class MetricTopK(Metric):
         return f"{super().name}_{self.K}"
     
     @property
-    def identifier(self):
-        """Name of the metric."""
-        return f"{super().identifier[:-1]},K={self.K})"
+    def params(self):
+        """Parameters of the metric."""
+        return super().params | {"K": self.K}
 
     @property
     def _indices(self):
