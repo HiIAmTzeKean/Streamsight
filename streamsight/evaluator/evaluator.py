@@ -155,6 +155,7 @@ class Evaluator(object):
         logger.info(f"Algorithms trained with background data...")
         
         self._micro_acc = MicroMetricAccumulator()
+        
         self._macro_acc = MacroMetricAccumulator()
         for algo in self.algorithm:
             for metric_entry in self.metric_entries:
@@ -194,9 +195,16 @@ class Evaluator(object):
                                         drop_unknown_user=self.ignore_unknown_user,
                                         drop_unknown_item=self.ignore_unknown_item)
         
+        X_true = ground_truth_data.binary_values
         for algo in self.algorithm:
             X_pred = algo.predict(unlabeled_data)
-            X_true = ground_truth_data.binary_values
+            
+            if X_pred.shape != X_true.shape:
+                # shapes might not be the same in the case of dropping unknowns
+                # from the ground truth data. We ensure that the same unknowns
+                # are dropped from the predictions
+                X_pred = X_pred[:X_true.shape[0], :X_true.shape[1]]
+
             for metric_entry in self.metric_entries:
                 metric_cls = METRIC_REGISTRY.get(metric_entry.name)
                 if metric_entry.K is not None:
@@ -207,8 +215,7 @@ class Evaluator(object):
                 self._micro_acc.add(metric=metric, algorithm_name=algo.identifier)
             
             # macro metric purposes
-            for item in self._macro_acc[algo.identifier]:
-                self._macro_acc[algo.identifier][item].cache_values(X_true,X_pred)
+            self._macro_acc.cache_results(algo.identifier, X_true, X_pred)
         
         self._reset_unknown_user_item_base()
     

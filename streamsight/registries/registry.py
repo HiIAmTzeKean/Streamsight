@@ -97,17 +97,17 @@ class DatasetRegistry(Registry):
 ALGORITHM_REGISTRY = AlgorithmRegistry()
 """Registry for algorithms.
 
-Contains the Recpack algorithms by default,
+Contains the streamsight algorithms by default,
 and allows registration of new algorithms via the `register` function.
 
 Example::
 
-    from recpack.pipelines import ALGORITHM_REGISTRY
+    from streamsight.pipelines import ALGORITHM_REGISTRY
 
     # Construct an ItemKNN object with parameter K=20
     algo = ALGORITHM_REGISTRY.get('ItemKNN')(K=20)
 
-    from recpack.algorithms import ItemKNN
+    from streamsight.algorithms import ItemKNN
     ALGORITHM_REGISTRY.register('HelloWorld', ItemKNN)
 
     # Also construct an ItemKNN object with parameter K=20
@@ -117,17 +117,17 @@ Example::
 METRIC_REGISTRY = MetricRegistry()
 """Registry for metrics.
 
-Contains the Recpack metrics by default,
+Contains the streamsight metrics by default,
 and allows registration of new metrics via the `register` function.
 
 Example::
 
-    from recpack.pipelines import METRIC_REGISTRY
+    from streamsight.pipelines import METRIC_REGISTRY
 
     # Construct a Recall object with parameter K=20
     algo = METRIC_REGISTRY.get('Recall')(K=20)
 
-    from recpack.algorithms import Recall
+    from streamsight.algorithms import Recall
     METRIC_REGISTRY.register('HelloWorld', Recall)
 
     # Also construct a Recall object with parameter K=20
@@ -139,17 +139,17 @@ Example::
 DATASET_REGISTRY = DatasetRegistry()
 """Registry for datasets.
 
-Contains the Recpack metrics by default,
+Contains the streamsight metrics by default,
 and allows registration of new metrics via the `register` function.
 
 Example::
 
-    from recpack.pipelines import METRIC_REGISTRY
+    from streamsight.pipelines import METRIC_REGISTRY
 
     # Construct a Recall object with parameter K=20
     algo = METRIC_REGISTRY.get('Recall')(K=20)
 
-    from recpack.algorithms import Recall
+    from streamsight.algorithms import Recall
     METRIC_REGISTRY.register('HelloWorld', Recall)
 
     # Also construct a Recall object with parameter K=20
