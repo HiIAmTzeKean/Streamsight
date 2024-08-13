@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 import pandas as pd
 
@@ -10,6 +9,7 @@ class Filter(ABC):
     A filter needs to implement an ``apply`` method,
     which takes as input a pandas DataFrame, and returns a processed pandas DataFrame.
     """
+
     @abstractmethod
     def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply Filter to the DataFrame passed.
@@ -22,6 +22,7 @@ class Filter(ABC):
     def __str__(self):
         attrs = self.__dict__
         return f"{self.__class__.__name__}({', '.join((f'{k}={v}' for k, v in attrs.items()))})"
+
 
 class MinItemsPerUser(Filter):
     """Require that a user has interacted with a minimum number of items.
@@ -56,6 +57,8 @@ class MinItemsPerUser(Filter):
             else df.drop_duplicates([self.user_ix, self.item_ix])[self.user_ix]
         )
         cnt_items_per_user = uids.value_counts()
-        users_of_interest = list(cnt_items_per_user[cnt_items_per_user >= self.min_iu].index)
+        users_of_interest = list(
+            cnt_items_per_user[cnt_items_per_user >= self.min_iu].index
+        )
 
         return df[df[self.user_ix].isin(users_of_interest)].copy()
