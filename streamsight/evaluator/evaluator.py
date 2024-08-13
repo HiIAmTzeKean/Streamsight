@@ -14,7 +14,7 @@ from streamsight.metrics.base import Metric
 from streamsight.registries.registry import (ALGORITHM_REGISTRY,
                                              METRIC_REGISTRY, AlgorithmEntry,
                                              MetricEntry)
-from streamsight.setting.base_setting import Setting
+from streamsight.settings.base_setting import Setting
 
 logger = logging.getLogger(__name__)
 
@@ -127,11 +127,11 @@ class Evaluator(object):
     def _ready_algo(self):
         """Train the algorithms with the background data.
         
-        This method should be called after `_instantiate_algorithm`. The
+        This method should be called after :meth:`_instantiate_algorithm()`. The
         algorithms are trained with the background data, and the set of known
         user/item is updated.
 
-        :raises ValueError: _description_
+        :raises ValueError: If algorithm is not instantiated
         """
         if not hasattr(self, "algorithm"):
             raise ValueError("Algorithm not instantiated")
@@ -273,7 +273,7 @@ class Evaluator(object):
         Runs all 3 phases across all splits (if there are multiple splits).
         This method should be called when the programmer wants to step through
         all phases and splits to arrive to the metrics computed. An alternative
-        to running through all splits is to call `run_step()` method which runs
+        to running through all splits is to call :meth:`run_step` method which runs
         only one step at a time.
         """
         self._ready_evaluator()
