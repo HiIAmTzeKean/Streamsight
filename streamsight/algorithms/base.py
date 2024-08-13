@@ -2,15 +2,16 @@ import logging
 import time
 from abc import ABC, abstractmethod
 
+import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 
 from streamsight.matrix import (InteractionMatrix, ItemUserBasedEnum,
                                 TimestampAttributeMissingError, to_csr_matrix)
+from streamsight.utils.util import add_rows_to_csr_matrix
 
 logger = logging.getLogger(__name__)
-# Matrix = Union[InteractionMatrix, csr_matrix]
 
 
 class Algorithm(BaseEstimator,ABC):
@@ -195,10 +196,16 @@ class Algorithm(BaseEstimator,ABC):
         prev_interaction = self._transform_predict_input(prev_interaction)
 
         X_pred = self._predict(prev_interaction)
-
-        #TODO what to do with to_predict_frame
-        #? this is something that i do not really need to deal with since this is
-        #? the job of the algo and not the evaluator
-        # self._check_prediction(X_pred, X)
-
+        known_shape = X_pred.shape
+        
+        # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
+        max_user_id  = to_predict_frame.max_user_id + 1 
+        max_item_id  = to_predict_frame.max_item_id + 1 
+        intended_shape = (max(max_user_id, X.shape[0]), max(max_item_id, X.shape[1]))
+        #? did not add col which represents the unknown items
+        X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0]-known_shape[0])
+        # pad users with random items
+        for user_id in to_predict_frame.user_ids:
+            if user_id >= known_shape[0]:
+                X_pred[user_id, :] = np.random.rand(1, X_pred.shape[1])
         return X_pred
