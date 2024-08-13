@@ -77,7 +77,7 @@ class SlidingWindowSetting(Setting):
             )
 
         self._background_data, _ = self._background_splitter.split(data)
-        self._ground_truth_data_frame, self._unlabeled_data_frame, self._data_timestamp_limit, self._incremental_data = [], [], [], []
+        self._ground_truth_data, self._unlabeled_data, self._data_timestamp_limit, self._incremental_data = [], [], [], []
 
         # sub_time is the subjugate time point that the splitter will slide over the data
         sub_time = self.t
@@ -95,8 +95,8 @@ class SlidingWindowSetting(Setting):
             unlabeled_set, ground_truth = self.prediction_data_processor.process(past_interaction,
                                                                                  future_interaction,
                                                                                  self.top_K)
-            self._unlabeled_data_frame.append(unlabeled_set)
-            self._ground_truth_data_frame.append(ground_truth)
+            self._unlabeled_data.append(unlabeled_set)
+            self._ground_truth_data.append(ground_truth)
             
             self._incremental_data.append(future_interaction)
             
@@ -104,7 +104,7 @@ class SlidingWindowSetting(Setting):
             pbar.update(1)
         pbar.close()
 
-        self._num_split_set = len(self._unlabeled_data_frame)
+        self._num_split_set = len(self._unlabeled_data)
         logger.info(
             f"Finished split with window size {self.window_size} seconds. "
             f"Number of splits: {self._num_split_set}"

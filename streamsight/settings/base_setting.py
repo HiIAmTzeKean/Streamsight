@@ -63,12 +63,9 @@ class Setting(ABC):
         self._split_complete = False
         """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
         self._num_full_interactions: int
-        self._unlabeled_data_series: InteractionMatrix
-        self._unlabeled_data_frame: List[InteractionMatrix]
-        self._ground_truth_data_series: InteractionMatrix
-        """Data containing the ground truth interactions to :attr:`_unlabeled_data_series`."""
-        self._ground_truth_data_frame: List[InteractionMatrix]
-        """List of ground truth data. Similar to :attr:`_ground_truth_data_series` but unique to :class:`SlidingWindowSetting`."""
+        self._unlabeled_data: Union[InteractionMatrix, List[InteractionMatrix]]
+        self._ground_truth_data: Union[InteractionMatrix, List[InteractionMatrix]]
+        """Data containing the ground truth interactions to :attr:`_unlabeled_data`. If :class:`SlidingWindowSetting`, then it will be a list of :class:`InteractionMatrix`."""
         self._incremental_data: List[InteractionMatrix]
         """Data that is used to incrementally update the model. Unique to :class:`SlidingWindowSetting`."""
         self._background_data: InteractionMatrix
@@ -188,8 +185,8 @@ class Setting(ABC):
         self._check_split_complete()
         
         if not self._sliding_window_setting:
-            return self._unlabeled_data_series
-        return self._unlabeled_data_frame
+            return self._unlabeled_data
+        return self._unlabeled_data
 
     @property
     def ground_truth_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
@@ -204,8 +201,8 @@ class Setting(ABC):
         self._check_split_complete()
         
         if not self._sliding_window_setting:
-            return self._ground_truth_data_series
-        return self._ground_truth_data_frame
+            return self._ground_truth_data
+        return self._ground_truth_data
 
     @property
     def incremental_data(self) -> List[InteractionMatrix]:
@@ -232,11 +229,11 @@ class Setting(ABC):
         assert (hasattr(self, "_background_data")
                 and self._background_data is not None)
 
-        assert (hasattr(self, "_unlabeled_data_series") and self._unlabeled_data_series is not None) \
-            or (hasattr(self, "_unlabeled_data_frame") and self._unlabeled_data_frame is not None)
+        assert (hasattr(self, "_unlabeled_data") and self._unlabeled_data is not None) \
+            or (hasattr(self, "_unlabeled_data") and self._unlabeled_data is not None)
 
-        assert (hasattr(self, "_ground_truth_data_series") and self._ground_truth_data_series is not None) \
-            or (hasattr(self, "_ground_truth_data_frame") and self._ground_truth_data_frame is not None)
+        assert (hasattr(self, "_ground_truth_data") and self._ground_truth_data is not None) \
+            or (hasattr(self, "_ground_truth_data") and self._ground_truth_data is not None)
         logger.debug("Split attributes are set.")
 
         self._check_size()
@@ -263,8 +260,8 @@ class Setting(ABC):
                     self._num_full_interactions, 0.05)
 
         if not self._sliding_window_setting:
-            n_unlabel = self._unlabeled_data_series.num_interactions
-            n_ground_truth = self._ground_truth_data_series.num_interactions
+            n_unlabel = self._unlabeled_data.num_interactions
+            n_ground_truth = self._ground_truth_data.num_interactions
 
             check_empty("Unlabeled set", n_unlabel)
             check_empty("Ground truth set", n_ground_truth)
@@ -272,8 +269,8 @@ class Setting(ABC):
 
         else:
             for dataset_idx in range(self._num_split_set):
-                n_unlabel = self._unlabeled_data_frame[dataset_idx].num_interactions
-                n_ground_truth = self._ground_truth_data_frame[dataset_idx].num_interactions
+                n_unlabel = self._unlabeled_data[dataset_idx].num_interactions
+                n_ground_truth = self._ground_truth_data[dataset_idx].num_interactions
 
                 check_empty(f"Unlabeled set[{dataset_idx}]", n_unlabel)
                 check_empty(f"Ground truth set[{dataset_idx}]", n_ground_truth)
@@ -289,7 +286,7 @@ class Setting(ABC):
         the generator and to allow for easy resetting when needed.
         """
         self.unlabeled_data_iter: Generator[InteractionMatrix] = self._create_generator(
-            "_unlabeled_data_series", "_unlabeled_data_frame")
+            "_unlabeled_data", "_unlabeled_data")
     
     def _incremental_data_generator(self):
         """Creates generator for data
@@ -313,7 +310,7 @@ class Setting(ABC):
         the generator and to allow for easy resetting when needed.
         """
         self.ground_truth_data_iter: Generator[InteractionMatrix] = self._create_generator(
-            "_ground_truth_data_series", "_ground_truth_data_frame")
+            "_ground_truth_data", "_ground_truth_data")
     # TODO consider better naming
     def _next_data_timestamp_limit_generator(self):
         self.data_timestamp_limit_iter: Generator[int] = self._create_generator(

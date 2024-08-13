@@ -80,7 +80,7 @@ class SingleTimePointSetting(Setting):
 
         self._background_data, _ = self._background_splitter.split(data)
         past_interaction, future_interaction = self._splitter.split(data)
-        self._unlabeled_data_series, self._ground_truth_data_series = (
+        self._unlabeled_data, self._ground_truth_data = (
             self.prediction_data_processor.process(
                 past_interaction, future_interaction, self.top_K
             )
