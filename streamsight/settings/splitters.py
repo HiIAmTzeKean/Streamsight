@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
-from streamsight.matrix import InteractionMatrix, ItemUserBasedEnum
+from streamsight.matrix import InteractionMatrix
 
 logger = logging.getLogger(__name__)
 
@@ -125,9 +125,6 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
     :param n_seq_data: Number of last interactions to provide as unlabeled data
         for model to make prediction.
     :type n_seq_data: int, optional
-    :param item_user_based: Item or User based setting.
-        Defaults to USER.
-    :type item_user_based: ItemUserBasedEnum, optional
     :return: A 2-tuple containing the ``past_interaction`` and ``future_interaction`` matrices.
     :rtype: Tuple[InteractionMatrix, InteractionMatrix]
     """
@@ -137,11 +134,9 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
         t,
         t_upper: Optional[int] = None,
         n_seq_data: int = 1,
-        item_user_based: ItemUserBasedEnum = ItemUserBasedEnum.USER,
     ):
         super().__init__(t, None, t_upper)
         self.n_seq_data = n_seq_data
-        self.item_user_based = item_user_based
 
     def update_split_point(self, t: int):
         logger.debug(f"{self.identifier} - Updating split point to t={t}")
@@ -166,17 +161,6 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
                 self.t + self.t_upper
             ).timestamps_gte(self.t)
         
-        # ? Is there a value in this
-        # if self.item_user_based == ItemUserBasedEnum.USER:
-        #     past_interaction = data.get_users_n_last_interaction(
-        #         self.n_seq_data, self.t, future_interaction.user_ids
-        #     )
-        # else:
-        #     # predict item based on user interaction
-        #     past_interaction = data.get_items_n_last_interaction(
-        #         self.n_seq_data, self.t
-        #     )
-
         past_interaction = data.get_users_n_last_interaction(
                 self.n_seq_data, self.t,future_interaction.user_ids
             )

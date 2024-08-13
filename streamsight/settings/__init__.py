@@ -1,4 +1,6 @@
 """
+.. currentmodule:: streamsight.settings
+
 Setting
 ------------
 
@@ -16,8 +18,6 @@ the following components:
     
 - ground_truth_data: Data that is used to evaluate the algorithm. This data\
     will contain the actual interactions.
-
-.. currentmodule:: streamsight.setting
 
 .. autosummary::
     :toctree: generated/
@@ -49,8 +49,6 @@ may split using a different or additional criteria other than timestamp. The
 programmer instead of redefining the entire setting can just implement a new
 splitter and reuse the existing setting.
 
-.. currentmodule:: streamsight.setting.splitters
-
 .. autosummary::
     :toctree: generated/
 
@@ -59,8 +57,8 @@ splitter and reuse the existing setting.
 
 Processor
 ------------
+The processor module contains classes that are used to process the data.
 
-.. currentmodule:: streamsight.setting.processor
 
 .. autosummary::
     :toctree: generated/
@@ -69,9 +67,13 @@ Processor
     PredictionDataProcessor
 """
 
-
-from streamsight.setting.base_setting import Setting
-from streamsight.setting.single_time_point_setting import SingleTimePointSetting
-from streamsight.setting.sliding_window_setting import SlidingWindowSetting
-from streamsight.setting.processor import Processor, PredictionDataProcessor
-from streamsight.setting.splitters import TimestampSplitter, NPastInteractionTimestampSplitter
+from streamsight.settings.base_setting import Setting
+from streamsight.settings.single_time_point_setting import (
+    SingleTimePointSetting,
+)
+from streamsight.settings.sliding_window_setting import SlidingWindowSetting
+from streamsight.settings.processor import Processor, PredictionDataProcessor
+from streamsight.settings.splitters import (
+    TimestampSplitter,
+    NPastInteractionTimestampSplitter,
+)

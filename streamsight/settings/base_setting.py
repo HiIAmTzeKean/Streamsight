@@ -1,12 +1,12 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Generator, List, Literal, Optional, Tuple, Union
+from typing import Generator, List, Optional, Union
 from warnings import warn
 
 import numpy as np
 
-from streamsight.matrix import InteractionMatrix, ItemUserBasedEnum
-from streamsight.setting.processor import PredictionDataProcessor
+from streamsight.matrix import InteractionMatrix
+from streamsight.settings.processor import PredictionDataProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,11 @@ class EOWSetting(Exception):
         super().__init__(self.message)
 
 def check_split_complete(func):
+    """Check split complete decorator.
+    
+    Decorator to check if the split is complete before accessing the property.
+    To be used on :class:`Setting` class methods.
+    """
     def check_split_for_func(self):
         if not self.is_ready:
             raise KeyError(
@@ -27,31 +32,30 @@ def check_split_complete(func):
 
 class Setting(ABC):
     """Base class for defining an evaluation setting.
+    
+    Core attribute
+    ====================
+    - :attr:`background_data`: Data used for training the model. Interval is `[0, background_t)`.
+    - :attr:`unlabeled_data`: List of unlabeled data. Each element is a :class:`InteractionMatrix` object of interval `[0, t)`.
+    - :attr:`ground_truth_data`: List of ground truth data. Each element is a :class:`InteractionMatrix` object of interval `[t, t + window_size)`.
+    - :attr:`incremental_data`: List of data that is used to incrementally update the model. Each element is a :class:`InteractionMatrix` object of interval `[t, t + window_size)`. Unique to :class:`SlidingWindowSetting`.
+    - :attr:`data_timestamp_limit`: List of timestamps that the splitter will slide over the data.
 
     :param seed: Seed for randomisation parts of the setting.
         Defaults to None, so random seed will be generated.
     :type seed: int, optional
-    :param item_user_based: Item or User based setting.
-        Defaults to "user".
-    :type item_user_based: Literal['user', 'item'], optional
-    :raises ValueError: Invalid value for item_user_based
     """
 
     def __init__(
         self,
         seed: Optional[int] = None,
-        item_user_based: Literal['user', 'item'] = "user"
     ):
         if seed is None:
             # Set seed if it was not set before.
             seed = np.random.get_state()[1][0]
         self.seed = seed
-        
-        # self._check_valid_item_user_based(item_user_based)
-        if not ItemUserBasedEnum.has_value(item_user_based):
-            raise ValueError(f"Invalid value for item_user_based: {item_user_based}")
-        self._item_user_based = ItemUserBasedEnum(item_user_based)
-        self.prediction_data_processor = PredictionDataProcessor(self._item_user_based)
+    
+        self.prediction_data_processor = PredictionDataProcessor()
         
         self._num_split_set = 1
         
@@ -62,33 +66,36 @@ class Setting(ABC):
         self._unlabeled_data_series: InteractionMatrix
         self._unlabeled_data_frame: List[InteractionMatrix]
         self._ground_truth_data_series: InteractionMatrix
+        """Data containing the ground truth interactions to :attr:`_unlabeled_data_series`."""
         self._ground_truth_data_frame: List[InteractionMatrix]
-        self._incremental_data_frame: List[InteractionMatrix]
-        """Data that is used to incrementally update the model. Unique to sliding window setting."""
+        """List of ground truth data. Similar to :attr:`_ground_truth_data_series` but unique to :class:`SlidingWindowSetting`."""
+        self._incremental_data: List[InteractionMatrix]
+        """Data that is used to incrementally update the model. Unique to :class:`SlidingWindowSetting`."""
         self._background_data: InteractionMatrix
+        """Data used as the initial set of interactions to train the model."""
         self._data_timestamp_limit: Union[int, List[int]]
         """This is the limit of the data in the corresponding split."""
         self.n_seq_data: int
-        """Number of last sequential interactions to provide as unlabeled data for model to make prediction."""
+        """Number of last sequential interactions to provide in :attr:`unlabeled_data` as unlabeled data for model to make prediction."""
         self.top_K: int
-        """Number of interaction per user that should be selected for evaluation purposes."""
+        """Number of interaction per user that should be selected for evaluation purposes in :attr:`ground_truth_data`."""
         
     @abstractmethod
     def _split(self, data_m: InteractionMatrix) -> None:
         """Abstract method to be implemented by the scenarios.
 
-        Splits the data and assigns to :attr:``background_data``,
-        :attr:``ground_truth_data``, :attr:``unlabeled_data``
+        Splits the data and assigns to :attr:`background_data`,
+        :attr:`ground_truth_data`, :attr:`unlabeled_data`
 
         :param data_m: Interaction matrix to be split.
         :type data_m: InteractionMatrix
         """
 
     def split(self, data_m: InteractionMatrix) -> None:
-        """Splits ``data_m`` according to the scenario.
+        """Splits `data_m` according to the scenario.
 
-        After splitting properties :attr:``training_data``,
-        :attr:``validation_data`` and :attr:``test_data`` can be used
+        After splitting properties :attr:`training_data`,
+        :attr:`validation_data` and :attr:`test_data` can be used
         to retrieve the splitted data.
 
         :param data_m: Interaction matrix that should be split.
@@ -102,23 +109,47 @@ class Setting(ABC):
         self._check_split()
 
         self._split_complete = True
+    
+    def _check_split_complete(self):
+        """Check if the setting is ready to be used for evaluation.
+
+        :raises KeyError: If the setting is not ready to be used for evaluation.
+        """
+        if not self.is_ready:
+            raise KeyError(f"Setting has not been split yet. Call split() method before accessing the property.")
         
     @property
-    def is_item_user_based(self) -> str:
-        """Item or User based setting.
+    def num_split(self) -> int:
+        """Number of splits created from dataset.
+        
+        This property defaults to 1 (no splits on training set) on a typical setting.
+        Usually for the :class:`SlidingWindowSetting` this property will be greater than 1
+        if there are multiple splits created from the sliding window on the dataset.
 
-        :return: Item or User based setting.
-        :rtype: ItemUserBasedEnum
+        :return: Number of splits created from dataset.
+        :rtype: int
         """
-        return self._item_user_based.value
-    
+        return self._num_split_set
+
+    @property
+    def is_ready(self) -> bool:
+        """Flag on setting if it is ready to be used for evaluation.
+        
+        :return: If the setting is ready to be used for evaluation.
+        :rtype: bool
+        """
+        return self._split_complete
+
     @property
     def is_sliding_window_setting(self) -> bool:
-        """Flag to indicate if the setting is a sliding window setting."""
+        """Flag to indicate if the setting is :class:`SlidingWindowSetting`.
+        
+        :return: If the setting is :class:`SlidingWindowSetting`.
+        :rtype: bool
+        """
         return self._sliding_window_setting
     
     @property
-    @check_split_complete
     def background_data(self) -> InteractionMatrix:
         """Background data provided for the model for the initial training.
         
@@ -127,30 +158,22 @@ class Setting(ABC):
         :return: Interaction Matrix of training interactions.
         :rtype: InteractionMatrix
         """
+        self._check_split_complete()
+        
         return self._background_data
 
     @property
-    @check_split_complete
     def data_timestamp_limit(self) -> Union[int, List[int]]:
         """The timestamp limit of the data in the corresponding split.
 
         :return: Timestamp limit of the data in the corresponding split.
         :rtype: Union[int, List[int]]
         """
+        self._check_split_complete()
+        
         return self._data_timestamp_limit
 
     @property
-    def num_split(self) -> int:
-        """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
-        return self._num_split_set
-
-    @property
-    def is_ready(self):
-        """Flag on setting if it is ready to be used for evaluation."""
-        return self._split_complete
-
-    @property
-    @check_split_complete
     def unlabeled_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
         """Unlabeled data for the model to make predictions on.
         
@@ -162,12 +185,13 @@ class Setting(ABC):
             if the setting is a sliding window setting.
         :rtype: Union[InteractionMatrix, List[InteractionMatrix]]
         """
+        self._check_split_complete()
+        
         if not self._sliding_window_setting:
             return self._unlabeled_data_series
         return self._unlabeled_data_frame
 
     @property
-    @check_split_complete
     def ground_truth_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
         """Ground truth data to evaluate the model's predictions on.
         
@@ -177,12 +201,13 @@ class Setting(ABC):
         :return: _description_
         :rtype: Union[InteractionMatrix, List[InteractionMatrix]]
         """
+        self._check_split_complete()
+        
         if not self._sliding_window_setting:
             return self._ground_truth_data_series
         return self._ground_truth_data_frame
 
     @property
-    @check_split_complete
     def incremental_data(self) -> List[InteractionMatrix]:
         """Data that is used to incrementally update the model.
 
@@ -191,10 +216,12 @@ class Setting(ABC):
         :return: _description_
         :rtype: List[InteractionMatrix]
         """
+        self._check_split_complete()
+        
         if not self._sliding_window_setting:
             raise AttributeError(
                 "Incremental data is only available for sliding window setting.")
-        return self._incremental_data_frame
+        return self._incremental_data
 
     def _check_split(self):
         """Checks that the splits have been done properly.
@@ -255,14 +282,15 @@ class Setting(ABC):
     def _unlabeled_data_generator(self):
         """Creates generator for data
         
-        ==
         Note
         ===
+        
         A private method is specifically created to abstract the creation of
         the generator and to allow for easy resetting when needed.
         """
         self.unlabeled_data_iter: Generator[InteractionMatrix] = self._create_generator(
             "_unlabeled_data_series", "_unlabeled_data_frame")
+    
     def _incremental_data_generator(self):
         """Creates generator for data
         
@@ -273,7 +301,8 @@ class Setting(ABC):
         the generator and to allow for easy resetting when needed.
         """
         self.incremental_data_iter: Generator[InteractionMatrix] = self._create_generator(
-            "_incremental_data_frame", "_incremental_data_frame")
+            "_incremental_data", "_incremental_data")
+    
     def _ground_truth_data_generator(self):
         """Creates generator for data
         
@@ -345,7 +374,13 @@ class Setting(ABC):
         except StopIteration:
             raise EOWSetting()
 
-    def reset_data_generators(self):
+    def reset_data_generators(self) -> None:
+        """Reset data generators.
+        
+        Resets the data generators to the beginning of the
+        data series. API allows the programmer to reset the data generators
+        of the setting object to the beginning of the data series.
+        """
         logger.info("Resetting data generators.")
         self._unlabeled_data_generator()
         self._ground_truth_data_generator()

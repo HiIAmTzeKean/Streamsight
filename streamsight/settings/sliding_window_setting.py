@@ -1,13 +1,13 @@
 import logging
-from typing import Literal, Optional
+from typing import Optional
 from warnings import warn
 
 import numpy as np
 from tqdm import tqdm
 from streamsight.matrix import (InteractionMatrix,
                                 TimestampAttributeMissingError)
-from streamsight.setting import Setting
-from streamsight.setting.splitters import (NPastInteractionTimestampSplitter,
+from streamsight.settings import Setting
+from streamsight.settings.splitters import (NPastInteractionTimestampSplitter,
                                            TimestampSplitter)
 
 logger = logging.getLogger(__name__)
@@ -21,12 +21,13 @@ class SlidingWindowSetting(Setting):
     unlabeled data and ground truth data stored in a list. The unlabeled data is the last :data:`n_seq_data` interactions of the users/item before the
     split point. The ground truth data is the interactions after the split point and spans :data:`window_size` seconds.
 
-    ====================
-    Attribute definition
+    Core attribute
     ====================
     - :attr:`background_data`: Data used for training the model. Interval is `[0, background_t)`.
     - :attr:`unlabeled_data`: List of unlabeled data. Each element is a :class:`InteractionMatrix` object of interval `[0, t)`.
     - :attr:`ground_truth_data`: List of ground truth data. Each element is a :class:`InteractionMatrix` object of interval `[t, t + window_size)`.
+    - :attr:`data_timestamp_limit`: List of timestamps that the splitter will slide over the data.
+    - :attr:`incremental_data`: List of data that is used to incrementally update the model. Each element is a :class:`InteractionMatrix` object of interval `[t, t + window_size)`.
 
     :param background_t: Time point to split the data into background and evaluation data. Split will be from `[0, t)`
     :type background_t: int
@@ -37,9 +38,6 @@ class SlidingWindowSetting(Setting):
     :type n_seq_data: int, optional
     :param top_K: Number of interaction per user that should be selected for evaluation purposes.
     :type top_K: int, optional
-    :param item_user_based: Item or User based setting.
-        Defaults to "user".
-    :type item_user_based: Literal['user', 'item'], optional
     :param seed: Seed for random number generator.
     :type seed: int, optional
     """
@@ -50,10 +48,9 @@ class SlidingWindowSetting(Setting):
         window_size: int = np.iinfo(np.int32).max,  # in seconds
         n_seq_data: int = 1,
         top_K: int = 1,
-        item_user_based: Literal["user", "item"] = "user",
         seed: Optional[int] = None,
     ):
-        super().__init__(seed=seed, item_user_based=item_user_based)
+        super().__init__(seed=seed)
         self._sliding_window_setting = True
         self.t = background_t
         self.window_size = window_size
@@ -63,7 +60,7 @@ class SlidingWindowSetting(Setting):
         
         self._background_splitter = TimestampSplitter(background_t, None, None)
         self._window_splitter = NPastInteractionTimestampSplitter(
-            background_t, window_size, n_seq_data, self._item_user_based
+            background_t, window_size, n_seq_data
         )
 
     def _split(self, data: InteractionMatrix):
@@ -80,7 +77,7 @@ class SlidingWindowSetting(Setting):
             )
 
         self._background_data, _ = self._background_splitter.split(data)
-        self._ground_truth_data_frame, self._unlabeled_data_frame, self._data_timestamp_limit, self._incremental_data_frame = [], [], [], []
+        self._ground_truth_data_frame, self._unlabeled_data_frame, self._data_timestamp_limit, self._incremental_data = [], [], [], []
 
         # sub_time is the subjugate time point that the splitter will slide over the data
         sub_time = self.t
@@ -101,7 +98,7 @@ class SlidingWindowSetting(Setting):
             self._unlabeled_data_frame.append(unlabeled_set)
             self._ground_truth_data_frame.append(ground_truth)
             
-            self._incremental_data_frame.append(future_interaction)
+            self._incremental_data.append(future_interaction)
             
             sub_time += self.window_size
             pbar.update(1)
