@@ -19,7 +19,7 @@ The interaction matrix can be used to build recommendation systems.
 Utils
 -----
 Below are some of the utility classes and functions that are used in the matrix module.
-These provides functionality for the matrix module and for use cases in ohter modules.
+These provides functionality for the matrix module and for use cases in other modules.
 
 .. autosummary::
     :toctree: generated/
