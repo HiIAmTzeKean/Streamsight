@@ -9,13 +9,22 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Build and deploy Python Sphinx documentation.
-        uses: peterhs73/sphinx-docs-action@v0.3.0
-            
+      - name: Checkout repository content
+        uses: actions/checkout@v4 # Checkout the repository content to github runner.
+      - name: Install Python
+        uses: actions/setup-python@v5
         with:
           python-version: 3.12
-          docs-source: docs/source/
-          docs-build: docs/build/html/
-          pyproject-path: .
-          external-repo: HiIAmTzeKean/Streamsight
-          deploy-token: ${{secrets.GITHUB_TOKEN}}
+      - name: Install dependencies
+        run: python -m pip install .
+        shell: bash
+      - name: Build sphinx
+        run: sphinx-build -b html docs/source/ docs/build/html/
+        shell: bash
+      - name: Deploy to external repos
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          external_repository: HiIAmTzeKean/Streamsight
+          publish_branch: master
+          publish_dir: docs/build/html/
