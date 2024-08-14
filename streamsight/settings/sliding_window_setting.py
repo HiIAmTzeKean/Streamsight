@@ -109,3 +109,13 @@ class SlidingWindowSetting(Setting):
             f"Finished split with window size {self.window_size} seconds. "
             f"Number of splits: {self._num_split_set}"
         )
+
+    @property
+    def params(self):
+        """Parameters of the setting."""
+        return {
+            "background_t": self.t,
+            "window_size": self.window_size,
+            "n_seq_data": self.n_seq_data,
+            "top_K": self.top_K,
+        }

@@ -54,11 +54,11 @@ class Setting(ABC):
             # Set seed if it was not set before.
             seed = np.random.get_state()[1][0]
         self.seed = seed
-    
+
         self.prediction_data_processor = PredictionDataProcessor()
-        
+
         self._num_split_set = 1
-        
+
         self._sliding_window_setting = False
         self._split_complete = False
         """Number of splits created from sliding window. Defaults to 1 (no splits on training set)."""
@@ -76,7 +76,32 @@ class Setting(ABC):
         """Number of last sequential interactions to provide in :attr:`unlabeled_data` as unlabeled data for model to make prediction."""
         self.top_K: int
         """Number of interaction per user that should be selected for evaluation purposes in :attr:`ground_truth_data`."""
+
+    @property
+    def name(self) -> str:
+        """Name of the setting.
         
+        :return: Name of the setting.
+        :rtype: str
+        """
+        return self.__class__.__name__
+    
+    @property
+    def params(self):
+        """Parameters of the setting."""
+        return {}
+    
+    def get_params(self):
+        """Get the parameters of the setting."""
+        return self.params
+    
+    @property
+    def identifier(self):
+        """Name of the setting."""
+        # return f"{super().identifier[:-1]},K={self.K})"
+        paramstring = ",".join((f"{k}={v}" for k, v in self.get_params().items() if v is not None))
+        return self.name + "(" + paramstring + ")"
+    
     @abstractmethod
     def _split(self, data_m: InteractionMatrix) -> None:
         """Abstract method to be implemented by the scenarios.
@@ -106,7 +131,7 @@ class Setting(ABC):
         self._check_split()
 
         self._split_complete = True
-    
+
     def _check_split_complete(self):
         """Check if the setting is ready to be used for evaluation.
 
@@ -114,7 +139,7 @@ class Setting(ABC):
         """
         if not self.is_ready:
             raise KeyError(f"Setting has not been split yet. Call split() method before accessing the property.")
-        
+
     @property
     def num_split(self) -> int:
         """Number of splits created from dataset.
@@ -145,7 +170,7 @@ class Setting(ABC):
         :rtype: bool
         """
         return self._sliding_window_setting
-    
+
     @property
     def background_data(self) -> InteractionMatrix:
         """Background data provided for the model for the initial training.
@@ -156,7 +181,7 @@ class Setting(ABC):
         :rtype: InteractionMatrix
         """
         self._check_split_complete()
-        
+
         return self._background_data
 
     @property
@@ -167,7 +192,7 @@ class Setting(ABC):
         :rtype: Union[int, List[int]]
         """
         self._check_split_complete()
-        
+
         return self._data_timestamp_limit
 
     @property
@@ -183,7 +208,7 @@ class Setting(ABC):
         :rtype: Union[InteractionMatrix, List[InteractionMatrix]]
         """
         self._check_split_complete()
-        
+
         if not self._sliding_window_setting:
             return self._unlabeled_data
         return self._unlabeled_data
@@ -199,7 +224,7 @@ class Setting(ABC):
         :rtype: Union[InteractionMatrix, List[InteractionMatrix]]
         """
         self._check_split_complete()
-        
+
         if not self._sliding_window_setting:
             return self._ground_truth_data
         return self._ground_truth_data
@@ -214,7 +239,7 @@ class Setting(ABC):
         :rtype: List[InteractionMatrix]
         """
         self._check_split_complete()
-        
+
         if not self._sliding_window_setting:
             raise AttributeError(
                 "Incremental data is only available for sliding window setting.")
@@ -244,36 +269,46 @@ class Setting(ABC):
         """
         logger.debug("Checking size of split sets.")
 
-        def check_ratio(name, count, total, threshold):
+        def check_ratio(name, count, total, threshold) -> None:
+            if check_empty(name, count):
+                return
+            
             if (count + 1e-9) / (total + 1e-9) < threshold:
                 warn(
-                    f"{name} resulting from {type(self).__name__} is unusually small.")
+                    UserWarning(
+                        f"{name} resulting from {self.name} is unusually small."
+                    )
+                )
 
-        def check_empty(name, count):
+        def check_empty(name, count) -> bool:
             if count == 0:
                 warn(
-                    f"{name} resulting from {type(self).__name__} is empty (no interactions).")
+                    UserWarning(
+                        f"{name} resulting from {self.name} is empty (no interactions)."
+                    )
+                )
+                return True
+            return False
 
         n_background = self._background_data.num_interactions
-        check_empty("Background set", n_background)
-        check_ratio("Background set", n_background,
-                    self._num_full_interactions, 0.05)
+        # check_empty("Background data", n_background)
+        check_ratio("Background data", n_background, self._num_full_interactions, 0.05)
 
         if not self._sliding_window_setting:
             n_unlabel = self._unlabeled_data.num_interactions
             n_ground_truth = self._ground_truth_data.num_interactions
 
-            check_empty("Unlabeled set", n_unlabel)
-            check_empty("Ground truth set", n_ground_truth)
-            check_ratio("Ground truth set", n_ground_truth, n_unlabel, 0.05)
+            check_empty("Unlabeled data", n_unlabel)
+            # check_empty("Ground truth data", n_ground_truth)
+            check_ratio("Ground truth data", n_ground_truth, n_unlabel, 0.05)
 
         else:
             for dataset_idx in range(self._num_split_set):
                 n_unlabel = self._unlabeled_data[dataset_idx].num_interactions
                 n_ground_truth = self._ground_truth_data[dataset_idx].num_interactions
 
-                check_empty(f"Unlabeled set[{dataset_idx}]", n_unlabel)
-                check_empty(f"Ground truth set[{dataset_idx}]", n_ground_truth)
+                check_empty(f"Unlabeled data[{dataset_idx}]", n_unlabel)
+                check_empty(f"Ground truth data[{dataset_idx}]", n_ground_truth)
         logger.debug("Size of split sets are checked.")
 
     def _unlabeled_data_generator(self):
@@ -287,7 +322,7 @@ class Setting(ABC):
         """
         self.unlabeled_data_iter: Generator[InteractionMatrix] = self._create_generator(
             "_unlabeled_data", "_unlabeled_data")
-    
+
     def _incremental_data_generator(self):
         """Creates generator for data
         
@@ -299,7 +334,7 @@ class Setting(ABC):
         """
         self.incremental_data_iter: Generator[InteractionMatrix] = self._create_generator(
             "_incremental_data", "_incremental_data")
-    
+
     def _ground_truth_data_generator(self):
         """Creates generator for data
         

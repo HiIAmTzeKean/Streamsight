@@ -85,3 +85,13 @@ class SingleTimePointSetting(Setting):
                 past_interaction, future_interaction, self.top_K
             )
         )
+        
+    @property
+    def params(self):
+        """Parameters of the setting."""
+        return {
+            "background_t": self.t,
+            "delta_after_t": self.delta_after_t,
+            "n_seq_data": self.n_seq_data,
+            "top_K": self.top_K,
+        }

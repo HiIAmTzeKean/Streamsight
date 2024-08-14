@@ -67,7 +67,7 @@ The processor module contains classes that are used to process the data.
     PredictionDataProcessor
 """
 
-from streamsight.settings.base_setting import Setting
+from streamsight.settings.base import Setting
 from streamsight.settings.single_time_point_setting import (
     SingleTimePointSetting,
 )
