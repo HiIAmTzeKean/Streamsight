@@ -16,5 +16,5 @@ jobs:
           python-version: 3.12
           docs-source: docs/source
           pyproject-path: .
-          external-repo: HiIAmTzeKean/Streamsight
+          external-repo: master
           deploy-token: ${{secrets.PRIVATE_TOKEN}}
