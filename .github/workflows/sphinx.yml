@@ -15,6 +15,7 @@ jobs:
         with:
           python-version: 3.12
           docs-source: docs/source/
+          docs-build: docs/build/html/
           pyproject-path: .
           external-repo: HiIAmTzeKean/Streamsight
           deploy-token: ${{secrets.GITHUB_TOKEN}}
