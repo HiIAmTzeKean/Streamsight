@@ -1,0 +1,20 @@
+name: Builds and deploys Python Sphinx documentation
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build and deploy Python Sphinx documentation.
+        uses: peterhs73/sphinx-docs-action@v0.3.0
+            
+        with:
+          python-version: 3.12
+          docs-source: docs/source
+          pyproject-path: .
+          external-repo: HiIAmTzeKean/Streamsight
+          deploy-token: ${{secrets.PRIVATE_TOKEN}}

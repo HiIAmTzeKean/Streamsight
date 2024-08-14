@@ -178,3 +178,5 @@ cython_debug/
 examples/download_dataset.ipynb
 **/LOGGING_CONFIG.yaml
 **/data/**.csv
+docs/source/generated/**
+docs/source/_autosummary/**
