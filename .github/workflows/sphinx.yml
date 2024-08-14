@@ -26,5 +26,5 @@ jobs:
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
           external_repository: HiIAmTzeKean/Streamsight
-          publish_branch: master
+          publish_branch: gh-pages
           publish_dir: docs/build/html/
