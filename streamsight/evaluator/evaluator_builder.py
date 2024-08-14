@@ -1,17 +1,16 @@
 import logging
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Optional, Union
 from warnings import warn
 
 from streamsight.evaluator.evaluator import Evaluator
-from streamsight.matrix import ItemUserBasedEnum
-from streamsight.registries.registry import (
+from streamsight.registries import (
     ALGORITHM_REGISTRY,
     METRIC_REGISTRY,
     AlgorithmEntry,
     MetricEntry,
 )
-from streamsight.settings.base_setting import Setting
-from streamsight.utils.util import arg_to_str
+from streamsight.settings import Setting
+from streamsight.utils import arg_to_str
 
 logger = logging.getLogger(__name__)
 

@@ -9,12 +9,11 @@ from streamsight.algorithms.base import Algorithm
 from streamsight.evaluator.accumulator import (MacroMetricAccumulator,
                                                MicroMetricAccumulator)
 from streamsight.evaluator.util import MetricLevelEnum
-from streamsight.matrix.interaction_matrix import InteractionMatrix
-from streamsight.metrics.base import Metric
-from streamsight.registries.registry import (ALGORITHM_REGISTRY,
-                                             METRIC_REGISTRY, AlgorithmEntry,
-                                             MetricEntry)
-from streamsight.settings.base_setting import Setting
+from streamsight.matrix import InteractionMatrix
+from streamsight.metrics import Metric
+from streamsight.registries import (ALGORITHM_REGISTRY, METRIC_REGISTRY,
+                                    AlgorithmEntry, MetricEntry)
+from streamsight.settings.base import Setting
 
 logger = logging.getLogger(__name__)
 
