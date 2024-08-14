@@ -5,6 +5,7 @@ from logging import warn
 from typing import Optional
 
 import pandas as pd
+from scipy.sparse import csr_matrix
 
 from streamsight.evaluator.util import MetricLevelEnum
 from streamsight.metrics.base import Metric
@@ -58,11 +59,17 @@ class MacroMetricAccumulator(MetricAccumulator):
     def add(self, metric: Metric, algorithm_name: str) -> None:
         super().add(metric, algorithm_name)
         self.ready = False
+        
+    def cache_results(self, algo:str, y_true:csr_matrix, y_pred):
+        for item in self.acc[algo]:
+            self.acc[algo][item].cache_values(y_true,y_pred)
+        self.ready = False
     
     @property
     def metrics(self) -> defaultdict:
         if not self.ready:
             self._calculate()
+        
         results = defaultdict(dict)
         for algo_name in self.acc:
             for metric_identifier in self.acc[algo_name]:

@@ -20,11 +20,7 @@ class ItemKNNIncremental(ItemKNN):
             self.historical_data = X
         else:
             self.historical_data = self.historical_data + X
-            
-        X = self._transform_fit_input(self.historical_data)
-        self._fit(X)
-
-        self._check_fit_complete()
         end = time.time()
-        logger.info(f"Fitting {self.name} complete - Took {end - start :.3}s")
+        logger.info(f"Updating historical data for {self.name} - Took {end - start :.3}s")
+        super().fit(self.historical_data)
         return self

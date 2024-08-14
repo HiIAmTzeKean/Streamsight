@@ -1,23 +1,19 @@
 import pytest
 
 from streamsight.matrix import InteractionMatrix
-from streamsight.matrix.interaction_matrix import ItemUserBasedEnum
-from streamsight.setting.base_setting import Setting
-from streamsight.setting.sliding_window_setting import SlidingWindowSetting
-
+from streamsight.settings.base import Setting
+from streamsight.settings.sliding_window_setting import SlidingWindowSetting
 
 BACKGROUND_T = 4
 WINDOW_SIZE = 3
 SEED = 42
 N_SEQ_DATA=1
-ITEM_USER_BASED=ItemUserBasedEnum.USER
 
 @pytest.fixture()
 def splitter():
     return SlidingWindowSetting(background_t=BACKGROUND_T,
                                 window_size=WINDOW_SIZE,
                                 n_seq_data=N_SEQ_DATA,
-                                item_user_based=ITEM_USER_BASED,
                                 seed=SEED)
 
 

@@ -6,7 +6,7 @@ from typing import Union
 import numpy as np
 import progressbar
 import yaml
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, hstack, vstack
 
 from streamsight.utils.directory_tools import create_config_yaml, safe_dir
 
@@ -112,3 +112,35 @@ def prepare_logger(path) -> dict:
 
     logging.config.dictConfig(config)
     return config
+
+def add_rows_to_csr_matrix(matrix:csr_matrix, n:int=1) -> csr_matrix:
+    """Add a row of zeros to a csr_matrix.
+    
+    ref: https://stackoverflow.com/questions/4695337/expanding-adding-a-row-or-column-a-scipy-sparse-matrix
+
+    :param matrix: Matrix to add a row of zeros to.
+    :type matrix: csr_matrix
+    :return: Matrix with a row of zeros added.
+    :rtype: csr_matrix
+    """
+    matrix = vstack([matrix,np.zeros((n,matrix.shape[1]))])
+    if type(matrix) != csr_matrix:
+        # matrix could be in COO format
+        return matrix.tocsr()
+    return matrix
+
+def add_columns_to_csr_matrix(matrix:csr_matrix, n:int=1) -> csr_matrix:
+    """Add a column of zeros to a csr_matrix.
+    
+    ref: https://stackoverflow.com/questions/60907414/how-to-properly-use-numpy-hstack
+
+    :param matrix: Matrix to add a column of zeros to.
+    :type matrix: csr_matrix
+    :return: Matrix with a column of zeros added.
+    :rtype: csr_matrix
+    """
+    matrix = hstack([matrix,np.zeros((matrix.shape[0],n))])
+    if type(matrix) != csr_matrix:
+        # matrix could be in COO format
+        return matrix.tocsr()
+    return matrix

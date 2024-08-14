@@ -2,17 +2,34 @@ import logging
 from typing import Literal
 
 import pandas as pd
-from streamsight.matrix import InteractionMatrix
-from streamsight.preprocessing.filter import Filter
 from tqdm.auto import tqdm
 
+from streamsight.matrix import InteractionMatrix
+from streamsight.preprocessing.filter import Filter
 
 tqdm.pandas()
 
 logger = logging.getLogger(__name__)
 
+
 class DataFramePreprocessor:
-    def __init__(self, item_ix:str, user_ix:str, timestamp_ix:str):
+    """Preprocesses a pandas DataFrame into an InteractionMatrix object.
+
+    The DataFramePreprocessor class allows the programmer to add filters for data
+    preprocessing before transforming the data into an InteractionMatrix object.
+    The preprocessor class after applying the filters, updates the item and user
+    ID mappings into internal ID to reduce the computation load and allows for
+    easy representation of the matrix.
+
+    :param item_ix: Name of the column in which item identifiers are listed.
+    :type item_ix: str
+    :param user_ix: Name of the column in which user identifiers are listed.
+    :type user_ix: str
+    :param timestamp_ix: Name of the column in which timestamps are listed.
+    :type timestamp_ix: str
+    """
+
+    def __init__(self, item_ix: str, user_ix: str, timestamp_ix: str):
         self._item_id_mapping = dict()
         self._user_id_mapping = dict()
 
@@ -21,6 +38,36 @@ class DataFramePreprocessor:
         self.timestamp_ix = timestamp_ix
 
         self.filters = []
+
+    @property
+    def item_id_mapping(self) -> pd.DataFrame:
+        """Map from original item IDs to internal item IDs.
+
+        Pandas DataFrame containing mapping from original item IDs to internal
+        (consecutive) item IDs as columns.
+
+        :return: DataFrame containing the mapping from original item IDs to internal
+        :rtype: pd.DataFrame
+        """
+        return pd.DataFrame.from_records(
+            list(self._item_id_mapping.items()),
+            columns=[self.item_ix, InteractionMatrix.ITEM_IX],
+        )
+
+    @property
+    def user_id_mapping(self) -> pd.DataFrame:
+        """Map from original user IDs to internal user IDs.
+
+        Pandas DataFrame containing mapping from original user IDs to internal
+        (consecutive) user IDs as columns.
+
+        :return: DataFrame containing the mapping from original item IDs to internal
+        :rtype: pd.DataFrame
+        """
+        return pd.DataFrame.from_records(
+            list(self._user_id_mapping.items()),
+            columns=[self.user_ix, InteractionMatrix.USER_IX],
+        )
 
     def add_filter(self, _filter: Filter):
         """Add a preprocessing filter to be applied
@@ -39,9 +86,44 @@ class DataFramePreprocessor:
         stage: Literal["preprocess", "filter"],
         df: pd.DataFrame,
     ):
+        """Logging for change tracking.
+
+        Prints a log message with the number of interactions, items and users
+        in the DataFrame.
+
+        :param step: To indicate if the log message is before or after the preprocessing
+        :type step: Literal[&quot;before&quot;, &quot;after&quot;]
+        :param stage: The current stage of the preprocessing
+        :type stage: Literal[&quot;preprocess&quot;, &quot;filter&quot;]
+        :param df: The dataframe being processed
+        :type df: pd.DataFrame
+        """
         logger.debug(f"\tinteractions {step} {stage}: {len(df.index)}")
         logger.debug(f"\titems {step} {stage}: {df[self.item_ix].nunique()}")
         logger.debug(f"\tusers {step} {stage}: {df[self.user_ix].nunique()}")
+
+    def _update_id_mappings(self, df: pd.DataFrame) -> None:
+        """Update the internal ID mappings for users and items.
+
+        The internal ID mappings are updated to reduce the computation load and
+        allow for easy representation of the matrix.
+
+        :param df: DataFrame to update the ID mappings
+        :type df: pd.DataFrame
+        """
+        # sort by timestamp to incrementally assign user and item ids by timestamp
+        df.sort_values(by=[self.timestamp_ix], inplace=True, ignore_index=True)
+        user_index = pd.CategoricalIndex(
+            df[self.user_ix], categories=df[self.user_ix].unique()
+        )
+        self._user_id_mapping = dict(enumerate(user_index.drop_duplicates()))
+        df[self.user_ix] = user_index.codes
+
+        item_index = pd.CategoricalIndex(
+            df[self.item_ix], categories=df[self.item_ix].unique()
+        )
+        self._item_id_mapping = dict(enumerate(item_index.drop_duplicates()))
+        df[self.item_ix] = item_index.codes
 
     def process(self, df: pd.DataFrame) -> InteractionMatrix:
         self._print_log_message("before", "preprocess", df)
@@ -52,43 +134,12 @@ class DataFramePreprocessor:
             self._print_log_message("after", "filter", df)
 
         self._update_id_mappings(df)
-        
+
         self._print_log_message("after", "preprocess", df)
 
         # Convert input data into internal data objects
         interaction_m = InteractionMatrix(
-            df,
-            self.item_ix,
-            self.user_ix,
-            self.timestamp_ix
+            df, self.item_ix, self.user_ix, self.timestamp_ix
         )
 
         return interaction_m
-
-    def _update_id_mappings(self, df: pd.DataFrame):
-        """
-        Update the id mapping so we can combine multiple files
-        """
-        # sort by timestamp to incrementally assign user and item ids by timestamp
-        df.sort_values(by=[self.timestamp_ix], inplace=True, ignore_index=True)
-        user_index = pd.CategoricalIndex(df[self.user_ix],categories=df[self.user_ix].unique())
-        self._user_id_mapping = dict(enumerate(user_index.drop_duplicates()))
-        df[self.user_ix] = user_index.codes
-
-        item_index = pd.CategoricalIndex(df[self.item_ix],categories=df[self.item_ix].unique())
-        self._item_id_mapping = dict(enumerate(item_index.drop_duplicates()))
-        df[self.item_ix] = item_index.codes
-
-    @property
-    def item_id_mapping(self) -> pd.DataFrame:
-        """Pandas DataFrame containing mapping from original item IDs to internal (consecutive) item IDs as columns."""
-        return pd.DataFrame.from_records(
-            list(self._item_id_mapping.items()), columns=[self.item_ix, InteractionMatrix.ITEM_IX]
-        )
-
-    @property
-    def user_id_mapping(self) -> pd.DataFrame:
-        """Pandas DataFrame containing mapping from original user IDs to internal (consecutive) user IDs as columns."""
-        return pd.DataFrame.from_records(
-            list(self._user_id_mapping.items()), columns=[self.user_ix, InteractionMatrix.USER_IX]
-        )

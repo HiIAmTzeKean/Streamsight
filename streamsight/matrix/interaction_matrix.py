@@ -89,8 +89,6 @@ class InteractionMatrix:
 
         df = df.rename(columns=col_mapper)
         df = df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX, InteractionMatrix.TIMESTAMP_IX]].copy()
-        
-
         df = df.reset_index(drop=True).reset_index().rename(columns={"index": InteractionMatrix.INTERACTION_IX})
 
         self._df = df
@@ -106,6 +104,8 @@ class InteractionMatrix:
         
         To ensure released matrix released to the models only contains data
         that is intended to be released. This addresses the data leakage issue.
+        It is recommended that the programmer defines the shape of the matrix
+        such that the model only sees the data that is intended to be seen.
         
         =======
         Example
@@ -119,7 +119,9 @@ class InteractionMatrix:
             
         Where user 4 is the user to be predicted. Assuming that user 4 is an
         unknown user, that is, the model has never seen user 4 before. The shape
-        of the matrix should be (4, 4). This must be defined by :attr:`shape`.
+        of the matrix should be (4, 4). This should be defined when calling the
+        function in :param:`shape`.
+        
         If the shape is defined, and it contains ID of unknown user/item, a warning
         will be raised if :attr:`drop_unknown` is set to False. If :attr:`drop_unknown`
         is set to True, the unknown user/item will be dropped from the data. All
@@ -127,7 +129,12 @@ class InteractionMatrix:
         the initial assumption that the user/item ID starts from 0 as defined in
         the dataset class.
         
-        Else, the shape will be inferred from the data. The shape will be (5, 4).
+        Else, in the event that :param:`shape` is not defined, the shape will be
+        inferred from the data. The shape will be determined by the number of
+        unique users/items. In this case the shape will be (5, 4). Note that the
+        shape may not be as intended by the programmer if the data contains
+        unknown users/items or if the dataframe does not contain all historical
+        users/items.
 
         :param shape: Shape of the known user and item base. This value is
             usually set by the evaluator during the evaluation run. This value
@@ -234,6 +241,7 @@ class InteractionMatrix:
         # TODO issue with -1 labeling in the interaction matrix should i create prediction matrix
         if not hasattr(self, "shape"):
             raise AttributeError("InteractionMatrix has no shape attribute. Please call mask_shape() first.")
+        
         values = np.ones(self._df.shape[0])
         indices = self._df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX]].values
         indices = (indices[:, 0], indices[:, 1])
@@ -702,3 +710,32 @@ class InteractionMatrix:
         if not self.has_timestamps:
             raise TimestampAttributeMissingError()
         return self._df[self.TIMESTAMP_IX].max()
+
+    @property
+    def max_user_id(self) -> int:
+        """The highest user ID in the interaction matrix.
+
+        :return: The highest user ID.
+        :rtype: int
+        """
+        max_val = self._df[self._df!=-1][InteractionMatrix.USER_IX].max()
+        if np.isnan(max_val):
+            return -1
+        return max_val
+    
+    @property
+    def max_item_id(self) -> int:
+        """The highest item ID in the interaction matrix.
+        
+        In the case of an empty matrix, the highest item ID is -1. This is
+        consistent with the the definition that -1 denotes the item that is
+        unknown. It would be incorrect to use any other value, since 0 is a
+        valid item ID.
+
+        :return: The highest item ID.
+        :rtype: int
+        """
+        max_val = self._df[self._df!=-1][InteractionMatrix.ITEM_IX].max()
+        if np.isnan(max_val):
+            return -1
+        return max_val
