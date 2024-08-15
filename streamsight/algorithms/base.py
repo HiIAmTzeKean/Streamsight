@@ -197,6 +197,7 @@ class Algorithm(BaseEstimator,ABC):
 
         X_pred = self._predict(prev_interaction)
         known_shape = X_pred.shape
+        logger.debug("Predictions by algorithm completed")
         
         # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
         max_user_id  = to_predict_frame.max_user_id + 1 
@@ -205,7 +206,14 @@ class Algorithm(BaseEstimator,ABC):
         #? did not add col which represents the unknown items
         X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0]-known_shape[0])
         # pad users with random items
+        logger.debug(f"Padding user ID in range({known_shape[0]}, {intended_shape[0]}) with random items")
+        row = []
+        col = []
         for user_id in to_predict_frame.user_ids:
             if user_id >= known_shape[0]:
-                X_pred[user_id, :] = np.random.rand(1, X_pred.shape[1])
+                row.append(user_id)
+                col.append(np.random.randint(0, X_pred.shape[1]))
+        pad = csr_matrix((np.ones(len(row)), (row, col)), shape=X_pred.shape)
+        X_pred += pad
+        logger.debug(f"Padding completed")
         return X_pred
