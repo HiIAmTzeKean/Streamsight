@@ -6,7 +6,7 @@ from typing import Union
 import numpy as np
 import progressbar
 import yaml
-from scipy.sparse import csr_matrix, hstack, vstack
+from scipy.sparse import csr_matrix
 
 from streamsight.utils.directory_tools import create_config_yaml, safe_dir
 
@@ -113,34 +113,49 @@ def prepare_logger(path) -> dict:
     logging.config.dictConfig(config)
     return config
 
+#TODO memory cannot handle large matrices
 def add_rows_to_csr_matrix(matrix:csr_matrix, n:int=1) -> csr_matrix:
     """Add a row of zeros to a csr_matrix.
     
-    ref: https://stackoverflow.com/questions/4695337/expanding-adding-a-row-or-column-a-scipy-sparse-matrix
+    ref: https://stackoverflow.com/questions/52299420/scipy-csr-matrix-understand-indptr
 
     :param matrix: Matrix to add a row of zeros to.
     :type matrix: csr_matrix
     :return: Matrix with a row of zeros added.
     :rtype: csr_matrix
     """
-    matrix = vstack([matrix,np.zeros((n,matrix.shape[1]))])
-    if type(matrix) != csr_matrix:
-        # matrix could be in COO format
-        return matrix.tocsr()
+    new_shape = (matrix.shape[0]+n, matrix.shape[1])
+    new_indptr = np.append(matrix.indptr, [matrix.indptr[-1]]*n)
+    matrix = csr_matrix((matrix.data, matrix.indices, new_indptr), shape=new_shape, copy=False)
     return matrix
 
 def add_columns_to_csr_matrix(matrix:csr_matrix, n:int=1) -> csr_matrix:
     """Add a column of zeros to a csr_matrix.
     
-    ref: https://stackoverflow.com/questions/60907414/how-to-properly-use-numpy-hstack
+    https://stackoverflow.com/questions/30691160/effectively-change-dimension-of-scipy-spare-csr-matrix
 
     :param matrix: Matrix to add a column of zeros to.
     :type matrix: csr_matrix
     :return: Matrix with a column of zeros added.
     :rtype: csr_matrix
     """
-    matrix = hstack([matrix,np.zeros((matrix.shape[0],n))])
-    if type(matrix) != csr_matrix:
-        # matrix could be in COO format
-        return matrix.tocsr()
+    new_shape = (matrix.shape[0], matrix.shape[1] + n)
+    matrix = csr_matrix((matrix.data, matrix.indices, matrix.indptr), shape=new_shape, copy=False)
     return matrix
+
+def set_row_csr_addition(A:csr_matrix, row_idx:int, new_row:np.ndarray) -> None:
+    """Set row of a csr_matrix to a new row.
+    
+    ref: https://stackoverflow.com/questions/28427236/set-row-of-csr-matrix
+
+    :param A: Matrix to set a row of.
+    :type A: csr_matrix
+    :param row_idx: Index of the row to set.
+    :type row_idx: int
+    :param new_row: New row to set.
+    :type new_row: np.ndarray
+    """
+    indptr = np.zeros(A.shape[1] + 1)
+    indptr[row_idx +1:] = A.shape[1]
+    indices = np.arange(A.shape[1])
+    A += csr_matrix((new_row, indices, indptr), shape=A.shape)
