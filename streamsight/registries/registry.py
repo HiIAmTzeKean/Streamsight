@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from enum import StrEnum
 from typing import Any, Dict, NamedTuple, Optional
 
 import streamsight.algorithms
@@ -181,3 +183,79 @@ class MetricEntry(NamedTuple):
     """
     name: str
     K: Optional[int] = None
+
+class AlgorithmStatusEnum(StrEnum):
+    NEW = "NEW"
+    READY = "READY"
+    PREDICTED = "PREDICTED"
+    COMPLETED = "COMPLETED"
+
+@dataclass
+class AlgorithmStatusEntry():
+    """_summary_
+
+    :param name: Name of the algorithm
+    :type name: str
+    :param status: Status of the algorithm
+    :type status: AlgorithmStatusEnum
+    :param data_segment: Data segment the algorithm is associated with
+    :type data_segment: str
+    :param algo_ptr: Pointer to the algorithm object
+    :type algo_ptr: Optional[Any]
+    """
+    name: str
+    algo_id : str
+    status: AlgorithmStatusEnum
+    data_segment: Optional[str] = None
+    algo_ptr: Optional[Any] = None
+
+class AlgorithmStatusRegistry:
+    """
+    A Registry is a wrapper for a dictionary that maps
+    names to Python types (most often classes).
+    """
+
+    def __init__(self):
+        self.registered: Dict[str, AlgorithmStatusEntry] = {}
+        self.status_counts = {i:0 for i in AlgorithmStatusEnum}
+
+    def __iter__(self):
+        return iter(self.registered)
+    
+    def __getitem__(self, key: str) -> AlgorithmStatusEntry:
+        if key not in self.registered:
+            raise AttributeError(f"Algorithm with ID:{key} not registered")
+        return self.registered[key]
+
+    def __setitem__(self, key: str, entry: AlgorithmStatusEntry):
+        if key in self:
+            raise KeyError(f"Algorithm with ID:{key} already registered")
+        self.registered[key] = entry
+    
+    def __contains__(self, key: str) -> bool:
+        """Check if the given key is known to the registry.
+
+        :param key: The key to check.
+        :type key: str
+        :return: True if the key is known
+        :rtype: bool
+        """
+        try:
+            self[key]
+            return True
+        except AttributeError:
+            return False
+
+    def get(self, algo_id: str) -> AlgorithmStatusEntry:
+        return self[algo_id]
+
+    def register(self, algo_id: str, entry: AlgorithmStatusEntry):
+        self[algo_id] = entry
+    
+    def update(self, aldo_id: str, status: AlgorithmStatusEnum):
+        self.status_counts[self[aldo_id].status] -= 1
+        self[aldo_id].status = status
+        self.status_counts[status] += 1
+    
+    def is_all_predicted(self):
+        return self.status_counts[AlgorithmStatusEnum.PREDICTED] == len(self.registered)
