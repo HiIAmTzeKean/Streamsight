@@ -30,3 +30,5 @@ class EvaluatorBase(object):
         
         self.ignore_unknown_user = ignore_unknown_user
         self.ignore_unknown_item = ignore_unknown_item
+        
+        self._run_step = 0

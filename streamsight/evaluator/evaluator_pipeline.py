@@ -1,6 +1,7 @@
 import logging
 from typing import List, Literal, Optional, Union
 from warnings import warn
+import warnings
 
 import pandas as pd
 from streamsight.evaluator.base import EvaluatorBase
@@ -42,7 +43,6 @@ class EvaluatorPipeline(EvaluatorBase):
         self.algorithm: List[Algorithm]
 
         # internal state
-        self._run_step = 0
         self._current_timestamp: int
     
 
@@ -144,7 +144,8 @@ class EvaluatorPipeline(EvaluatorBase):
         
         self.user_item_base._update_unknown_user_item_base(ground_truth_data)
         # Assume that we ignore unknowns
-        unlabeled_data.mask_shape(self.user_item_base.known_shape)
+        with warnings.catch_warnings(action="ignore"):
+            unlabeled_data.mask_shape(self.user_item_base.known_shape)
         ground_truth_data.mask_shape(self.user_item_base.known_shape,
                                         drop_unknown_user=self.ignore_unknown_user,
                                         drop_unknown_item=self.ignore_unknown_item)

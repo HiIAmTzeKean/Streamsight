@@ -2,9 +2,10 @@ from dataclasses import dataclass
 import logging
 from enum import StrEnum
 from typing import Tuple
+from uuid import UUID
 
 from streamsight.matrix import InteractionMatrix
-from streamsight.registries.registry import AlgorithmStatusEnum
+from streamsight.registries.registry import AlgorithmStateEnum
 
 logger = logging.getLogger(__name__)
 
@@ -66,17 +67,17 @@ class UserItemBaseStatus():
         self.unknown_item = set()
         
 class AlgorithmStatusWarning(UserWarning):
-    def __init__(self, algo_id:str, status:AlgorithmStatusEnum, phase: str):
+    def __init__(self, algo_id:UUID, status:AlgorithmStateEnum, phase: str):
         self.algo_id = algo_id
         self.status = status
         if phase == "data_release":
-            super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm has completed stream evaluation. No more data release available.")
+            super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm has already requested for data. Returning the same data again.")
         elif phase == "unlabeled":
             super().__init__(f"Algorithm:{algo_id} not ready to get unlabeled data, current status is {status}. Call get_data() first.")
-        elif phase == "predict":
-            super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm should request for unlabeled data first.")
         elif phase == "predict_complete":
             super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm already submitted prediction")
+        elif phase == "predict":
+            super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm should request for unlabeled data first.")
         elif phase == "complete":
-            super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm has completed stream evaluation.")
+            super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm has completed stream evaluation. No more data release available.")
         super().__init__(f"Algorithm:{algo_id} current status is {status}.")
