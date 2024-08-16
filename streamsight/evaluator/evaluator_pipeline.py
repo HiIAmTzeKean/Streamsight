@@ -1,15 +1,15 @@
 import logging
-from typing import List, Literal, Optional, Tuple, Union
+from typing import List, Literal, Optional, Union
 from warnings import warn
+import warnings
 
 import pandas as pd
+from streamsight.evaluator.base import EvaluatorBase
 from tqdm import tqdm
-
 from streamsight.algorithms.base import Algorithm
 from streamsight.evaluator.accumulator import (MacroMetricAccumulator,
                                                MicroMetricAccumulator)
 from streamsight.evaluator.util import MetricLevelEnum
-from streamsight.matrix import InteractionMatrix
 from streamsight.metrics import Metric
 from streamsight.registries import (ALGORITHM_REGISTRY, METRIC_REGISTRY,
                                     AlgorithmEntry, MetricEntry)
@@ -17,8 +17,8 @@ from streamsight.settings.base import Setting
 
 logger = logging.getLogger(__name__)
 
-class Evaluator(object):
-    """Evaluator class for evaluating algorithms with metrics.
+class EvaluatorPipeline(EvaluatorBase):
+    """EvaluatorPipeline class for evaluating algorithms with metrics.
     
     The evaluator class is responsible for evaluating algorithms with metrics.
     It is split into 3 phases:
@@ -37,39 +37,14 @@ class Evaluator(object):
                  setting: Setting,
                  ignore_unknown_user: bool = True,
                  ignore_unknown_item: bool = True):
+        super().__init__(metric_entries, setting, ignore_unknown_user, ignore_unknown_item)
+        
         self.algorithm_entries = algorithm_entries
-        self.metric_entries = metric_entries
-        
         self.algorithm: List[Algorithm]
-        self._micro_acc: MicroMetricAccumulator
-        self._macro_acc: MacroMetricAccumulator
-        self.setting = setting
-        """Accumulator for computed metrics"""
-        
-        self.ignore_unknown_user = ignore_unknown_user
-        self.ignore_unknown_item = ignore_unknown_item
-        
-        self.unknown_user = set()
-        self.known_user = set()
-        self.unknown_item = set()
-        self.known_item = set()
-        
+
         # internal state
-        self._run_step = 0
         self._current_timestamp: int
     
-    @property
-    def known_shape(self) -> Tuple[int, int]:
-        """Known shape of the user-item interaction matrix.
-        
-        This is the shape of the released user/item interaction matrix to the
-        algorithm. This shape follows from assumption in the dataset that
-        ID increment in the order of time.
-
-        :return: Tuple of (`|user|`, `|item|`)
-        :rtype: Tuple[int, int]
-        """
-        return (len(self.known_user), len(self.known_item))
 
     def metric_results(self,
                        level:Union[Literal["micro","macro"], MetricLevelEnum]="macro",
@@ -89,28 +64,6 @@ class Evaluator(object):
         
         return acc.df_metric(filter_algo=filter_algo,
                              filter_timestamp=timestamp)
-    
-    def _update_known_user_item_base(self, data:InteractionMatrix):
-        """Updates the known user and item set with the data.
-
-        :param data: Data to update the known user and item set with.
-        :type data: InteractionMatrix
-        """
-        self.known_item.update(data.item_ids)
-        self.known_user.update(data.user_ids)
-        
-    def _update_unknown_user_item_base(self, data:InteractionMatrix):
-        self.unknown_user = data.user_ids.difference(self.known_user)
-        self.unknown_item = data.item_ids.difference(self.known_item)
-
-    def _reset_unknown_user_item_base(self):
-        """Clears the unknown user and item set.
-        
-        This method clears the unknown user and item set. This method should be
-        called after the Phase 3 when the data release is done.
-        """
-        self.unknown_user = set()
-        self.unknown_item = set()
         
     def _instantiate_algorithm(self):
         """Instantiate the algorithms from the algorithm entries.
@@ -135,8 +88,8 @@ class Evaluator(object):
         if not hasattr(self, "algorithm"):
             raise ValueError("Algorithm not instantiated")
         background_data = self.setting.background_data
-        self._update_known_user_item_base(background_data)
-        background_data.mask_shape(self.known_shape)
+        self.user_item_base._update_known_user_item_base(background_data)
+        background_data.mask_shape(self.user_item_base.known_shape)
         
         for algo in self.algorithm:
             algo.fit(background_data)
@@ -149,9 +102,10 @@ class Evaluator(object):
         instantiates the metric accumulator, and prepares the data generators.
         The next phase of the evaluator is the evaluation phase.
         """
+        logger.info("Phase 1: Preparing the evaluator...")
         self._instantiate_algorithm()
         self._ready_algo()
-        logger.info(f"Algorithms trained with background data...")
+        logger.debug(f"Algorithms trained with background data...")
         
         self._micro_acc = MicroMetricAccumulator()
         
@@ -164,10 +118,10 @@ class Evaluator(object):
                 else:
                     metric:Metric = metric_cls(timestamp_limit=None,cache=True)
                 self._macro_acc.add(metric=metric, algorithm_name=algo.identifier)
-        logger.info(f"Metric accumulator instantiated...")
+        logger.debug(f"Metric accumulator instantiated...")
         
         self.setting.reset_data_generators()
-        logger.info(f"Setting data generators ready...")
+        logger.debug(f"Setting data generators ready...")
     
     def _evaluate_step(self):
         """Evaluate performance of the algorithms. (Phase 2)
@@ -176,6 +130,7 @@ class Evaluator(object):
         It takes the unlabeled data, predicts the interaction, and evaluates the
         performance with the ground truth data.
         """
+        logger.info("Phase 2: Evaluating the algorithms...")
         # we assume that we ignore all unknown user and item now
         unlabeled_data = self.setting.next_unlabeled_data()
         # unlabeled data will respect the unknown user and item
@@ -187,10 +142,11 @@ class Evaluator(object):
         current_timestamp = self.setting.next_data_timestamp_limit()
         self._current_timestamp = current_timestamp
         
-        self._update_unknown_user_item_base(ground_truth_data)
+        self.user_item_base._update_unknown_user_item_base(ground_truth_data)
         # Assume that we ignore unknowns
-        unlabeled_data.mask_shape(self.known_shape)
-        ground_truth_data.mask_shape(self.known_shape,
+        with warnings.catch_warnings(action="ignore"):
+            unlabeled_data.mask_shape(self.user_item_base.known_shape)
+        ground_truth_data.mask_shape(self.user_item_base.known_shape,
                                         drop_unknown_user=self.ignore_unknown_user,
                                         drop_unknown_item=self.ignore_unknown_item)
         
@@ -216,17 +172,18 @@ class Evaluator(object):
             # macro metric purposes
             self._macro_acc.cache_results(algo.identifier, X_true, X_pred)
         
-        self._reset_unknown_user_item_base()
+        self.user_item_base._reset_unknown_user_item_base()
     
     def _data_release_step(self):
         """Data release phase. (Phase 3)
         """
         if not self.setting.is_sliding_window_setting:
             return
+        logger.info("Phase 3: Releasing the data...")
         
         incremental_data = self.setting.next_incremental_data()
-        self._update_known_user_item_base(incremental_data)
-        incremental_data.mask_shape(self.known_shape)
+        self.user_item_base._update_known_user_item_base(incremental_data)
+        incremental_data.mask_shape(self.user_item_base.known_shape)
         
         for algo in self.algorithm:
             algo.fit(incremental_data)

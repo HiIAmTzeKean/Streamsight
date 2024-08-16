@@ -1,7 +1,7 @@
 import pytest
 from streamsight.datasets import TestDataset
 from streamsight.settings import SlidingWindowSetting, SingleTimePointSetting
-from streamsight.evaluator.evaluator_builder import EvaluatorBuilder
+from streamsight.evaluator.evaluator_builder import EvaluatorBuilder, EvaluatorStreamerBuilder
 
 @pytest.fixture()
 def sliding_window():
@@ -42,3 +42,25 @@ class TestFullRun:
         b.add_setting(single_time_point)
         evaluator = b.build()
         evaluator.run()
+    
+    def test_stream(self, sliding_window):
+        b = EvaluatorStreamerBuilder()
+        b.add_metric("PrecisionK")
+        b.add_setting(sliding_window)
+        evaluator = b.build()
+        
+        from streamsight.algorithms import ItemKNNIncremental
+
+        algo = ItemKNNIncremental(K=10)
+        algo_id = evaluator.register_algorithm(algo)
+        
+        evaluator.start_stream()
+        
+        data = evaluator.get_data(algo_id)
+        algo.fit(data)
+        
+        unlabeled_data = evaluator.get_unlabeled_data(algo_id)
+        prediction = algo.predict(unlabeled_data)
+        
+        evaluator.submit_prediction(algo_id, prediction)
+        

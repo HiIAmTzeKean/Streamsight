@@ -24,6 +24,7 @@ thorough specifying the class name as a string.
     :toctree: generated/
 
     EvaluatorBuilder
+    EvaluatorStreamerBuilder
 
 Example
 ~~~~~~~~~
@@ -55,7 +56,9 @@ used to evaluate the performance of the algorithms on the data.
 .. autosummary::
     :toctree: generated/
 
-    Evaluator
+    EvaluatorBase
+    EvaluationPipeline
+    EvaluatorStreamer
 
 Accumulator
 ----------------------------
@@ -71,9 +74,11 @@ used to accumulate the metrics.
     MicroMetricAccumulator
 """
 
-from streamsight.evaluator.evaluator_builder import EvaluatorBuilder
-from streamsight.evaluator.evaluator import Evaluator
-from streamsight.evaluator.util import MetricLevelEnum
+from streamsight.evaluator.base import EvaluatorBase
+from streamsight.evaluator.evaluator_builder import EvaluatorBuilder, EvaluatorStreamerBuilder
+from streamsight.evaluator.evaluator_pipeline import EvaluatorPipeline
+from streamsight.evaluator.evaluator_stream import EvaluatorStreamer
+from streamsight.evaluator.util import MetricLevelEnum, UserItemBaseStatus, AlgorithmStatusWarning
 from streamsight.evaluator.accumulator import (
     MetricAccumulator,
     MacroMetricAccumulator,

@@ -89,6 +89,7 @@ class Dataset(ABC):
         :type force: bool, optional
         """
         if not os.path.exists(self.file_path) or force:
+            logger.debug(f"{self.name} dataset not found in {self.file_path}.")
             self._download_dataset()
         logger.debug(f"Data file is in memory and in dir specified.")
             
