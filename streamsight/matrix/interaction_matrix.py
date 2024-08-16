@@ -195,6 +195,9 @@ class InteractionMatrix:
                im: Union["InteractionMatrix", pd.DataFrame]) -> "InteractionMatrix":
         """Concatenate this InteractionMatrix with another.
         
+        .. note::
+            This is a inplace operation. and will modify the current object.
+        
         :param im: InteractionMatrix to concat with.
         :type im: Union[InteractionMatrix, pd.DataFrame]
         :return: InteractionMatrix with the interactions from both matrices.
@@ -211,8 +214,6 @@ class InteractionMatrix:
     def union(self, im: "InteractionMatrix") -> "InteractionMatrix":
         """Combine events from this InteractionMatrix with another.
 
-        This is a inplace operation.
-        
         :param im: InteractionMatrix to union with.
         :type im: InteractionMatrix
         :return: Union of interactions in this InteractionMatrix and the other.

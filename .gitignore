@@ -1,12 +1,7 @@
 **/.DS_Store
 docs/Report/Association for Computing Machinery (ACM) - SIGPLAN Proceedings Template
 
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+.vscode/**
 
 # Local History for Visual Studio Code
 .history/
@@ -180,3 +175,5 @@ examples/download_dataset.ipynb
 **/data/**.csv
 docs/source/generated/**
 docs/source/_autosummary/**
+**/log/**
+**/.python-version
