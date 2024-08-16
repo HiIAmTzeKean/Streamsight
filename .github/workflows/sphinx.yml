@@ -21,7 +21,7 @@ jobs:
         run: poetry install
         shell: bash
       - name: Build sphinx
-        run: cd docs/; make clean; make html; cd /;
+        run: python3 -m sphinx.cmd.build -b html docs/source/ docs/build/
         shell: bash
       - name: Deploy to external repos
         uses: peaceiris/actions-gh-pages@v3
