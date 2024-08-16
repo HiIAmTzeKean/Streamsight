@@ -15,8 +15,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.12
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2
       - name: Install dependencies
-        run: python -m pip install .; python install -e .
+        run: poetry install
         shell: bash
       - name: Build sphinx
         run: cd docs/; make clean; make html; cd /;
