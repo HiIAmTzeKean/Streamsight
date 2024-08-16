@@ -24,7 +24,7 @@ easily swap out different components of the system to suit your needs.
     :maxdepth: 1
     :caption: Evaluation
 
-    streamsight.evaluator
+    streamsight.evaluators
 
 .. toctree::
     :maxdepth: 1
