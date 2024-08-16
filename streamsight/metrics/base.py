@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, Optional, Tuple
+from warnings import warn
 
 import numpy as np
 from scipy.sparse import csr_matrix, vstack
@@ -81,22 +82,22 @@ class Metric:
             return
         
         # reshape old y_true and y_pred to add the new columns
-        
-        # self._y_true = csr_matrix((self._y_true.data, self._y_true.indices, self._y_true.indptr),
-        #                           (self._y_true.shape[0], y_true.shape[1]))
-        #                           (self._y_pred.shape[0], y_pred.shape[1]))
         if y_true.shape[1] > self._y_true.shape[1]:
             self._y_true = add_columns_to_csr_matrix(self._y_true, y_true.shape[1]-self._y_true.shape[1])
             self._y_pred = add_columns_to_csr_matrix(self._y_pred, y_pred.shape[1]-self._y_pred.shape[1])
+            
         #? np.vstack([self._y_true.toarray(), y_true.toarray()]) faster ?
         self._y_true = vstack([self._y_true, y_true])
-        
-        # self._y_pred = csr_matrix((self._y_pred.data, self._y_pred.indices, self._y_pred.indptr),
         self._y_pred = vstack([self._y_pred, y_pred])
     
     def calculate_cached(self):
         if not self.cache:
             raise ValueError("Caching is disabled for this metric.")
+        if not hasattr(self, "_y_true") or not hasattr(self, "_y_pred"):
+            self._scores = None
+            # raise AttributeError("No cached values found. Call cache_values() first.")
+            return
+        
         self.calculate(self._y_true, self._y_pred)
 
     @property
@@ -286,6 +287,12 @@ class ElementwiseMetricK(MetricTopK):
         :return: The results DataFrame with columns: user_id, item_id, score
         :rtype: pd.DataFrame
         """
+        if not hasattr(self, "_scores"):
+            raise ValueError("Metric has not been calculated yet.")
+        elif self._scores is None:
+            warn(UserWarning("No scores were computed. Returning empty dict."))
+            return dict(zip(self.col_names, (np.array([]), np.array([]), np.array([]))))
+        
         scores = self._scores.toarray()
 
         all_users = set(range(self._scores.shape[0]))
@@ -343,6 +350,12 @@ class ListwiseMetricK(MetricTopK):
         :return: The results DataFrame with columns: user_id, score
         :rtype: pd.DataFrame
         """
+        if not hasattr(self, "_scores"):
+            raise ValueError("Metric has not been calculated yet.")
+        elif self._scores is None:
+            warn(UserWarning("No scores were computed. Returning empty dict."))
+            return dict(zip(self.col_names, (np.array([]), np.array([]))))
+    
         scores = self._scores.toarray()
 
         int_users, items = self._indices
@@ -356,4 +369,10 @@ class ListwiseMetricK(MetricTopK):
     @property
     def macro_result(self):
         """Global metric value obtained by taking the average over all users."""
+        if not hasattr(self, "_scores"):
+            raise ValueError("Metric has not been calculated yet.")
+        elif self._scores is None:
+            warn(UserWarning("No scores were computed. Returning None."))
+            return None
+        
         return self._scores.mean()

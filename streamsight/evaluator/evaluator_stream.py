@@ -27,6 +27,11 @@ logger = logging.getLogger(__name__)
 warnings.simplefilter('always', AlgorithmStatusWarning)
 
 class EvaluatorStreamer(EvaluatorBase):
+    """Evaluation via streaming through API
+
+    :param EvaluatorBase: _description_
+    :type EvaluatorBase: _type_
+    """
     def __init__(
         self,
         metric_entries: List[MetricEntry],
@@ -41,7 +46,7 @@ class EvaluatorStreamer(EvaluatorBase):
         self._unlabeled_data_cache: InteractionMatrix
         self._ground_truth_data_cache: InteractionMatrix
         self._training_data_cache: InteractionMatrix
-        self._timestamp_data_cache: int
+        # self._current_timestamp: int
 
         self.has_started = False
         
@@ -73,25 +78,6 @@ class EvaluatorStreamer(EvaluatorBase):
         self._training_data_cache = background_data
         
         self._cache_evaluation_data()
-
-    def metric_results(self,
-                       level:Union[Literal["micro","macro"], MetricLevelEnum]="macro",
-                       only_current_frame=False,
-                       filter_algo:Optional[str]=None) -> pd.DataFrame:
-        """Results of the metrics computed.
-        
-        This property returns the results of the metrics computed in the evaluator.
-        """
-        timestamp = None
-        if only_current_frame:
-            timestamp = self._timestamp_data_cache
-
-        acc = self._macro_acc
-        if level == MetricLevelEnum.MICRO:
-            acc = self._micro_acc
-        
-        return acc.df_metric(filter_algo=filter_algo,
-                             filter_timestamp=timestamp)
 
     def register_algorithm(self, algorithm: Algorithm) -> UUID:
         if self.has_started:
@@ -138,19 +124,19 @@ class EvaluatorStreamer(EvaluatorBase):
             warn(AlgorithmStatusWarning(algo_id, status, "complete"))
 
         elif status == AlgorithmStateEnum.NEW:
-            self.status_registry.update(algo_id, AlgorithmStateEnum.READY, self._timestamp_data_cache)
+            self.status_registry.update(algo_id, AlgorithmStateEnum.READY, self._current_timestamp)
             
-        elif status == AlgorithmStateEnum.READY and self.status_registry[algo_id].data_segment == self._timestamp_data_cache:
+        elif status == AlgorithmStateEnum.READY and self.status_registry[algo_id].data_segment == self._current_timestamp:
             warn(AlgorithmStatusWarning(algo_id, status, "data_release"))
             
-        elif status == AlgorithmStateEnum.PREDICTED and self.status_registry[algo_id].data_segment == self._timestamp_data_cache:
+        elif status == AlgorithmStateEnum.PREDICTED and self.status_registry[algo_id].data_segment == self._current_timestamp:
             # if algo has predicted, check if current timestamp has not changed
             return_msg = f"Algorithm {algo_id} has already predicted for this data segment, please wait for all other algorithms to predict"
             logger.info(return_msg)
             print(return_msg)
             
         else:            
-            self.status_registry.update(algo_id, AlgorithmStateEnum.READY, self._timestamp_data_cache)
+            self.status_registry.update(algo_id, AlgorithmStateEnum.READY, self._current_timestamp)
             
         # release data to the algorithm
         return self._training_data_cache
@@ -192,7 +178,7 @@ class EvaluatorStreamer(EvaluatorBase):
         
         unlabeled_data = self.setting.next_unlabeled_data()
         ground_truth_data = self.setting.next_ground_truth_data()
-        self._timestamp_data_cache = self.setting.next_data_timestamp_limit()
+        self._current_timestamp = self.setting.next_data_timestamp_limit()
         
         self.user_item_base._update_unknown_user_item_base(ground_truth_data)
         # Assume that we ignore unknowns
@@ -211,9 +197,9 @@ class EvaluatorStreamer(EvaluatorBase):
         for metric_entry in self.metric_entries:
             metric_cls = METRIC_REGISTRY.get(metric_entry.name)
             if metric_entry.K is not None:
-                metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=self._timestamp_data_cache)
+                metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=self._current_timestamp)
             else:
-                metric:Metric = metric_cls(timestamp_limit=self._timestamp_data_cache)
+                metric:Metric = metric_cls(timestamp_limit=self._current_timestamp)
             metric.calculate(X_true, X_pred)
             self._micro_acc.add(metric=metric, algorithm_name=algorithm_name)
         
