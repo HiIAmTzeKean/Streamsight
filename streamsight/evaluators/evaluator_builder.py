@@ -2,8 +2,8 @@ import logging
 from typing import Dict, List, Optional, Union
 from warnings import warn
 
-from streamsight.evaluator.evaluator_pipeline import EvaluatorPipeline
-from streamsight.evaluator.evaluator_stream import EvaluatorStreamer
+from streamsight.evaluators.evaluator_pipeline import EvaluatorPipeline
+from streamsight.evaluators.evaluator_stream import EvaluatorStreamer
 from streamsight.registries import (
     ALGORITHM_REGISTRY,
     METRIC_REGISTRY,

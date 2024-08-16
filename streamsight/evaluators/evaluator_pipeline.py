@@ -1,19 +1,18 @@
 import logging
-from typing import List, Literal, Optional, Union
-from warnings import warn
 import warnings
+from typing import List
+from warnings import warn
 
-import pandas as pd
-from streamsight.evaluator.base import EvaluatorBase
 from tqdm import tqdm
-from streamsight.algorithms.base import Algorithm
-from streamsight.evaluator.accumulator import (MacroMetricAccumulator,
-                                               MicroMetricAccumulator)
-from streamsight.evaluator.util import MetricLevelEnum
+
+from streamsight.algorithms import Algorithm
+from streamsight.evaluators.accumulator import (MacroMetricAccumulator,
+                                                MicroMetricAccumulator)
+from streamsight.evaluators.base import EvaluatorBase
 from streamsight.metrics import Metric
 from streamsight.registries import (ALGORITHM_REGISTRY, METRIC_REGISTRY,
                                     AlgorithmEntry, MetricEntry)
-from streamsight.settings.base import Setting
+from streamsight.settings import Setting
 
 logger = logging.getLogger(__name__)
 

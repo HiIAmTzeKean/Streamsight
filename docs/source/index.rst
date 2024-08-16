@@ -1,6 +1,10 @@
 Welcome to Streamsight's documentation!
 =======================================
 
+Streamsight is a Python library for building and evaluating recommender systems
+that can handle streaming data. It is designed to be modular so that you can
+easily swap out different components of the system to suit your needs.
+
 .. toctree::
     :maxdepth: 1
     :caption: Data handling

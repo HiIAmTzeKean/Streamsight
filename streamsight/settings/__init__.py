@@ -27,9 +27,9 @@ the following components:
     SlidingWindowSetting
 
 A setting is stateful. Thus, the initialisation of the setting object only stores
-the parameters that are passed. Calling of :attr:`Scenario.split` is necessary
-such that the attributes :attr:`Scenario.background_data`, :attr:`Scenario.unlabeled_data`
-and :attr:`Scenario.ground_truth_data` are populated.
+the parameters that are passed. Calling of :attr:`Setting.split` is necessary
+such that the attributes :attr:`Setting.background_data`, :attr:`Setting.unlabeled_data`
+and :attr:`Setting.ground_truth_data` are populated.
 
 Splitters
 ------------

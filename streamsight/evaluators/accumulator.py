@@ -7,8 +7,8 @@ from typing import Optional
 import pandas as pd
 from scipy.sparse import csr_matrix
 
-from streamsight.evaluator.util import MetricLevelEnum
-from streamsight.metrics.base import Metric
+from streamsight.evaluators.util import MetricLevelEnum
+from streamsight.metrics import Metric
 
 logger = logging.getLogger(__name__)
 

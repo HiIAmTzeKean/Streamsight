@@ -3,11 +3,11 @@ from typing import List, Literal, Optional, Union
 
 import pandas as pd
 
-from streamsight.evaluator.accumulator import (MacroMetricAccumulator,
-                                               MicroMetricAccumulator)
-from streamsight.evaluator.util import MetricLevelEnum, UserItemBaseStatus
-from streamsight.registries import (MetricEntry)
-from streamsight.settings.base import Setting
+from streamsight.evaluators.accumulator import (MacroMetricAccumulator,
+                                                MicroMetricAccumulator)
+from streamsight.evaluators.util import MetricLevelEnum, UserItemBaseStatus
+from streamsight.registries import MetricEntry
+from streamsight.settings import Setting
 
 logger = logging.getLogger(__name__)
 

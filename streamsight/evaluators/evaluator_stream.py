@@ -1,29 +1,27 @@
 import logging
 import random
 import uuid
-from uuid import UUID
-from typing import Dict, List, Literal, Optional, Union
-from warnings import warn
 import warnings
-
-import pandas as pd
+from typing import Dict, List, Optional
+from uuid import UUID
+from warnings import warn
 
 from scipy.sparse import csr_matrix
 
 from streamsight.algorithms import Algorithm
-from streamsight.evaluator.accumulator import (MacroMetricAccumulator,
-                                               MicroMetricAccumulator)
-from streamsight.evaluator.base import EvaluatorBase
-from streamsight.evaluator.util import AlgorithmStatusWarning, MetricLevelEnum
+from streamsight.evaluators.accumulator import (MacroMetricAccumulator,
+                                                MicroMetricAccumulator)
+from streamsight.evaluators.base import EvaluatorBase
+from streamsight.evaluators.util import AlgorithmStatusWarning
 from streamsight.matrix import InteractionMatrix
 from streamsight.metrics import Metric
-from streamsight.registries import METRIC_REGISTRY, MetricEntry
-from streamsight.registries.registry import (AlgorithmStatusEntry,
-                                             AlgorithmStateEnum,
-                                             AlgorithmStatusRegistry)
+from streamsight.registries import (METRIC_REGISTRY, AlgorithmStateEnum,
+                                    AlgorithmStatusEntry,
+                                    AlgorithmStatusRegistry, MetricEntry)
 from streamsight.settings import Setting
 
 logger = logging.getLogger(__name__)
+
 warnings.simplefilter('always', AlgorithmStatusWarning)
 
 class EvaluatorStreamer(EvaluatorBase):
