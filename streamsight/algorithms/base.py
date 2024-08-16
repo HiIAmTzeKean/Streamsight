@@ -8,7 +8,7 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 
 from streamsight.matrix import (InteractionMatrix, ItemUserBasedEnum,
-                                TimestampAttributeMissingError, to_csr_matrix)
+                                to_csr_matrix)
 from streamsight.utils.util import add_rows_to_csr_matrix
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class Algorithm(BaseEstimator,ABC):
     """Base class for all streamsight algorithm implementations."""
 
     ITEM_USER_BASED: ItemUserBasedEnum
-    
+
     def __init__(self):
         super().__init__()
 
@@ -29,9 +29,9 @@ class Algorithm(BaseEstimator,ABC):
 
     @property
     def identifier(self):
-        """Name of the object.
+        """Identifier of the object.
 
-        Name is made by combining the class name with the parameters
+        Identifier is made by combining the class name with the parameters
         passed at construction time.
 
         Constructed by recreating the initialisation call.
@@ -132,31 +132,13 @@ class Algorithm(BaseEstimator,ABC):
         """
         return to_csr_matrix(X, binary=True)
 
-    def _assert_is_interaction_matrix(self, *matrices: InteractionMatrix) -> None:
-        """Make sure that the passed matrices are all an InteractionMatrix."""
-        for X in matrices:
-            if type(X) != InteractionMatrix:
-                raise TypeError(f"{self.name} requires Interaction Matrix as input. Got {type(X)}.")
-
-    def _assert_has_timestamps(self, *matrices: InteractionMatrix):
-        """Make sure that the matrices all have timestamp information."""
-        for X in matrices:
-            if not X.has_timestamps:
-                raise TimestampAttributeMissingError()
-
     def fit(self, X: InteractionMatrix) -> "Algorithm":
         """Fit the model to the input interaction matrix.
 
-        After fitting the model will be ready to use for prediction.
-
-        This function will handle some generic bookkeeping
-        for each of the child classes,
-
-        - The fit function gets timed, and this will get printed
-        - Input data is converted to expected type using call to
-          :meth:`_transform_predict_input`
-        - The model is trained using the :meth:`_fit` method
-        - :meth:`_check_fit_complete` is called to check fitting was succesful
+        The input data is transformed to the expected type using
+        :meth:`_transform_fit_input`. The fitting is done using the
+        :meth:`_fit` method. Finally the method checks that the fitting
+        was successful using :meth:`_check_fit_complete`.
 
         :param X: The interactions to fit the model on.
         :type X: Matrix
@@ -175,13 +157,11 @@ class Algorithm(BaseEstimator,ABC):
     def predict(self, X: InteractionMatrix) -> csr_matrix:
         """Predicts scores, given the interactions in X
 
-        Recommends items for each nonzero user in the X matrix.
-
-        This function is a wrapper around the :meth:`_predict` method,
-        and performs checks on in- and output data to guarantee proper computation.
-
-        - Checks that model is fitted correctly
-        - checks the output using :meth:`_check_prediction` function
+        The input data is transformed to the expected type using
+        :meth:`_transform_predict_input`. The predictions are made
+        using the :meth:`_predict` method. Finally the predictions
+        are then padded with random items for users that are not in the
+        training data.
 
         :param X: interactions to predict from.
         :type X: InteractionMatrix
@@ -198,12 +178,12 @@ class Algorithm(BaseEstimator,ABC):
         X_pred = self._predict(prev_interaction)
         known_shape = X_pred.shape
         logger.debug("Predictions by algorithm completed")
-        
+
         # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
         max_user_id  = to_predict_frame.max_user_id + 1 
         max_item_id  = to_predict_frame.max_item_id + 1 
         intended_shape = (max(max_user_id, X.shape[0]), max(max_item_id, X.shape[1]))
-        #? did not add col which represents the unknown items
+        # ? did not add col which represents the unknown items
         X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0]-known_shape[0])
         # pad users with random items
         logger.debug(f"Padding user ID in range({known_shape[0]}, {intended_shape[0]}) with random items")
