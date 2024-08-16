@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.evaluator
+.. currentmodule:: streamsight.evaluators
 
 Evaluator Builder
 ----------------------------
@@ -63,6 +63,7 @@ computing the metric for each prediction against the ground truth. There are
     EvaluatorPipeline
     EvaluatorStreamer
 
+
 Accumulator
 ----------------------------
 
@@ -75,14 +76,27 @@ used to accumulate the metrics.
     MetricAccumulator
     MacroMetricAccumulator
     MicroMetricAccumulator
+    
+Utility
+----------------------------
+
+The evaluator module in streamsight contains the utility classes which abstract
+some of the common functionalities used in the evaluator module.
+
+.. autosummary::
+    :toctree: generated/
+
+    MetricLevelEnum
+    UserItemBaseStatus
+    AlgorithmStatusWarning
 """
 
-from streamsight.evaluator.base import EvaluatorBase
-from streamsight.evaluator.evaluator_builder import EvaluatorBuilder, EvaluatorStreamerBuilder
-from streamsight.evaluator.evaluator_pipeline import EvaluatorPipeline
-from streamsight.evaluator.evaluator_stream import EvaluatorStreamer
-from streamsight.evaluator.util import MetricLevelEnum, UserItemBaseStatus, AlgorithmStatusWarning
-from streamsight.evaluator.accumulator import (
+from streamsight.evaluators.base import EvaluatorBase
+from streamsight.evaluators.evaluator_builder import EvaluatorBuilder, EvaluatorStreamerBuilder
+from streamsight.evaluators.evaluator_pipeline import EvaluatorPipeline
+from streamsight.evaluators.evaluator_stream import EvaluatorStreamer
+from streamsight.evaluators.util import MetricLevelEnum, UserItemBaseStatus, AlgorithmStatusWarning
+from streamsight.evaluators.accumulator import (
     MetricAccumulator,
     MacroMetricAccumulator,
     MicroMetricAccumulator,

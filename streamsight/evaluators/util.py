@@ -27,6 +27,12 @@ class MetricLevelEnum(StrEnum):
     
 @dataclass
 class UserItemBaseStatus():
+    """Unknown and known user/item base.
+    
+    This class is used to store the status of the user and item base. The class
+    stores the known and unknown user and item set. The class also provides
+    methods to update the known and unknown user and item set.
+    """
     unknown_user = set()
     known_user = set()
     unknown_item = set()
