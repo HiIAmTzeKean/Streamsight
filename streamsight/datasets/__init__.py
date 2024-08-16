@@ -1,7 +1,8 @@
-"""The dataset module allows users to easily use to publicly available datasets in their experiments.
-
+"""
 .. currentmodule:: streamsight.datasets
 
+The dataset module allows users to easily use to publicly available datasets
+in their experiments.
 
 .. autosummary::
     :toctree: generated/
