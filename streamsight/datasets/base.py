@@ -178,4 +178,8 @@ class Dataset(ABC):
     
     @abstractmethod
     def _download_dataset(self):
+        """Downloads the dataset.
+
+        Downloads the csv file from the dataset URL and saves it to the file path.
+        """
         raise NotImplementedError("Needs to be implemented")
