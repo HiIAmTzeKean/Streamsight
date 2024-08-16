@@ -40,16 +40,17 @@ class TimestampSplitter(Splitter):
     """Splits data by timestamp.
     
     Split data so that the first return value contains interactions in
-    ``[t-t_lower, t)``, and the second those in ``[t, t+t_upper]``.
+    `[t-t_lower, t)`, and the second those in `[t, t+t_upper]`.
 
-    If ``t_lower`` or ``t_upper`` are omitted, they are assumed to have a value of infinity.
+    If `t_lower` or `t_upper` are omitted, they are assumed to have a value of infinity.
     A user can occur in both return values.
 
-    ====================
+
     Attribute definition
     ====================
-    - :attr:``past_interaction``: List of unlabeled data. Interval is ``[0, t)``.
-    - :attr:``future_interaction``: Data used for training the model. Interval is ``[t, t+t_upper)`` or ``[t,inf]``.
+    
+    - :attr:`past_interaction`: List of unlabeled data. Interval is `[0, t)`.
+    - :attr:`future_interaction`: Data used for training the model. Interval is `[t, t+t_upper)` or `[t,inf]`.
 
     :param t: Timestamp to split on in seconds since epoch.
     :type t: int
@@ -72,12 +73,12 @@ class TimestampSplitter(Splitter):
     def split(
         self, data: InteractionMatrix
     ) -> Tuple[InteractionMatrix, InteractionMatrix]:
-        """Splits data so that ``past_interaction`` contains interactions in ``[t-t_lower, t)``,
-        and ``future_interaction`` those in ``[t, t+t_upper]``.
+        """Splits data so that `past_interaction` contains interactions in `[t-t_lower, t)`,
+        and `future_interaction` those in `[t, t+t_upper]`.
 
         :param data: Interaction matrix to be split. Must contain timestamps.
         :type data: InteractionMatrix
-        :return: A 2-tuple containing the ``past_interaction`` and ``future_interaction`` matrices.
+        :return: A 2-tuple containing the `past_interaction` and `future_interaction` matrices.
         :rtype: Tuple[InteractionMatrix, InteractionMatrix]
         """
 
@@ -108,14 +109,15 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
     """Splits data with n past interactions based on a timestamp.
     
     Splits the data into unlabeled and ground truth data based on a timestamp.
-    Historical data contains last ``n_seq_data`` interactions before the timestamp ``t``
-    and the future interaction contains interactions after the timestamp ``t``.
+    Historical data contains last `n_seq_data` interactions before the timestamp `t`
+    and the future interaction contains interactions after the timestamp `t`.
 
-    ====================
+
     Attribute definition
     ====================
-    - :attr:``past_interaction``: List of unlabeled data. Interval is ``[0, t)``.
-    - :attr:``future_interaction``: Data used for training the model. Interval is ``[t, t+t_upper)`` or ``[t,inf]``.
+    
+    - :attr:`past_interaction`: List of unlabeled data. Interval is `[0, t)`.
+    - :attr:`future_interaction`: Data used for training the model. Interval is `[t, t+t_upper)` or `[t,inf]`.
 
     :param t: Timestamp to split on in seconds since epoch.
     :type t: int
@@ -125,7 +127,7 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
     :param n_seq_data: Number of last interactions to provide as unlabeled data
         for model to make prediction.
     :type n_seq_data: int, optional
-    :return: A 2-tuple containing the ``past_interaction`` and ``future_interaction`` matrices.
+    :return: A 2-tuple containing the `past_interaction` and `future_interaction` matrices.
     :rtype: Tuple[InteractionMatrix, InteractionMatrix]
     """
 
@@ -146,12 +148,13 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
         self, data: InteractionMatrix
     ) -> Tuple[InteractionMatrix, InteractionMatrix]:
         """Splits data such that the following definition holds:
-        - :attr:``past_interaction``: List of unlabeled data. Interval is ``[0, t)``.
-        - :attr:``future_interaction``: Data used for training the model. Interval is ``[t, t+t_upper)`` or [t,inf].
+        
+        - :attr:`past_interaction` : List of unlabeled data. Interval is `[0, t)`.
+        - :attr:`future_interaction` : Data used for training the model. Interval is `[t, t+t_upper)` or `[t,inf]`.
 
         :param data: Interaction matrix to be split. Must contain timestamps.
         :type data: InteractionMatrix
-        :return: A 2-tuple containing the ``past_interaction`` and ``future_interaction`` matrices.
+        :return: A 2-tuple containing the `past_interaction` and `future_interaction` matrices.
         :rtype: Tuple[InteractionMatrix, InteractionMatrix]
         """
         if self.t_upper is None:
