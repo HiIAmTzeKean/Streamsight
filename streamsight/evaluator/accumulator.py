@@ -13,9 +13,13 @@ from streamsight.metrics.base import Metric
 logger = logging.getLogger(__name__)
 
 class MetricAccumulator(ABC):
-    """Accumulates metrics and provides methods to aggregate results into usable formats.
+    """Accumulates and aggregate :class:`Metric`
+    
+    Base class for accumulating metrics. The class is used to store and aggregate
+    metrics for each algorithm. The class is abstract and should not be instantiated
+    directly. Instead, use the :class:`MacroMetricAccumulator` or :class:`MicroMetricAccumulator`
+    to accumulate metrics.
     """
-
     def __init__(self):
         self.acc: defaultdict[str, dict[str, Metric]] = defaultdict(dict)
 
@@ -23,6 +27,17 @@ class MetricAccumulator(ABC):
         return self.acc[key]
 
     def add(self, metric: Metric, algorithm_name: str) -> None:
+        """Add a metric to the accumulator
+        
+        Takes a :class:`Metric` object and adds it under the algorithm name. If
+        the specified metric already exists for the algorithm, it will be
+        overwritten with the new metric.
+
+        :param metric: Metric to store
+        :type metric: Metric
+        :param algorithm_name: Name of the algorithm
+        :type algorithm_name: str
+        """
         if metric.identifier in self.acc[algorithm_name]:
             warn(
                 f"Metric {metric.identifier} already exists for algorithm {algorithm_name}. Overwriting...")
@@ -37,11 +52,29 @@ class MetricAccumulator(ABC):
                   filter_timestamp:Optional[int]=None,
                   filter_algo:Optional[str]=None
                   ) -> pd.DataFrame:
+        """Dataframe representation of the metric
+
+        :param filter_timestamp: Timestamp value to filter on, defaults to None
+        :type filter_timestamp: Optional[int], optional
+        :param filter_algo: Algorithm name to filter on, defaults to None
+        :type filter_algo: Optional[str], optional
+        :return: Dataframe representation of the metric
+        :rtype: pd.DataFrame
+        """
         pass
 
     @property
     @abstractmethod
     def metrics(self) -> defaultdict:
+        """Compute metric for output
+        
+        Computes the metric for each algorithm into a dictionary. The Key value
+        of the dictionary depends on the level of aggregation of the metric
+        and the algorithm name.
+
+        :return: _description_
+        :rtype: defaultdict
+        """
         pass
 
 class MacroMetricAccumulator(MetricAccumulator):
@@ -88,8 +121,11 @@ class MacroMetricAccumulator(MetricAccumulator):
         """
         df = pd.DataFrame.from_dict(self.metrics, orient="index")
         df = df.rename_axis(["Algorithm", "Metric"])
-        # df = df.groupby(by=["Algorithm", "Metric"]).sum()
-        # return df.eval('macro_score = score / num_user').drop(["score","num_user"], axis=1)
+        
+        # TODO allow filter for macro on specific timestamp?
+        if filter_algo:
+            df = df.filter(like=filter_algo, axis=0)
+
         return df
 
 class MicroMetricAccumulator(MetricAccumulator):
@@ -139,5 +175,4 @@ class MicroMetricAccumulator(MetricAccumulator):
             df = df.filter(like=filter_algo, axis=0)
         if filter_timestamp:
             df = df.filter(like=f"t={filter_timestamp}", axis=0)
-
         return df

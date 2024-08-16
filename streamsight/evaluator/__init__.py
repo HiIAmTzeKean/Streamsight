@@ -50,14 +50,17 @@ python notebook.
 Evaluator
 ----------------------------
 
-The evaluator module in streamsight contains the Evaluator class which is
-used to evaluate the performance of the algorithms on the data.
+The evaluator module in streamsight contains the evaluators which allows the
+programmer to evaluate the algorithms on a fixed setting. The evaluator also
+aids the programmer in masking the shape of the dataset and then subsequently
+computing the metric for each prediction against the ground truth. There are
+2 concrete implementation of :class:`Evaluator`.
 
 .. autosummary::
     :toctree: generated/
 
     EvaluatorBase
-    EvaluationPipeline
+    EvaluatorPipeline
     EvaluatorStreamer
 
 Accumulator

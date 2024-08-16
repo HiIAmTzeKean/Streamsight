@@ -18,10 +18,10 @@ from streamsight.settings.base import Setting
 logger = logging.getLogger(__name__)
 
 class EvaluatorPipeline(EvaluatorBase):
-    """EvaluatorPipeline class for evaluating algorithms with metrics.
+    """Evaluation via pipeline
     
-    The evaluator class is responsible for evaluating algorithms with metrics.
-    It is split into 3 phases:
+    The pipeline is responsible for evaluating algorithms with metrics and evaluates
+    the algorithms in 3 phases:
     
     1. Pre-phase
     2. Evaluation phase
@@ -44,27 +44,7 @@ class EvaluatorPipeline(EvaluatorBase):
 
         # internal state
         self._current_timestamp: int
-    
-
-    def metric_results(self,
-                       level:Union[Literal["micro","macro"], MetricLevelEnum]="macro",
-                       only_current_frame=False,
-                       filter_algo:Optional[str]=None) -> pd.DataFrame:
-        """Results of the metrics computed.
-        
-        This property returns the results of the metrics computed in the evaluator.
-        """
-        timestamp = None
-        if only_current_frame:
-            timestamp = self._current_timestamp
-
-        acc = self._macro_acc
-        if level == MetricLevelEnum.MICRO:
-            acc = self._micro_acc
-        
-        return acc.df_metric(filter_algo=filter_algo,
-                             filter_timestamp=timestamp)
-        
+            
     def _instantiate_algorithm(self):
         """Instantiate the algorithms from the algorithm entries.
         
