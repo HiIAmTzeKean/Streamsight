@@ -2,7 +2,6 @@ import os
 import pandas as pd
 import pytest
 from streamsight.datasets import AmazonMusicDataset
-from streamsight.datasets.base import Dataset
 from streamsight.matrix import InteractionMatrix
 
 @pytest.fixture()
