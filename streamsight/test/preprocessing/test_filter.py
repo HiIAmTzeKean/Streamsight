@@ -1,11 +1,8 @@
-import pytest
 import numpy as np
-from streamsight.datasets import TestDataset
 from streamsight.preprocessing import MinItemsPerUser
 from streamsight.matrix import InteractionMatrix
 
-from streamsight.test.conftest import test_dataframe, test_dataset
-
+TIMESTAMP_IX = "time"
 ITEM_IX = "item"
 USER_IX = "user"
 MIN_ITEM_USER = 2
@@ -36,7 +33,7 @@ def test_min_items_per_user_dataset(test_dataset, test_dataframe):
     
     min_items = MinItemsPerUser(MIN_ITEM_USER, item_ix=ITEM_IX, user_ix=USER_IX)
     filtered_data = min_items.apply(test_dataframe)
-    filtered_data = filtered_data[["time","user","item"]]
+    filtered_data = filtered_data[[TIMESTAMP_IX, USER_IX, ITEM_IX]]
     filtered_data.columns = ["ts","uid","iid"]
     # ID for load will start from 0
     filtered_data["uid"] = filtered_data["uid"] - 1
