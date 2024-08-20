@@ -69,16 +69,19 @@ class DataFramePreprocessor:
             columns=[self.user_ix, InteractionMatrix.USER_IX],
         )
 
-    def add_filter(self, _filter: Filter):
+    def add_filter(self, filter: Filter):
         """Add a preprocessing filter to be applied
-        before transforming to a InteractionMatrix object.
+        
+        This filter will be applied before transforming to a
+        :class:`InteractionMatrix` object.
 
-        Filters are applied in order, different orderings can lead to different results!
+        Filters are applied in order of addition, different orderings can lead to
+        different results!
 
-        :param _filter: The filter to be applied
-        :type _filter: Filter
+        :param filter: The filter to be applied
+        :type filter: Filter
         """
-        self.filters.append(_filter)
+        self.filters.append(filter)
 
     def _print_log_message(
         self,

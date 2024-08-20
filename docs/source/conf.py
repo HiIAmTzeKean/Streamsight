@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 project = 'streamsight'
 copyright = '2024, Ng Tze Kean'
-author = 'Ng Tze Kean'
+author = "HiIAmTzeKean <ngtzekean@gmail.com>"
 release = '0.2.1'
 
 # -- General configuration ---------------------------------------------------
@@ -22,12 +22,13 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.mathjax',
+    'sphinxcontrib.bibtex'
 ]
 autosummary_generate = True
+bibtex_bibfiles = ['refs.bib']
 
 templates_path = ['_templates']
 exclude_patterns = []
-
 
 
 # -- Options for HTML output -------------------------------------------------

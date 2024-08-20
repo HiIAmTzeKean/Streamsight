@@ -1,7 +1,7 @@
 import pytest
 from streamsight.datasets import TestDataset
 from streamsight.settings import SlidingWindowSetting, SingleTimePointSetting
-from streamsight.evaluator.evaluator_builder import EvaluatorBuilder, EvaluatorStreamerBuilder
+from streamsight.evaluators import EvaluatorBuilder, EvaluatorStreamerBuilder
 
 @pytest.fixture()
 def sliding_window():
