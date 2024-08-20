@@ -16,10 +16,14 @@ from streamsight.utils import to_binary
 logger = logging.getLogger(__name__)
         
 class ItemUserBasedEnum(StrEnum):
+    """Enum class for item and user based properties.
+    
+    Enum class to indicate if the function or logic is based on item or user.
+    """
     ITEM = "item"
-    """Similarity between items to predict user preferences"""
+    """Property based on item"""
     USER = "user"
-    """Similarities between users to predict item preferences"""
+    """Property based on user"""
     
     @classmethod
     def has_value(cls, value: str):
@@ -40,13 +44,13 @@ class InteractionMatrix:
 
     .. note::
 
-       -  The InteractionMatrix does not assume binary user-item pairs.
-        If a user interacts with an item more than once, there will be two
-        entries for this user-item pair.
+        - The InteractionMatrix does not assume binary user-item pairs.
+          If a user interacts with an item more than once, there will be two
+          entries for this user-item pair.
         
         - We assume that the user and item IDs are integers starting from 0. IDs
-        that are indicated by "-1" are reserved to label the user or item to
-        be predicted.
+          that are indicated by "-1" are reserved to label the user or item to
+          be predicted.
 
     :param df: Dataframe containing user-item interactions. Must contain at least
         item ids and user ids.
