@@ -96,6 +96,10 @@ class Dataset(ABC):
     def add_filter(self, _filter: Filter):
         """Add a filter to be applied when loading the data.
 
+        Utilize :class:`DataFramePreprocessor` class to add filters to the
+        dataset to load. The filter will be applied when the data is loaded into
+        an :class:`InteractionMatrix` object when :meth:`load` is called.
+        
         :param _filter: Filter to be applied to the loaded DataFrame
                     processing to interaction matrix.
         :type _filter: Filter
