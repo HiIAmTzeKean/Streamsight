@@ -32,7 +32,9 @@ easily swap out different components of the system to suit your needs.
 
     streamsight.registries
 
-Indices and tables
+
+Indices and References
 ==================
 
 * :ref:`genindex`
+* :ref:`ref-sheet`

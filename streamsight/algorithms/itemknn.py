@@ -27,34 +27,17 @@ def compute_cosine_similarity(X: csr_matrix) -> csr_matrix:
 class ItemKNN(Algorithm):
     """Item K Nearest Neighbours model.
 
-    First described in 'Item-based top-n recommendation algorithms.'
-    Deshpande, Mukund, and George Karypis,
-    ACM Transactions on Information Systems (TOIS) 22.1 (2004): 143-177
+    First described in 'Item-based top-n recommendation algorithms.' :cite:`10.1145/963770.963776`
+    
+    This code is adapted from RecPack :cite:`recpack`
 
     For each item the K most similar items are computed during fit.
     Similarity parameter decides how to compute the similarity between two items.
-    Supported options are: ``"cosine"`` and ``"conditional_probability"``
 
     Cosine similarity between item i and j is computed as
 
     .. math::
         sim(i,j) = \\frac{X_i X_j}{||X_i||_2 ||X_j||_2}
-
-    The conditional probablity based similarity of item i with j is computed as
-
-    .. math ::
-        sim(i,j) = \\frac{\\sum\\limits_{u \\in U} \\mathbb{I}_{u,i} X_{u,j}}{Freq(i) \\times Freq(j)^{\\alpha}}
-
-    Where I_ui is 1 if the user u has visited item i, and 0 otherwise.
-    And alpha is the pop_discount parameter.
-    Note that this is a non-symmetric similarity measure.
-    Given that X is a binary matrix, and alpha is set to 0, this simplifies to pure conditional probability.
-
-    .. math::
-        sim(i,j) = \\frac{Freq(i \\land j)}{Freq(i)}
-
-    If sim_normalize is True, the scores are normalized per predictive item,
-    making sure the sum of each row in the similarity matrix is 1.
 
     :param K: How many neigbours to use per item,
         make sure to pick a value below the number of columns of the matrix to fit on.
