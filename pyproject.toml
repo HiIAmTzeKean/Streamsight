@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "streamsight"
-version = "0.2.1"
-description = "RecSys evaluator system for recommenders in a fair manner."
-authors = ["Ng Tze Kean"]
+version = "0.2.2"
+description = "RecSys toolkit for evaluation in a fair manner."
+authors = ["Ng Tze Kean <ngtzekean@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -16,19 +16,18 @@ numpy = "^1.26.4"
 urllib3 = "^2.2.1"
 tqdm = "^4.66.4"
 progressbar = "^2.5"
-sphinx = "7.4.7"
-sphinx-rtd-theme = "^2.0.0"
 typing-extensions = "^4.12.2"
 deprecation = "^2.1.0"
-sphinxcontrib-bibtex = "^2.6.2"
-setuptools = "^73.0.0"
-
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
 ipykernel = "^6.29.3"
 black = "^24.4.2"
 simplejson = "^3.19.3"
+sphinxcontrib-bibtex = "^2.6.2"
+setuptools = "^73.0.0"
+sphinx = "7.4.7"
+sphinx-rtd-theme = "^2.0.0"
 
 [build-system]
 requires = ["poetry-core"]
