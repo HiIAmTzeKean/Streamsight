@@ -93,18 +93,18 @@ class Dataset(ABC):
             self._download_dataset()
         logger.debug(f"Data file is in memory and in dir specified.")
             
-    def add_filter(self, _filter: Filter):
+    def add_filter(self, filter: Filter):
         """Add a filter to be applied when loading the data.
 
         Utilize :class:`DataFramePreprocessor` class to add filters to the
         dataset to load. The filter will be applied when the data is loaded into
         an :class:`InteractionMatrix` object when :meth:`load` is called.
         
-        :param _filter: Filter to be applied to the loaded DataFrame
+        :param filter: Filter to be applied to the loaded DataFrame
                     processing to interaction matrix.
-        :type _filter: Filter
+        :type filter: Filter
         """
-        self.preprocessor.add_filter(_filter)
+        self.preprocessor.add_filter(filter)
         
     def load(self,apply_filters=True) -> InteractionMatrix:
         """Loads data into an InteractionMatrix object.
