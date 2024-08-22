@@ -182,10 +182,17 @@ class Setting(ABC):
         return self._background_data
 
     @property
-    def data_timestamp_limit(self) -> Union[int, List[int]]:
-        """The timestamp limit of the data in the corresponding split.
+    def t_window(self) -> Union[None, int, List[int]]:
+        """The upper timestamp of the window in split.
 
-        :return: Timestamp limit of the data in the corresponding split.
+        In settings that respect the global timeline, a timestamp value will
+        be returned. In the case of :class:`SlidingWindowSetting`, a list of
+        timestamp values will be returned.
+        
+        Settings such as :class:`LeaveNOutSetting` will return None since there
+        is no split with respect to time.
+        
+        :return: timestamp limit for the data.
         :rtype: Union[int, List[int]]
         """
         self._check_split_complete()
