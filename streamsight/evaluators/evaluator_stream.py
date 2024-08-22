@@ -18,7 +18,7 @@ from streamsight.metrics import Metric
 from streamsight.registries import (METRIC_REGISTRY, AlgorithmStateEnum,
                                     AlgorithmStatusEntry,
                                     AlgorithmStatusRegistry, MetricEntry)
-from streamsight.settings import Setting
+from streamsight.settings import EOWSetting, Setting
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,29 @@ warnings.simplefilter('always', AlgorithmStatusWarning)
 
 class EvaluatorStreamer(EvaluatorBase):
     """Evaluation via streaming through API
+    
+    This class exposes a few of the core API that allows the user to stream
+    the evaluation process. The following API are exposed:
+    
+    1. :meth:`register_algorithm`
+    2. :meth:`start_stream`
+    3. :meth:`get_unlabeled_data`
+    4. :meth:`submit_prediction`
+    
+    The programmer can take a look at the specific method for more details
+    on the implementation of the API. The methods are designed with the
+    methodological approach that the algorithm is decoupled from the
+    the evaluating platform. And thus, the evaluator will only provide
+    the necessary data to the algorithm and evaluate the prediction.
 
-    :param EvaluatorBase: _description_
-    :type EvaluatorBase: _type_
+    :param metric_entries: List of metric entries
+    :type metric_entries: List[MetricEntry]
+    :param setting: Setting object
+    :type setting: Setting
+    :param ignore_unknown_user: To ignore unknown users
+    :type ignore_unknown_user: bool
+    :param ignore_unknown_item: To ignore unknown items
+    :type ignore_unknown_item: bool
     """
     def __init__(
         self,
@@ -52,7 +72,23 @@ class EvaluatorStreamer(EvaluatorBase):
         self.rd = random.Random(self.seed)
 
     def start_stream(self):
-        # TODO allow programmer to register anytime ?
+        """Start the streaming process
+        
+        This method is called to start the streaming process. The method will
+        prepare the evaluator for the streaming process. The method will reset
+        the data generators, prepare the micro and macro accumulators, update
+        the known user/item base, and cache the evaluation data.
+        
+        The method will set the internal state :attr:`has_started` to True. The
+        method can be called anytime after the evaluator is instantiated. However,
+        once the method is called, the evaluator cannot register any new algorithms.
+        
+        :raises ValueError: If the stream has already started
+        """
+        #? allow programmer to register anytime
+        if self.has_started:
+            raise ValueError("Cannot start the stream again")
+        
         self.has_started = True
         self.setting.reset_data_generators()
         
@@ -150,6 +186,33 @@ class EvaluatorStreamer(EvaluatorBase):
         warn(AlgorithmStatusWarning(algo_id, status, "unlabeled"))
         
     def submit_prediction(self, algo_id: UUID, X_pred: csr_matrix) -> None:
+        """Submit the prediction of the algorithm
+        
+        This method is called to submit the prediction of the algorithm.
+        There are a few checks that are done before the prediction is
+        evaluated by calling :meth:`_evaluate`.
+        
+        Once the prediction is evaluated, the method will update the state
+        of the algorithm to PREDICTED.
+        
+        The method will also check for each call if the current step of evaluation
+        is the final one, if it is the final step, the method will update the
+        state of the algorithm to COMPLETED.
+        
+        Branches
+        --------
+        
+        1. If state is READY, evaluate the prediction
+        2. If state is NEW, algorithm has not obtained data, raise warning
+        3. If state is PREDICTED, algorithm has already predicted, raise warning
+        4. All other state, raise warning that the algorithm has completed
+        
+
+        :param algo_id: _description_
+        :type algo_id: UUID
+        :param X_pred: _description_
+        :type X_pred: csr_matrix
+        """
         status = self.status_registry[algo_id].state
         
         if status == AlgorithmStateEnum.READY:
@@ -164,7 +227,6 @@ class EvaluatorStreamer(EvaluatorBase):
         
         else:
             warn(AlgorithmStatusWarning(algo_id, status, "complete"))
-            return
         
         if self._run_step == self.setting.num_split:
             self.status_registry.update(algo_id, AlgorithmStateEnum.COMPLETED)
@@ -172,12 +234,36 @@ class EvaluatorStreamer(EvaluatorBase):
             warn(AlgorithmStatusWarning(algo_id, status, "complete"))
         
     def _cache_evaluation_data(self):
+        """Cache the evaluation data for the current step.
+        
+        Summary
+        --------
+        This method will cache the evaluation data for the current step. The method
+        will update the unknown user/item base, get the next unlabeled and ground
+        truth data, and update the current timestamp.
+        
+        Specifics
+        --------
+        The method will update the unknown user/item base with the ground truth data.
+        Next, mask the unlabeled and ground truth data with the known user/item
+        base. The method will cache the unlabeled and ground truth data in the internal
+        attributes :attr:`_unlabeled_data_cache` and :attr:`_ground_truth_data_cache`.
+        The timestamp is cached in the internal attribute :attr:`_current_timestamp`.
+        
+        we use an internal attribute :attr:`_run_step` to keep track of the current
+        step such that we can check if we have reached the last step.
+        
+        We assume that any method calling this method has already checked if the
+        there is still data to be processed.
+        """
         self._run_step += 1
         
-        unlabeled_data = self.setting.next_unlabeled_data()
-        ground_truth_data = self.setting.next_ground_truth_data()
-        self._current_timestamp = self.setting.next_t_window()
-        
+        try:
+            unlabeled_data = self.setting.next_unlabeled_data()
+            ground_truth_data = self.setting.next_ground_truth_data()
+            self._current_timestamp = self.setting.next_t_window()
+        except EOWSetting:
+            raise EOWSetting("There is no more data to be processed, please ensure that the setting has more data")
         self.user_item_base._update_unknown_user_item_base(ground_truth_data)
         # Assume that we ignore unknowns
         unlabeled_data.mask_shape(self.user_item_base.known_shape)
@@ -189,6 +275,20 @@ class EvaluatorStreamer(EvaluatorBase):
         self._ground_truth_data_cache = ground_truth_data
     
     def _evaluate(self, algo_id: UUID, X_pred: csr_matrix):
+        """Evaluate the prediction
+        
+        Given the prediction and the algorithm ID, the method will evaluate the
+        prediction using the metrics specified in the evaluator. The prediction
+        of the algorithm is compared to the ground truth data currently cached.
+        
+        The evaluation results will be stored in the micro and macro accumulators
+        which will later be used to calculate the final evaluation results.
+
+        :param algo_id: The unique identifier of the algorithm
+        :type algo_id: UUID
+        :param X_pred: The prediction of the algorithm
+        :type X_pred: csr_matrix
+        """
         X_true = self._ground_truth_data_cache.binary_values
         algorithm_name = self.status_registry.get_algorithm_identifier(algo_id)
         # evaluate the prediction
