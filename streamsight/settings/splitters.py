@@ -36,6 +36,40 @@ class Splitter(ABC):
         """
         raise NotImplementedError(f"{self.name} must implement the _split method.")
 
+class NLastInteractionSplitter(Splitter):
+    """Splits the n most recent interactions of a user into the second return value,
+    and earlier interactions into the first.
+
+    :param n: Number of most recent actions to assign to the second return value.
+    :type n: int
+    :param n_seq_data: Number of last interactions to provide as unlabeled data
+        for model to make prediction.
+    :type n_seq_data: int, optional
+    """
+
+    def __init__(self, n: int, n_seq_data: int = 1):
+        super().__init__()
+        if n < 1:
+            raise ValueError(
+                f"n must be greater than 0, got {n}. Values for n < 1"
+                " will cause the ground truth data to be empty."
+            )
+        self.n = n
+        self.n_seq_data = n_seq_data
+
+    def split(
+        self, data: InteractionMatrix
+    ) -> Tuple[InteractionMatrix, InteractionMatrix]:
+        future_interaction = data.get_users_n_last_interaction(self.n)
+        past_interaction = data - future_interaction
+        past_interaction = past_interaction.get_users_n_last_interaction(
+            self.n_seq_data
+        )
+        logger.debug(f"{self.identifier} has complete split")
+
+        return past_interaction, future_interaction
+
+
 class TimestampSplitter(Splitter):
     """Splits data by timestamp.
     
@@ -100,13 +134,13 @@ class TimestampSplitter(Splitter):
                 self.t + self.t_upper
             )
 
-        logger.debug(f"{self.identifier} - Split successful")
+        logger.debug(f"{self.identifier} has complete split")
 
         return past_interaction, future_interaction
 
 
 class NPastInteractionTimestampSplitter(TimestampSplitter):
-    """Splits data with n past interactions based on a timestamp.
+    """Splits with n past interactions based on a timestamp.
     
     Splits the data into unlabeled and ground truth data based on a timestamp.
     Historical data contains last `n_seq_data` interactions before the timestamp `t`
@@ -167,5 +201,5 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
         past_interaction = data.get_users_n_last_interaction(
                 self.n_seq_data, self.t,future_interaction.user_ids
             )
-        logger.debug(f"{self.identifier} - Split successful")
+        logger.debug(f"{self.identifier} has complete split")
         return past_interaction, future_interaction

@@ -72,8 +72,10 @@ from streamsight.settings.single_time_point_setting import (
     SingleTimePointSetting,
 )
 from streamsight.settings.sliding_window_setting import SlidingWindowSetting
+from streamsight.settings.leave_n_out_setting import LeaveNOutSetting
 from streamsight.settings.processor import Processor, PredictionDataProcessor
 from streamsight.settings.splitters import (
     TimestampSplitter,
     NPastInteractionTimestampSplitter,
+    NLastInteractionSplitter
 )
