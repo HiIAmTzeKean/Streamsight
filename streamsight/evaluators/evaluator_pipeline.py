@@ -68,6 +68,7 @@ class EvaluatorPipeline(EvaluatorBase):
             raise ValueError("Algorithm not instantiated")
         background_data = self.setting.background_data
         self.user_item_base._update_known_user_item_base(background_data)
+        # TODO timeline is not respected, can use flag to indicate a override the known user and item
         background_data.mask_shape(self.user_item_base.known_shape)
         
         for algo in self.algorithm:
@@ -118,7 +119,7 @@ class EvaluatorPipeline(EvaluatorBase):
         # the ground truth must follow the same shape as the unlabeled data
         # for evaluation purposes. This means that we drop the unknown user and item
         # from the ground truth data
-        current_timestamp = self.setting.next_data_timestamp_limit()
+        current_timestamp = self.setting.next_t_window()
         self._current_timestamp = current_timestamp
         
         self.user_item_base._update_unknown_user_item_base(ground_truth_data)
