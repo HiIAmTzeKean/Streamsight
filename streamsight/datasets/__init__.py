@@ -27,9 +27,9 @@ that can be used for testing purposes.
 Example
 ~~~~~~~~~
 
-Loading a dataset only takes a couple of lines.
 If the file specified does not exist, the dataset is downloaded and written into this file.
-Subsequent loading of the dataset then happens from this file.
+Subsequent loading of the dataset will not require downloading the dataset again,
+and will be obtained from the file in the directory.
 
 .. code-block:: python
 
@@ -39,15 +39,19 @@ Subsequent loading of the dataset then happens from this file.
     data = dataset.load()
 
 
-Each dataset has its own default preprocessing steps, documented in the classes respectively.
-To use custom preprocessing a couple more lines should be added to the example.
+Each dataset can be loaded with default filters that are applied to the dataset.
+To use the default filters, set `use_default_filters` parameter to True.
+The dataset can also be loaded without filters and preprocessing of ID by
+calling the :meth:`load` method with the parameter `apply_filters` set to False.
+The recommended loading is with filters applied to ensure that the user and item
+ids are incrementing in the order of time.
 
 .. code-block:: python
 
     from streamsight.datasets import AmazonMusicDataset
 
-    dataset = AmazonMusicDataset()
-    data = dataset.load()
+    dataset = AmazonMusicDataset(use_default_filters=True)
+    data = dataset.load(apply_filters=False)
 
 For an overview of available filters see :mod:`streamsight.preprocessing`
 """
