@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import List, Literal
 
 import pandas as pd
 from tqdm.auto import tqdm
@@ -37,7 +37,7 @@ class DataFramePreprocessor:
         self.user_ix = user_ix
         self.timestamp_ix = timestamp_ix
 
-        self.filters = []
+        self.filters: List[Filter] = []
 
     @property
     def item_id_mapping(self) -> pd.DataFrame:

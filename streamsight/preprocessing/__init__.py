@@ -11,6 +11,7 @@ transforming the data into an InteractionMatrix object.
 
     Filter
     MinItemsPerUser
+    MinUsersPerItem
 
 Preprocessor
 ------------
@@ -26,4 +27,4 @@ easy representation of the matrix.
     DataFramePreprocessor
 """
 from streamsight.preprocessing.preprocessor import DataFramePreprocessor
-from streamsight.preprocessing.filter import Filter, MinItemsPerUser
+from streamsight.preprocessing.filter import Filter, MinItemsPerUser, MinUsersPerItem
