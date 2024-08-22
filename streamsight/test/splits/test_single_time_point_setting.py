@@ -16,7 +16,7 @@ def setting(): #TODO change name as no more user
                                   seed=SEED)
 
 #TODO test when n_seq is set to 0
-class TestSingleTimePointSettingForUser():
+class TestSingleTimePointSetting():
     def test_seed_value(self, setting):
         assert setting.seed == SEED
     
