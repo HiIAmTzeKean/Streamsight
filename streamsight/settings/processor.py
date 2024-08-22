@@ -44,12 +44,12 @@ class Processor(ABC):
 
 
 class PredictionDataProcessor(Processor):
-    """Injects the item/user ID to indicate ID for prediction.
+    """Injects the user ID to indicate ID for prediction.
 
-    Operates on the past and future interaction matrices to inject the item/user
+    Operates on the past and future interaction matrices to inject the user
     ID to be predicted by the model into the past interaction matrix. The
-    resulting past interaction matrix will contain the item/user ID to be
-    predicted which will be derived from the set of item/user IDs in the future
+    resulting past interaction matrix will contain the user ID to be
+    predicted which will be derived from the set of user IDs in the future
     interaction matrix. Timestamp of the masked interactions will be preserved as
     the item ID are simply masked with "-1".
 
