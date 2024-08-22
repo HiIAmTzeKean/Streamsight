@@ -27,7 +27,7 @@ class TestSlidingWindowSetting():
         
     def test_split_properties(self, splitter: Setting,  matrix: InteractionMatrix):
         splitter._split(matrix)
-        assert splitter._num_split_set == 2
+        assert splitter._num_split_set == 3
         
     def test_access_split_attributes_before_split(self, splitter: Setting):
         with pytest.raises(KeyError) as e_info:
@@ -49,13 +49,13 @@ class TestSlidingWindowSetting():
 
     def test_incremental_data(self, splitter: Setting, matrix: InteractionMatrix):
         expected_incremental_data_0 = matrix.timestamps_gte(BACKGROUND_T).timestamps_lt(BACKGROUND_T + WINDOW_SIZE)
-        expected_ground_truth_data_1 = matrix.timestamps_gte(BACKGROUND_T + WINDOW_SIZE).timestamps_lt(BACKGROUND_T + 2*WINDOW_SIZE)
+        expected_incremental_data_1 = matrix.timestamps_gte(BACKGROUND_T + WINDOW_SIZE).timestamps_lt(BACKGROUND_T + 2*WINDOW_SIZE)
         splitter.split(matrix)
         assert splitter.incremental_data[0]._df.equals(
             expected_incremental_data_0._df)
         assert splitter.incremental_data[1]._df.equals(
-            expected_ground_truth_data_1._df)
+            expected_incremental_data_1._df)
         
-    def test_data_time_limit(self, splitter: Setting, matrix: InteractionMatrix):
+    def test_t_window(self, splitter: Setting, matrix: InteractionMatrix):
         splitter.split(matrix)
-        assert splitter.data_timestamp_limit == [4, 7]
+        assert splitter.t_window == [4, 7, 10]

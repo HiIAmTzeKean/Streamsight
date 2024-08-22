@@ -1,26 +1,28 @@
 import logging
 import os
+import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-import time
-from typing import Optional
+from typing import List, Optional
 from urllib.request import urlretrieve
 from warnings import warn
 
 import pandas as pd
 
 from streamsight.matrix import InteractionMatrix
-from streamsight.preprocessing.filter import Filter
+from streamsight.preprocessing.filter import (Filter, MinItemsPerUser,
+                                              MinUsersPerItem)
 from streamsight.preprocessing.preprocessor import DataFramePreprocessor
 from streamsight.utils.util import MyProgressBar
 
 logger = logging.getLogger(__name__)
 
 class Dataset(ABC):
-    """Represents a collaborative filtering dataset. Dataset must minimally contain
-    user, item and timestamp columns.
+    """Represents a collaborative filtering dataset.
     
-    ===========
+    Dataset must minimally contain user, item and timestamp columns for the
+    other modules to work.
+
     Assumption
     ===========
     User/item ID increments in the order of time. This is an assumption that will
@@ -36,7 +38,7 @@ class Dataset(ABC):
     :type filename: str, optional
     :type base_path: str, optional
     """
-    
+
     USER_IX = None
     """Name of the column in the DataFrame with user identifiers"""
     ITEM_IX = None
@@ -46,40 +48,64 @@ class Dataset(ABC):
 
     DEFAULT_FILENAME = None
     """Default filename that will be used if it is not specified by the user."""
-    
+
     DEFAULT_BASE_PATH = "data"
     """Default base path where the dataset will be stored."""
-    
-    def __init__(self, filename: Optional[str] = None, base_path: Optional[str] = None):
+
+    def __init__(
+        self, filename: Optional[str] = None, base_path: Optional[str] = None, use_default_filters=False
+    ):
         if not self.USER_IX or not self.ITEM_IX or not self.TIMESTAMP_IX:
             raise AttributeError("USER_IX, ITEM_IX or TIMESTAMP_IX not set.")
-        
+
         self.base_path = base_path if base_path else self.DEFAULT_BASE_PATH
-        logger.debug(f"{self.name} being initialized with '{self.base_path}' as the base path.")
-        
+        logger.debug(
+            f"{self.name} being initialized with '{self.base_path}' as the base path."
+        )
+
         self.filename = filename if filename else self.DEFAULT_FILENAME
         if not self.filename:
             raise ValueError("No filename specified, and no default known.")
-        self.preprocessor = DataFramePreprocessor(self.ITEM_IX, self.USER_IX, self.TIMESTAMP_IX)
+        self.preprocessor = DataFramePreprocessor(
+            self.ITEM_IX, self.USER_IX, self.TIMESTAMP_IX
+        )
         
+        if use_default_filters:
+            for f in self._default_filters:
+                self.add_filter(f)
+
         self._check_safe()
         logger.debug(f"{self.name} is initialized.")
-    
+
     @property
     def name(self):
         """Name of the object's class."""
         return self.__class__.__name__
-     
+    
+    @property
+    def _default_filters(self) -> List[Filter]:
+        """The default filters for all datasets
+        
+        Concrete classes can override this property to add more filters.
+        
+        :return: List of filters to be applied to the dataset
+        :rtype: List[Filter]
+        """
+        return [
+            MinItemsPerUser(3, self.ITEM_IX, self.USER_IX),
+            MinUsersPerItem(3, self.ITEM_IX, self.USER_IX),
+        ]
+
     @property
     def file_path(self) -> str:
         """File path of the dataset."""
         return os.path.join(self.base_path, self.filename) # type: ignore
-    
+
     def _check_safe(self):
         """Check if the directory is safe. If directory does not exit, create it."""
         p = Path(self.base_path)
         p.mkdir(exist_ok=True)
-        
+
     def fetch_dataset(self, force=False) -> None:
         """Check if dataset is present, if not download
 
@@ -92,7 +118,7 @@ class Dataset(ABC):
             logger.debug(f"{self.name} dataset not found in {self.file_path}.")
             self._download_dataset()
         logger.debug(f"Data file is in memory and in dir specified.")
-            
+
     def add_filter(self, filter: Filter):
         """Add a filter to be applied when loading the data.
 
@@ -105,7 +131,7 @@ class Dataset(ABC):
         :type filter: Filter
         """
         self.preprocessor.add_filter(filter)
-        
+
     def load(self,apply_filters=True) -> InteractionMatrix:
         """Loads data into an InteractionMatrix object.
 
@@ -131,11 +157,11 @@ class Dataset(ABC):
         else:
             im = self._dataframe_to_matrix(df)
             warn("No filters applied, user and item ids may not be incrementing in the order of time. Classes that use this dataset may not work as expected.")
-        
+
         end = time.time()
         logger.info(f"{self.name} dataset loaded - Took {end - start:.3}s")
         return im
-    
+
     def _dataframe_to_matrix(self, df: pd.DataFrame) -> InteractionMatrix:
         """Converts a DataFrame to an InteractionMatrix.
 
@@ -152,7 +178,7 @@ class Dataset(ABC):
             item_ix=self.ITEM_IX,
             timestamp_ix=self.TIMESTAMP_IX,
         )
-        
+
     def _fetch_remote(self, url: str, filename: str) -> str:
         """Fetch data from remote url and save locally
 
@@ -178,8 +204,7 @@ class Dataset(ABC):
         :rtype: pd.DataFrame
         """
         raise NotImplementedError("Needs to be implemented")
-    
-    
+
     @abstractmethod
     def _download_dataset(self):
         """Downloads the dataset.

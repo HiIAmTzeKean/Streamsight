@@ -66,6 +66,10 @@ class InteractionMatrix:
         maximum user id plus one, the number of items to the maximum item
         id plus one.
     :type shape: Tuple[int, int], optional
+    :param skip_df_processing: Skip processing of the dataframe. This is useful
+        when the dataframe is already processed and the columns are already
+        renamed.
+    :type skip_df_processing: bool, optional
     """
 
     ITEM_IX = "iid"
@@ -81,6 +85,7 @@ class InteractionMatrix:
         user_ix: str,
         timestamp_ix: str,
         shape: Optional[Tuple[int, int]] = None,
+        skip_df_processing: bool = False
     ):
         self.shape: Tuple[int, int]
         """The shape of the interaction matrix, i.e. `|user| x |item|`."""
@@ -91,14 +96,19 @@ class InteractionMatrix:
             timestamp_ix: InteractionMatrix.TIMESTAMP_IX
         }
 
+        if shape:
+            self.shape = shape
+            
+        if skip_df_processing:
+            self._df = df
+            return
+        
         df = df.rename(columns=col_mapper)
         df = df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX, InteractionMatrix.TIMESTAMP_IX]].copy()
         df = df.reset_index(drop=True).reset_index().rename(columns={"index": InteractionMatrix.INTERACTION_IX})
 
         self._df = df
         
-        if shape:
-            self.shape = shape
 
     def mask_shape(self, shape: Optional[Tuple[int, int]] = None,
                 #    drop_unknown: bool = False,
@@ -223,16 +233,18 @@ class InteractionMatrix:
         :return: Union of interactions in this InteractionMatrix and the other.
         :rtype: InteractionMatrix
         """
-        df = pd.concat([self._df, im._df])
-        shape = (max(self.shape[0], im.shape[0]), max(self.shape[1], im.shape[1]))
-        return InteractionMatrix(
-            df,
-            InteractionMatrix.ITEM_IX,
-            InteractionMatrix.USER_IX,
-            InteractionMatrix.TIMESTAMP_IX,
-            shape
-        )
-    
+        return self + im
+
+    def difference(self, im: "InteractionMatrix") -> "InteractionMatrix":
+        """Difference between this InteractionMatrix and another.
+
+        :param im: InteractionMatrix to subtract from this.
+        :type im: InteractionMatrix
+        :return: Difference between this InteractionMatrix and the other.
+        :rtype: InteractionMatrix
+        """
+        return self - im
+        
     @property
     def values(self) -> csr_matrix:
         """All user-item interactions as a sparse matrix of size (|`global_users`|, |`global_items`|).
@@ -286,7 +298,11 @@ class InteractionMatrix:
 
         return self._apply_mask(mask, inplace=inplace)
     
-    def _apply_mask(self, mask, inplace=False) -> Optional["InteractionMatrix"]:
+    @overload
+    def _apply_mask(self, mask: pd.Series, inplace=True) -> "InteractionMatrix": ...
+    @overload
+    def _apply_mask(self, mask: pd.Series, inplace=False) -> None: ...
+    def _apply_mask(self, mask: pd.Series, inplace=False) -> Optional["InteractionMatrix"]:
         interaction_m = self if inplace else self.copy()
 
         c_df = interaction_m._df[mask]
@@ -378,8 +394,46 @@ class InteractionMatrix:
         """
         return self._timestamps_cmp(operator.le, timestamp, inplace)
     
-    def __add__(self, other):
-        return self.union(other)
+    def __add__(self, im: "InteractionMatrix") -> "InteractionMatrix":
+        """Combine events from this InteractionMatrix with another.
+
+        :param im: InteractionMatrix to union with.
+        :type im: InteractionMatrix
+        :return: Union of interactions in this InteractionMatrix and the other.
+        :rtype: InteractionMatrix
+        """
+        df = pd.concat([self._df, im._df])
+        
+        shape = None
+        if hasattr(self, "shape") and hasattr(im, "shape"):
+            shape = (max(self.shape[0], im.shape[0]), max(self.shape[1], im.shape[1]))
+            
+        return InteractionMatrix(
+            df,
+            InteractionMatrix.ITEM_IX,
+            InteractionMatrix.USER_IX,
+            InteractionMatrix.TIMESTAMP_IX,
+            shape,
+            True
+        )
+    
+    def __sub__(self, im: "InteractionMatrix") -> "InteractionMatrix":
+        full_data = pd.MultiIndex.from_frame(self._df)
+        data_part_2 = pd.MultiIndex.from_frame(im._df)
+        data_part_1 = full_data.difference(data_part_2).to_frame().reset_index(drop=True)
+        
+        shape = None
+        if hasattr(self, "shape") and hasattr(im, "shape"):
+            shape = (max(self.shape[0], im.shape[0]), max(self.shape[1], im.shape[1]))
+        
+        return InteractionMatrix(
+            data_part_1,
+            InteractionMatrix.ITEM_IX,
+            InteractionMatrix.USER_IX,
+            InteractionMatrix.TIMESTAMP_IX,
+            shape,
+            True
+        )
     
     @overload
     def items_in(self, I: Set[int], inplace=False) -> "InteractionMatrix": ...
@@ -458,52 +512,20 @@ class InteractionMatrix:
 
         return self._apply_mask(mask, inplace=inplace)
 
-    def indices_in(self, u_i_lists: Tuple[List[int], List[int]], inplace=False) -> Optional["InteractionMatrix"]:
-        """Select interactions between the specified user-item combinations.
-
-        :param u_i_lists: Two lists as a tuple, the first list are the indices of users,
-                    and the second are indices of items,
-                    both should be of the same length.
-        :type u_i_lists: Tuple[List[int], List[int]]
-        :param inplace: Apply the selection in place to the object,
-                            defaults to False
-        :type inplace: bool, optional
-        :return: None if inplace is True,
-            otherwise a new InteractionMatrix object with the selection of events.
-        :rtype: Union[InteractionMatrix, None]
-        """
-        logger.debug("Performing indices_in comparison")
-
-        interaction_m = self if inplace else self.copy()
-
-        # Data is temporarily duplicated across a MultiIndex and
-        #   the [USER_IX, ITEM_IX] columns for fast multi-indexing.
-        # This index can be dropped safely,
-        #   as the data is still there in the original columns.
-        index = pd.MultiIndex.from_frame(interaction_m._df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX]])
-        tuples = list(zip(*u_i_lists))
-        c_df = interaction_m._df.set_index(index)
-        c_df = c_df.loc[tuples]
-        c_df.reset_index(drop=True, inplace=True)
-
-        interaction_m._df = c_df
-
-        return None if inplace else interaction_m
-
     def _get_last_n_interactions(self,
                                  by: ItemUserBasedEnum,
                                  n_seq_data: int,
-                                 timestamp_limit: Optional[int] = None,
+                                 t_upper: Optional[int] = None,
                                  id_in: Optional[Set[int]] = None,
                                  inplace = False) -> "InteractionMatrix":
         if not self.has_timestamps:
             raise TimestampAttributeMissingError()
-        if timestamp_limit is None:
-            timestamp_limit = self.max_timestamp
+        if t_upper is None:
+            t_upper = self.max_timestamp + 1 # to include the last timestamp
 
         interaction_m = self if inplace else self.copy()
 
-        mask = interaction_m._df[InteractionMatrix.TIMESTAMP_IX] < timestamp_limit
+        mask = interaction_m._df[InteractionMatrix.TIMESTAMP_IX] < t_upper
         if id_in and by == ItemUserBasedEnum.USER:
             mask = mask & interaction_m._df[InteractionMatrix.USER_IX].isin(id_in)
         elif id_in and by == ItemUserBasedEnum.ITEM:
@@ -522,16 +544,16 @@ class InteractionMatrix:
     def _get_first_n_interactions(self,
                                  by: ItemUserBasedEnum,
                                  n_seq_data: int,
-                                 timestamp_limit: Optional[int] = None,
+                                 t_lower: Optional[int] = None,
                                  inplace = False) -> "InteractionMatrix":
         if not self.has_timestamps:
             raise TimestampAttributeMissingError()
-        if timestamp_limit is None:
-            timestamp_limit = self.min_timestamp
+        if t_lower is None:
+            t_lower = self.min_timestamp
 
         interaction_m = self if inplace else self.copy()
         
-        mask = interaction_m._df[InteractionMatrix.TIMESTAMP_IX] >= timestamp_limit
+        mask = interaction_m._df[InteractionMatrix.TIMESTAMP_IX] >= t_lower
         if by == ItemUserBasedEnum.USER:
             c_df = interaction_m._df[mask].groupby(
                 InteractionMatrix.USER_IX).head(n_seq_data)
@@ -543,39 +565,85 @@ class InteractionMatrix:
     
     def get_users_n_last_interaction(self,
                                      n_seq_data: int = 1,
-                                     timestamp_limit: Optional[int] = None,
+                                     t_upper: Optional[int] = None,
                                      user_in: Optional[Set[int]] = None,
                                      inplace: bool = False) -> "InteractionMatrix":
         """Select the last n interactions for each user.
+
+        :param n_seq_data: Number of interactions to select, defaults to 1
+        :type n_seq_data: int, optional
+        :param t_upper: Seconds past t. Upper limit for the timestamp
+            of the interactions to select, defaults to None
+        :type t_upper: Optional[int], optional
+        :param user_in: Set of user IDs to select the interactions from,
+            defaults to None
+        :type user_in: Optional[Set[int]], optional
+        :param inplace: If operation is inplace, defaults to False
+        :type inplace: bool, optional
+        :return: Resulting interaction matrix
+        :rtype: InteractionMatrix
         """
         logger.debug("Performing get_user_n_last_interaction comparison")
-        return self._get_last_n_interactions(ItemUserBasedEnum.USER, n_seq_data, timestamp_limit, user_in, inplace)
+        return self._get_last_n_interactions(ItemUserBasedEnum.USER, n_seq_data, t_upper, user_in, inplace)
 
     def get_items_n_last_interaction(self,
                                      n_seq_data: int = 1,
-                                     timestamp_limit: Optional[int] = None,
+                                     t_upper: Optional[int] = None,
                                      item_in: Optional[Set[int]] = None,
                                      inplace: bool = False) -> "InteractionMatrix":
         """Select the last n interactions for each item.
+        
+        :param n_seq_data: Number of interactions to select, defaults to 1
+        :type n_seq_data: int, optional
+        :param t_upper: Seconds past t. Upper limit for the timestamp
+            of the interactions to select, defaults to None
+        :type t_upper: Optional[int], optional
+        :param item_in: Set of item IDs to select the interactions from,
+            defaults to None
+        :type item_in: Optional[Set[int]], optional
+        :param inplace: If operation is inplace, defaults to False
+        :type inplace: bool, optional
+        :return: Resulting interaction matrix
+        :rtype: InteractionMatrix
         """
         logger.debug("Performing get_item_n_last_interaction comparison")
-        return self._get_last_n_interactions(ItemUserBasedEnum.ITEM, n_seq_data, timestamp_limit, item_in, inplace)
+        return self._get_last_n_interactions(ItemUserBasedEnum.ITEM, n_seq_data, t_upper, item_in, inplace)
     
     def get_users_n_first_interaction(self,
                                       n_seq_data: int = 1,
-                                      timestamp_limit: Optional[int] = None,
+                                      t_lower: Optional[int] = None,
                                       inplace = False) -> "InteractionMatrix":
         """Select the first n interactions for each user.
+
+        :param n_seq_data: Number of interactions to select, defaults to 1
+        :type n_seq_data: int, optional
+        :param t_lower: Seconds past t. Lower limit for the timestamp
+            of the interactions to select, defaults to None
+        :type t_lower: Optional[int], optional
+        :param inplace: If operation is inplace, defaults to False
+        :type inplace: bool, optional
+        :return: Resulting interaction matrix
+        :rtype: InteractionMatrix
         """
-        return self._get_first_n_interactions(ItemUserBasedEnum.USER, n_seq_data, timestamp_limit, inplace)
+        return self._get_first_n_interactions(ItemUserBasedEnum.USER, n_seq_data, t_lower, inplace)
     
     def get_items_n_first_interaction(self,
                                       n_seq_data: int = 1,
-                                      timestamp_limit: Optional[int] = None,
+                                      t_lower: Optional[int] = None,
                                       inplace = False) -> "InteractionMatrix":
-        """Select the first n interactions for each user.
+        """Select the first n interactions for each item.
+        
+        :param n_seq_data: Number of interactions to select, defaults to 1
+        :type n_seq_data: int, optional
+        :param t_lower: Seconds past t. Lower limit for the timestamp
+            of the interactions to select, defaults to None
+        :type t_lower: Optional[int], optional
+        :param inplace: If operation is inplace, defaults to False
+        :type inplace: bool, optional
+        :return: Resulting interaction matrix
+        :rtype: InteractionMatrix
         """
-        return self._get_first_n_interactions(ItemUserBasedEnum.ITEM, n_seq_data, timestamp_limit, inplace)
+        return self._get_first_n_interactions(ItemUserBasedEnum.ITEM, n_seq_data, t_lower, inplace)
     
     @property
     def binary_values(self) -> csr_matrix:
@@ -588,61 +656,6 @@ class InteractionMatrix:
         :rtype: csr_matrix
         """
         return to_binary(self.values)
-    
-    @property
-    def binary_item_history(self) -> Iterator[Tuple[int, List[int]]]:
-        """The unique items interacted with, per user.
-
-        :yield: Tuples of user ID, list of distinct item IDs the user interacted with.
-        :rtype: List[Tuple[int, List[int]]]
-        """
-        df = self._df.drop_duplicates([InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX])
-        for uid, user_history in df.groupby(InteractionMatrix.USER_IX):
-            yield (uid, user_history[InteractionMatrix.ITEM_IX].values)
-
-    @property
-    def interaction_history(self) -> Iterator[Tuple[int, List[int]]]:
-        """The interactions per user
-
-        :yield: Tuples of user ID, list of interaction IDs.
-        :rtype: List[Tuple[int, List[int]]]
-        """
-        for uid, user_history in self._df.groupby(self.USER_IX):
-            yield (uid, user_history[InteractionMatrix.INTERACTION_IX].values)
-
-    @property
-    def sorted_interaction_history(self) -> Iterator[Tuple[int, List[int]]]:
-        """The interaction IDs per user, sorted by timestamp (ascending).
-
-        :raises AttributeError: If there is no timestamp column can't sort
-        :yield: tuple of user ID, list of interaction IDs sorted by timestamp
-        :rtype: List[Tuple[int, List[int]]]
-        """
-        if not self.has_timestamps:
-            raise AttributeError(
-                "InteractionMatrix is missing timestamps. " "Cannot sort user history without timestamps."
-            )
-        for uid, user_history in self._df.groupby(self.USER_IX):
-            yield (
-                uid,
-                user_history.sort_values(self.TIMESTAMP_IX, ascending=True)[InteractionMatrix.INTERACTION_IX].values,
-            )
-
-    @property
-    def sorted_item_history(self) -> Iterator[Tuple[int, List[int]]]:
-        """The items the user interacted with for every user sorted by timestamp (ascending).
-
-        :raises AttributeError: If there is no timestamp column.
-        :yield: Tuple of user ID, list of item IDs sorted by timestamp.
-        :rtype: List[Tuple[int, List[int]]]
-        """
-        if not self.has_timestamps:
-            raise TimestampAttributeMissingError()
-        for uid, user_history in self._df.groupby(self.USER_IX):
-            yield (
-                uid,
-                user_history.sort_values(self.TIMESTAMP_IX, ascending=True)[InteractionMatrix.ITEM_IX].values,
-            )
     
     def get_prediction_data(self) -> "InteractionMatrix":
         """Get the data to be predicted.

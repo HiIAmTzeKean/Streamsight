@@ -77,7 +77,7 @@ class SlidingWindowSetting(Setting):
             )
 
         self._background_data, _ = self._background_splitter.split(data)
-        self._ground_truth_data, self._unlabeled_data, self._data_timestamp_limit, self._incremental_data = [], [], [], []
+        self._ground_truth_data, self._unlabeled_data, self._t_window, self._incremental_data = [], [], [], []
 
         # sub_time is the subjugate time point that the splitter will slide over the data
         sub_time = self.t
@@ -85,7 +85,7 @@ class SlidingWindowSetting(Setting):
 
         pbar = tqdm(total=int((max_timestamp - sub_time) / self.window_size))
         while sub_time <= max_timestamp:
-            self._data_timestamp_limit.append(sub_time)
+            self._t_window.append(sub_time)
             # the set used for eval will always have a timestamp greater than
             # data released such that it is unknown to the model
             self._window_splitter.update_split_point(sub_time)

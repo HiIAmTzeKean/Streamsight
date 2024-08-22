@@ -61,7 +61,7 @@ class SingleTimePointSetting(Setting):
         self._splitter = NPastInteractionTimestampSplitter(
             background_t, delta_after_t, n_seq_data
         )
-        self._data_timestamp_limit = background_t
+        self._t_window = background_t
 
     def _split(self, data: InteractionMatrix):
         """Splits your dataset into a training, validation and test dataset

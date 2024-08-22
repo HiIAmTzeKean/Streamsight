@@ -176,7 +176,7 @@ class EvaluatorStreamer(EvaluatorBase):
         
         unlabeled_data = self.setting.next_unlabeled_data()
         ground_truth_data = self.setting.next_ground_truth_data()
-        self._current_timestamp = self.setting.next_data_timestamp_limit()
+        self._current_timestamp = self.setting.next_t_window()
         
         self.user_item_base._update_unknown_user_item_base(ground_truth_data)
         # Assume that we ignore unknowns

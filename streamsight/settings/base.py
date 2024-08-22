@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generator, List, Optional, Union
+from typing import Any, Dict, Generator, List, Optional, Union
 from warnings import warn
 
 import numpy as np
@@ -56,8 +56,8 @@ class Setting(ABC):
         """Data that is used to incrementally update the model. Unique to :class:`SlidingWindowSetting`."""
         self._background_data: InteractionMatrix
         """Data used as the initial set of interactions to train the model."""
-        self._data_timestamp_limit: Union[int, List[int]]
-        """This is the limit of the data in the corresponding split."""
+        self._t_window: Union[None, int, List[int]]
+        """This is the upper timestamp of the window in split. The actual interaction might have a smaller timestamp value than this because this will is the t cut off value."""
         self.n_seq_data: int
         """Number of last sequential interactions to provide in :attr:`unlabeled_data` as unlabeled data for model to make prediction."""
         self.top_K: int
@@ -72,20 +72,24 @@ class Setting(ABC):
         """
         return self.__class__.__name__
     
+    def __str__(self):
+        attrs = self.params
+        return f"{self.__class__.__name__}({', '.join((f'{k}={v}' for k, v in attrs.items()))})"
+    
     @property
-    def params(self):
+    def params(self) -> Dict[str, Any]:
         """Parameters of the setting."""
         return {}
     
-    def get_params(self):
+    def get_params(self) -> Dict[str, Any]:
         """Get the parameters of the setting."""
         return self.params
     
     @property
-    def identifier(self):
+    def identifier(self) -> str:
         """Name of the setting."""
         # return f"{super().identifier[:-1]},K={self.K})"
-        paramstring = ",".join((f"{k}={v}" for k, v in self.get_params().items() if v is not None))
+        paramstring = ",".join((f"{k}={v}" for k, v in self.params.items() if v is not None))
         return self.name + "(" + paramstring + ")"
     
     @abstractmethod
@@ -178,15 +182,22 @@ class Setting(ABC):
         return self._background_data
 
     @property
-    def data_timestamp_limit(self) -> Union[int, List[int]]:
-        """The timestamp limit of the data in the corresponding split.
+    def t_window(self) -> Union[None, int, List[int]]:
+        """The upper timestamp of the window in split.
 
-        :return: Timestamp limit of the data in the corresponding split.
+        In settings that respect the global timeline, a timestamp value will
+        be returned. In the case of :class:`SlidingWindowSetting`, a list of
+        timestamp values will be returned.
+        
+        Settings such as :class:`LeaveNOutSetting` will return None since there
+        is no split with respect to time.
+        
+        :return: timestamp limit for the data.
         :rtype: Union[int, List[int]]
         """
         self._check_split_complete()
 
-        return self._data_timestamp_limit
+        return self._t_window
 
     @property
     def unlabeled_data(self) -> Union[InteractionMatrix, List[InteractionMatrix]]:
@@ -360,11 +371,10 @@ class Setting(ABC):
         self.ground_truth_data_iter: Generator[InteractionMatrix] = self._create_generator(
             "_ground_truth_data")
         
-    # TODO consider better naming
-    def _next_data_timestamp_limit_generator(self):
-        """Generates data timestamp limit.
+    def _next_t_window_generator(self):
+        """Generates t_window data.
         
-        Allow for iteration over the data timestamp limit. If the setting is a
+        Allow for iteration over the t_window data. If the setting is a
         sliding window setting, then it will iterate over the list of data
         timestamp limit.
         
@@ -372,8 +382,8 @@ class Setting(ABC):
             A private method is specifically created to abstract the creation of
             the generator and to allow for easy resetting when needed.
         """
-        self.data_timestamp_limit_iter: Generator[int] = self._create_generator(
-            "_data_timestamp_limit")
+        self.t_window_iter: Generator[int] = self._create_generator(
+            "_t_window")
 
     def next_unlabeled_data(self, reset=False) -> InteractionMatrix:
         """Get the next unlabeled data.
@@ -442,24 +452,25 @@ class Setting(ABC):
         except StopIteration:
             raise EOWSetting()
 
-    def next_data_timestamp_limit(self, reset=False) -> int:
+    #? t_window_data
+    def next_t_window(self, reset=False) -> int:
         """Get the next data timestamp limit.
         
-        Get the next data timestamp limit for the corresponding split.
+        Get the next upper timestamp limit for the corresponding split.
         If the setting is a sliding window setting, then it will iterate over
-        the list of data timestamp limit.
+        the list of timestamps that specify the timestamp cut off for the data.
 
         :param reset: To reset the generator, defaults to False
         :type reset: bool, optional
         :raises EOWSetting: If there is no more data timestamp limit to iterate over.
-        :return: The next data timestamp limit for the corresponding split.
+        :return: The next t_window for the corresponding split.
         :rtype: int
         """
-        if reset or not hasattr(self, "data_timestamp_limit_iter"):
-            self._next_data_timestamp_limit_generator()
+        if reset or not hasattr(self, "t_window_iter"):
+            self._next_t_window_generator()
 
         try:
-            return next(self.data_timestamp_limit_iter)
+            return next(self.t_window_iter)
         except StopIteration:
             raise EOWSetting()
 
@@ -473,6 +484,6 @@ class Setting(ABC):
         logger.info("Resetting data generators.")
         self._unlabeled_data_generator()
         self._ground_truth_data_generator()
-        self._next_data_timestamp_limit_generator()
+        self._next_t_window_generator()
         self._incremental_data_generator()
         logger.info("Data generators are reset.")
