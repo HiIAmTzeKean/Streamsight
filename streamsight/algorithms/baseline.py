@@ -1,76 +1,67 @@
-# RecPack, An Experimentation Toolkit for Top-N Recommendation
-# Copyright (C) 2020  Froomle N.V.
-# License: GNU AGPLv3 - https://gitlab.com/recpack-maintainers/recpack/-/blob/master/LICENSE
-# Author:
-#   Lien Michiels
-#   Robin Verachtert
 from typing import Optional
 import warnings
 
-import numpy as np
-from scipy.sparse import csr_matrix, lil_matrix
+import pandas as pd
 
+import numpy as np
+from scipy.sparse import csr_matrix
 from streamsight.algorithms.base import Algorithm
-from streamsight.utils.util import get_top_K_values
+from streamsight.algorithms.utils import get_top_K_values
 
 class Random(Algorithm):
-    """Uniform random algorithm, each item has an equal chance of getting recommended.
+    """Random algorithm that recommends items uniformly at random.
 
-    Simple baseline, recommendations are sampled uniformly without replacement
-    from the items that were interacted with in the matrix provided to fit.
-    Scores are given based on sampling rank, such that the items first
-    in the sample has the highest score
-
-    :param K: How many items to sample for recommendation, defaults to 200
+    :param K: How many items to sample for recommendation, defaults to 10
     :type K: int, optional
     :param seed: Seed for the random number generator used, defaults to None
     :type seed: int, optional
-    :param use_only_interacted_items: Should only items visited in the training
-        matrix be used to recommend from. If False all items will be recommended
-        uniformly at random.
-        Defaults to True.
-    :type use_only_interacted_items: boolean, optional
     """
 
-    def __init__(self, K: Optional[int] = 200, seed: Optional[int] = None, use_only_interacted_items: bool = True):
+    def __init__(self, K: Optional[int] = 10, seed: Optional[int] = None):
         super().__init__()
-        self.items = None
-        self.K = K  # TODO Allow K to be set to zero?
-        self.use_only_interacted_items = use_only_interacted_items
-
+        self.K = K
+        
         if seed is None:
             seed = np.random.get_state()[1][0]
         self.seed = seed
         self.rand_gen = np.random.default_rng(seed=self.seed)
 
     def _fit(self, X: csr_matrix) -> "Random":
-        if self.use_only_interacted_items:
-            self.items_ = list(set(X.nonzero()[1]))
-        else:
-            self.items_ = list(np.arange(X.shape[1]))
-
-        if self.K is not None and len(self.items_) < self.K:
-            warnings.warn("K is larger than the number of items.", UserWarning)
-
+        self.fit_complete_ = True
         return self
 
-    def _predict(self, X: csr_matrix) -> csr_matrix:
-        # For each user choose random K items, and generate a score for these items
-        # Then create a matrix with the scores on the right indices
-        users = list(set(X.nonzero()[0]))
+    def _predict(self, X: csr_matrix, predict_frame:Optional[pd.DataFrame]=None) -> csr_matrix:
+        """Predict the top K items for each user in the predict frame.
+        
+        If the predict frame is not provided, an AttributeError is raised.
 
-        num_items = X.shape[1]
-        K = min(len(self.items_), self.K) if self.K is not None else self.K
-        # Generate random scores for all items
-        random_scores = self.rand_gen.random((len(users), num_items))
+        :param X: _description_
+        :type X: csr_matrix
+        :param predict_frame: _description_, defaults to None
+        :type predict_frame: Optional[pd.DataFrame], optional
+        :raises AttributeError: _description_
+        :return: _description_
+        :rtype: csr_matrix
+        """
+        if predict_frame is None:
+            raise AttributeError("Predict frame with requested ID is required for Random algorithm")
 
-        # Filter out only allowed items
-        allowed_items = np.zeros(num_items)
-        allowed_items[self.items_] = 1
+        known_item_id = X.shape[1]
+        
+        # predict_frame contains (user_id, -1) pairs
+        max_user_id  = predict_frame["uid"].max() + 1 
+        intended_shape = (max(max_user_id, X.shape[0]), known_item_id)
+        
+        to_predict = predict_frame.value_counts("uid")
+        row = []
+        col = []
+        for user_id in to_predict.index:
+            for _ in range(to_predict[user_id]):
+                row.append(user_id)
+                col.append(np.random.randint(0, known_item_id))
+        scores = csr_matrix((np.ones(len(row)), (row, col)), shape=intended_shape)
+        
         # Get top K of allowed items per user
-        top_scores = get_top_K_values(csr_matrix(random_scores * allowed_items), K=K)
-
-        X_pred = csr_matrix(X.shape)
-        X_pred[users] = top_scores
+        X_pred = get_top_K_values(scores, K=self.K)
 
         return X_pred
