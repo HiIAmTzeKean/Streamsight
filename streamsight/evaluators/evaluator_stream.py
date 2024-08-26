@@ -145,25 +145,61 @@ class EvaluatorStreamer(EvaluatorBase):
         return algo_id
     
     def get_algorithm_state(self, algo_id: UUID) -> AlgorithmStateEnum:
+        """Get the state of the algorithm
+        
+        This method is called to get the state of the algorithm given the
+        unique identifier of the algorithm. The method will return the state
+        of the algorithm.
+
+        :param algo_id: Unique identifier of the algorithm
+        :type algo_id: UUID
+        :return: The state of the algorithm
+        :rtype: AlgorithmStateEnum
+        """
         return self.status_registry[algo_id].state
     
     def get_all_algorithm_status(self) -> Dict[str, AlgorithmStateEnum]:
+        """Get the status of all algorithms
+        
+        This method is called to get the status of all algorithms registered
+        with the evaluator. The method will return a dictionary where the key
+        is the name of the algorithm and the value is the state of the algorithm.
+
+        :return: The status of all algorithms
+        :rtype: Dict[str, AlgorithmStateEnum]
+        """
         return self.status_registry.all_algo_states()
 
     def get_data(self, algo_id: UUID) -> InteractionMatrix:
         """Get training data for the algorithm
         
+        Summary
+        --------
+        
         This method is called to get the training data for the algorithm. The
         training data is defined as either the background data or the incremental
-        data.
+        data. The training data is always released irrespective of the state of
+        the algorithm.
         
-        The method will check the status of the algorithm and return the
-        #TODO
+        Specifics
+        --------
+        
+        1. If the state is COMPLETED, raise warning that the algorithm has completed
+        2. If the state is NEW, release training data to the algorithm
+        3. If the state is READY and the data segment is the same, raise warning
+           that the algorithm has already obtained data
+        4. If the state is PREDICTED and the data segment is the same, inform
+           the algorithm that it has already predicted and should wait for other
+           algorithms to predict
+        5. This will occur when :attr:`_current_timestamp` has changed, which causes
+           scenario 2 to not be caught. In this case, the algorithm is requesting
+           the next window of data. Thus, this is a valid data call and the status
+           will be updated to READY.
 
-        :param algo_id: _description_
+        :param algo_id: Unique identifier of the algorithm
         :type algo_id: UUID
-        :raises ValueError: _description_
-        :return: _description_
+        :raises ValueError: If the stream has not started
+        :return: The training data for the algorithm
         :rtype: InteractionMatrix
         """
         if not self.has_started:
@@ -197,7 +233,8 @@ class EvaluatorStreamer(EvaluatorBase):
             logger.info(return_msg)
             print(return_msg)
             
-        else:            
+        else:
+            #? any other scenario that we have not accounted for       
             self.status_registry.update(algo_id, AlgorithmStateEnum.READY, self._current_timestamp)
             
         # release data to the algorithm
