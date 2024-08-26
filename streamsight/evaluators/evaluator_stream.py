@@ -2,7 +2,7 @@ import logging
 import random
 import uuid
 import warnings
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from uuid import UUID
 from warnings import warn
 
@@ -114,6 +114,19 @@ class EvaluatorStreamer(EvaluatorBase):
         self._cache_evaluation_data()
 
     def register_algorithm(self, algorithm: Algorithm) -> UUID:
+        """Register the algorithm with the evaluator
+        
+        This method is called to register the algorithm with the evaluator.
+        The method will assign a unique identifier to the algorithm and store
+        the algorithm in the registry. The method will raise a ValueError if
+        the stream has already started.
+
+        :param algorithm: The algorithm to be registered
+        :type algorithm: Algorithm
+        :raises ValueError: If the stream has already started
+        :return: The unique identifier of the algorithm
+        :rtype: UUID
+        """
         if self.has_started:
             raise ValueError("Cannot register algorithm after the stream has started")
     
@@ -138,6 +151,21 @@ class EvaluatorStreamer(EvaluatorBase):
         return self.status_registry.all_algo_states()
 
     def get_data(self, algo_id: UUID) -> InteractionMatrix:
+        """Get training data for the algorithm
+        
+        This method is called to get the training data for the algorithm. The
+        training data is defined as either the background data or the incremental
+        data.
+        
+        The method will check the status of the algorithm and return the
+        #TODO
+
+        :param algo_id: _description_
+        :type algo_id: UUID
+        :raises ValueError: _description_
+        :return: _description_
+        :rtype: InteractionMatrix
+        """
         if not self.has_started:
             raise ValueError(f"call start_stream() before requesting data for algorithm {algo_id}")
         
@@ -176,6 +204,30 @@ class EvaluatorStreamer(EvaluatorBase):
         return self._training_data_cache
 
     def get_unlabeled_data(self, algo_id: UUID) -> Optional[InteractionMatrix]:
+        """Get unlabeled data for the algorithm
+
+        Summary
+        --------
+        
+        This method is called to get the unlabeled data for the algorithm. The
+        unlabeled data is the data that the algorithm will predict. It will
+        contain `(user_id, -1)` pairs, where the value -1 indicates that the
+        item is to be predicted.
+        
+        Specifics
+        --------
+        
+        1. If the state is READY/PREDICTED, return the unlabeled data
+        2. If the state is COMPLETED, raise warning that the algorithm has completed
+        3. ALl other same, raise warning that the algorithm has not obtained data
+           and should call :meth:`get_data` first.
+        
+        
+        :param algo_id: Unique identifier of the algorithm
+        :type algo_id: UUID
+        :return: The unlabeled data for prediction
+        :rtype: Optional[InteractionMatrix]
+        """
         status = self.status_registry[algo_id].state
         if status in [AlgorithmStateEnum.READY, AlgorithmStateEnum.PREDICTED]:
             return self._unlabeled_data_cache
@@ -185,8 +237,11 @@ class EvaluatorStreamer(EvaluatorBase):
             return
         warn(AlgorithmStatusWarning(algo_id, status, "unlabeled"))
         
-    def submit_prediction(self, algo_id: UUID, X_pred: csr_matrix) -> None:
+    def submit_prediction(self, algo_id: UUID, X_pred: Union[csr_matrix, InteractionMatrix]) -> None:
         """Submit the prediction of the algorithm
+        
+        Summary
+        --------
         
         This method is called to submit the prediction of the algorithm.
         There are a few checks that are done before the prediction is
@@ -199,7 +254,7 @@ class EvaluatorStreamer(EvaluatorBase):
         is the final one, if it is the final step, the method will update the
         state of the algorithm to COMPLETED.
         
-        Branches
+        Specifics
         --------
         
         1. If state is READY, evaluate the prediction
@@ -214,6 +269,7 @@ class EvaluatorStreamer(EvaluatorBase):
         :type X_pred: csr_matrix
         """
         status = self.status_registry[algo_id].state
+        X_pred = self._transform_prediction(X_pred)
         
         if status == AlgorithmStateEnum.READY:
             self._evaluate(algo_id, X_pred)
@@ -232,7 +288,12 @@ class EvaluatorStreamer(EvaluatorBase):
             self.status_registry.update(algo_id, AlgorithmStateEnum.COMPLETED)
             logger.info(f"Finished streaming")
             warn(AlgorithmStatusWarning(algo_id, status, "complete"))
-        
+    
+    def _transform_prediction(self, X_pred: Union[csr_matrix, InteractionMatrix]) -> csr_matrix:
+        if isinstance(X_pred, InteractionMatrix):
+            X_pred = X_pred.binary_values
+        return X_pred
+    
     def _cache_evaluation_data(self):
         """Cache the evaluation data for the current step.
         
