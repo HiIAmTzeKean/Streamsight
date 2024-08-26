@@ -157,6 +157,15 @@ class Metric:
         return check
 
     def _set_shape(self, y_true: csr_matrix) -> None:
+        """Set the number of users and items in the metric.
+        
+        The values of ``self._num_users`` and ``self._num_items`` are set
+        to the number of users and items in ``y_true``. This allows for the
+        computation of the metric to be done in the correct shape.
+
+        :param y_true: Binary representation of user-item interactions.
+        :type y_true: csr_matrix
+        """
         self._num_users, self._num_items = y_true.shape
 
     def _eliminate_empty_users(self, y_true: csr_matrix, y_pred: csr_matrix) -> Tuple[csr_matrix, csr_matrix]:
@@ -198,11 +207,15 @@ class MetricTopK(Metric):
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
     """
+    DEFAULT_K = 10
 
-    def __init__(self, K:int = 10,
+    def __init__(self, K:Optional[int] = DEFAULT_K,
                  timestamp_limit: Optional[int] = None,
                  cache: bool = False):
         super().__init__(timestamp_limit, cache)
+        if K is None:
+            warn(f"K not specified, using default value {self.DEFAULT_K}.")
+            K = self.DEFAULT_K
         self.K = K
 
     @property
