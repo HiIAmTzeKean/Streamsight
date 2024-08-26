@@ -17,18 +17,16 @@ logger = logging.getLogger(__name__)
 class SingleTimePointSetting(Setting):
     """Single time point setting for data split.
 
-
-
     :param background_t: Time point to split the data into background and evaluation data. Split will be from ``[0, t)``
     :type background_t: int
-    :param delta_after_t:
-        Defaults to maximal integer value (acting as infinity).
-    :type delta_after_t: int, optional
     :param n_seq_data: Number of last sequential interactions to provide as
         unlabeled data for model to make prediction.
     :type n_seq_data: int, optional
     :param top_K: Number of interaction per user that should be selected for evaluation purposes.
     :type top_K: int, optional
+    :param t_upper: Upper bound on the timestamp of interactions.
+        Defaults to maximal integer value (acting as infinity).
+    :type t_upper: int, optional
     :param seed: Seed for randomization parts of the scenario.
         Timed scenario is deterministic, so changing seed should not matter.
         Defaults to None, so random seed will be generated.
@@ -38,28 +36,28 @@ class SingleTimePointSetting(Setting):
     def __init__(
         self,
         background_t: int,
-        delta_after_t: int = np.iinfo(np.int32).max,
         n_seq_data: int = 1,
         top_K: int = 1,
+        t_upper: int = np.iinfo(np.int32).max,
         seed: Optional[int] = None,
     ):
         super().__init__(seed=seed)
         self.t = background_t
         """Seconds before `t` timestamp value to be used in `background_set`."""
-        self.delta_after_t = delta_after_t
+        self.t_upper = t_upper
         """Seconds after `t` timestamp value to be used in `ground_truth_data`."""
         self.n_seq_data = n_seq_data
         self.top_K = top_K
 
         logger.info(
-            f"Splitting data at time {background_t} with delta_after_t interval {delta_after_t}"
+            f"Splitting data at time {background_t} with t_upper interval {t_upper}"
         )
 
         self._background_splitter = TimestampSplitter(
-            background_t, None, delta_after_t
+            background_t, None, t_upper
         )
         self._splitter = NPastInteractionTimestampSplitter(
-            background_t, delta_after_t, n_seq_data
+            background_t, t_upper, n_seq_data
         )
         self._t_window = background_t
 
@@ -91,7 +89,7 @@ class SingleTimePointSetting(Setting):
         """Parameters of the setting."""
         return {
             "background_t": self.t,
-            "delta_after_t": self.delta_after_t,
+            "t_upper": self.t_upper,
             "n_seq_data": self.n_seq_data,
             "top_K": self.top_K,
         }

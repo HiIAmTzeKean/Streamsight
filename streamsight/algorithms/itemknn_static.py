@@ -1,5 +1,8 @@
 import logging
 import time
+from typing import Optional
+
+import pandas as pd
 from scipy.sparse import csr_matrix
 from streamsight.algorithms.base import Algorithm
 from streamsight.algorithms.itemknn import ItemKNN
@@ -27,8 +30,8 @@ class ItemKNNStatic(ItemKNN):
         super().fit(X)
         return self
 
-    def _predict(self, X: csr_matrix) -> csr_matrix:
-        num_item, num_user = self.similarity_matrix_.shape
+    def _predict(self, X: csr_matrix, predict_frame:Optional[pd.DataFrame]=None) -> csr_matrix:
+        num_item, _ = self.similarity_matrix_.shape
         # reduce X to only the items that are in the similarity matrix
-        X = X[:num_user, :num_item]
+        X = X[:, :num_item]
         return super()._predict(X)

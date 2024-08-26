@@ -33,10 +33,13 @@ class Dataset(ABC):
 
     :param filename: Name of the file, if no name is provided the dataset default will be used if known.
         If the dataset does not have a default filename, a ValueError will be raised.
+    :type filename: str, optional
     :param base_path: The base_path to the data directory.
         Defaults to `data`
-    :type filename: str, optional
     :type base_path: str, optional
+    :param use_default_filters: If True, the default filters will be applied to the dataset.
+        Defaults to False.
+    :type use_default_filters: bool, optional
     """
 
     USER_IX = None

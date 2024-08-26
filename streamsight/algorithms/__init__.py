@@ -32,6 +32,7 @@ they have interacted with.
     ItemKNNStatic
 """
 from streamsight.algorithms.base import Algorithm
+from streamsight.algorithms.baseline import Random
 from streamsight.algorithms.itemknn import ItemKNN
 from streamsight.algorithms.itemknn_incremental import ItemKNNIncremental
 from streamsight.algorithms.itemknn_rolling import ItemKNNRolling

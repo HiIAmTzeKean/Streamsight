@@ -1,4 +1,7 @@
 
+from typing import Optional
+
+import pandas as pd
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 from streamsight.algorithms.base import Algorithm
@@ -43,23 +46,6 @@ class ItemKNN(Algorithm):
         make sure to pick a value below the number of columns of the matrix to fit on.
         Defaults to 200
     :type K: int, optional
-    :param similarity: Which similarity measure to use,
-        can be one of ["cosine", "conditional_probability"], defaults to "cosine"
-    :type similarity: str, optional
-    :param pop_discount: Power applied to the comparing item in the denominator,
-        to discount contributions of very popular items.
-        Should be between 0 and 1. If None, apply no discounting.
-        Defaults to None.
-    :type pop_discount: float, optional
-    :param normalize_X: Normalize rows in the interaction matrix so that
-        the contribution of users who have viewed more items is smaller,
-        defaults to False
-    :type normalize_X: bool, optional
-    :param normalize_sim: Normalize scores per row in the similarity matrix to
-        counteract artificially large similarity scores when the predictive item is
-        rare, defaults to False.
-    :type normalize_sim: bool, optional
-    :raises ValueError: If an unsupported similarity measure is passed.
     """
     ITEM_USER_BASED = ItemUserBasedEnum.ITEM
     
@@ -79,7 +65,7 @@ class ItemKNN(Algorithm):
 
         self.similarity_matrix_ = item_similarities
 
-    def _predict(self, X: csr_matrix) -> csr_matrix:
+    def _predict(self, X: csr_matrix, predict_frame:Optional[pd.DataFrame]=None) -> csr_matrix:
         """Predict scores for nonzero users in X
 
         Scores are computed by matrix multiplication of X
@@ -87,6 +73,8 @@ class ItemKNN(Algorithm):
 
         :param X: csr_matrix with interactions
         :type X: csr_matrix
+        :param predict_frame: DataFrame containing the user IDs to predict for
+        :type predict_frame: pd.DataFrame, optional
         :return: csr_matrix with scores
         :rtype: csr_matrix
         """

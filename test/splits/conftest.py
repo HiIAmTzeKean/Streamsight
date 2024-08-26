@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from streamsight.matrix import InteractionMatrix
-from streamsight.test.conftest import test_dataframe
+from test.conftest import test_dataframe
 
 @pytest.fixture()
 def matrix(test_dataframe):

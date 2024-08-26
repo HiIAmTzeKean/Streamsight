@@ -1,6 +1,9 @@
 import logging
 import time
 from abc import ABC, abstractmethod
+from typing import Optional
+
+import pandas as pd
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -65,7 +68,7 @@ class Algorithm(BaseEstimator,ABC):
         raise NotImplementedError("Please implement _fit")
 
     @abstractmethod
-    def _predict(self, X: csr_matrix) -> csr_matrix:
+    def _predict(self, X: csr_matrix, predict_frame:Optional[pd.DataFrame]=None) -> csr_matrix:
         """Stub for predicting scores to users
 
         Will be called by the `predict` wrapper.
@@ -73,6 +76,8 @@ class Algorithm(BaseEstimator,ABC):
 
         :param X: User-item interaction matrix used as input to predict
         :type X: csr_matrix
+        :param predict_frame: DataFrame containing the user IDs to predict for
+        :type predict_frame: pd.DataFrame
         :raises NotImplementedError: Implement this method in the child class
         :return: Predictions made for all nonzero users in X
         :rtype: csr_matrix
@@ -86,27 +91,6 @@ class Algorithm(BaseEstimator,ABC):
         https://scikit-learn.org/stable/modules/generated/sklearn.utils.validation.check_is_fitted.html
         """
         check_is_fitted(self)
-
-    def _check_prediction(self, X_pred: csr_matrix, X: csr_matrix) -> None:
-        """Checks that the predictions matches expectations
-
-        Checks implemented:
-
-        - Check that all users with history got at least 1 recommendation
-
-        For failing checks a warning is printed.
-
-        :param X_pred: Predictions made for all nonzero users in X
-        :type X_pred: csr_matrix
-        :param X: User-item interaction matrix used as input to predict
-        :type X: csr_matrix
-        """
-
-        users = set(X.nonzero()[0])
-        predicted_users = set(X_pred.nonzero()[0])
-        missing = users.difference(predicted_users)
-        if len(missing) > 0:
-            logger.warning(f"{self.name} failed to recommend any items for {len(missing)} users. There are a total of {len(users)} users with history.")
 
     def _transform_fit_input(self, X: InteractionMatrix) -> csr_matrix:
         """Transform the training data to expected type
@@ -154,6 +138,38 @@ class Algorithm(BaseEstimator,ABC):
         logger.info(f"Fitting {self.name} complete - Took {end - start :.3}s")
         return self
 
+    def _pad_predict(self, X_pred: csr_matrix, intended_shape: tuple, to_predict_frame: pd.DataFrame) -> csr_matrix:
+        """Pad the predictions with random items for users that are not in the training data.
+
+        :param X_pred: Predictions made by the algorithm
+        :type X_pred: csr_matrix
+        :param intended_shape: The intended shape of the prediction matrix
+        :type intended_shape: tuple
+        :param to_predict_frame: DataFrame containing the user IDs to predict for
+        :type to_predict_frame: pd.DataFrame
+        :return: The padded prediction matrix
+        :rtype: csr_matrix
+        """
+        known_user_id, known_item_id = X_pred.shape
+        if X_pred.shape == intended_shape:
+            return X_pred
+
+        X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0]-known_user_id)
+        # pad users with random items
+        logger.debug(f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with random items")
+        to_predict = to_predict_frame.value_counts("uid")
+        row = []
+        col = []
+        for user_id in to_predict.index:
+            if user_id >= known_user_id:
+                for _ in range(to_predict[user_id]):
+                    row.append(user_id)
+                    col.append(np.random.randint(0, known_item_id))
+        pad = csr_matrix((np.ones(len(row)), (row, col)), shape=intended_shape)
+        X_pred += pad
+        logger.debug(f"Padding completed")
+        return X_pred
+
     def predict(self, X: InteractionMatrix) -> csr_matrix:
         """Predicts scores, given the interactions in X
 
@@ -175,8 +191,8 @@ class Algorithm(BaseEstimator,ABC):
         prev_interaction = X.get_interaction_data()
         prev_interaction = self._transform_predict_input(prev_interaction)
 
-        X_pred = self._predict(prev_interaction)
-        known_shape = X_pred.shape
+        X_pred = self._predict(prev_interaction, to_predict_frame._df)
+        # known_user_id, known_item_id = X_pred.shape
         logger.debug("Predictions by algorithm completed")
 
         # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
@@ -184,16 +200,5 @@ class Algorithm(BaseEstimator,ABC):
         max_item_id  = to_predict_frame.max_item_id + 1 
         intended_shape = (max(max_user_id, X.shape[0]), max(max_item_id, X.shape[1]))
         # ? did not add col which represents the unknown items
-        X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0]-known_shape[0])
-        # pad users with random items
-        logger.debug(f"Padding user ID in range({known_shape[0]}, {intended_shape[0]}) with random items")
-        row = []
-        col = []
-        for user_id in to_predict_frame.user_ids:
-            if user_id >= known_shape[0]:
-                row.append(user_id)
-                col.append(np.random.randint(0, X_pred.shape[1]))
-        pad = csr_matrix((np.ones(len(row)), (row, col)), shape=X_pred.shape)
-        X_pred += pad
-        logger.debug(f"Padding completed")
-        return X_pred
+        
+        return self._pad_predict(X_pred, intended_shape, to_predict_frame._df)

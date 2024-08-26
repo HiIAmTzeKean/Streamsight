@@ -14,12 +14,14 @@ class PrecisionK(ListwiseMetricK):
     """Computes the fraction of top-K recommendations that correspond
     to true interactions.
 
-    Different from the definition for information retrieval
-    a recommendation algorithm is expected to always return K items
-    when the Top-K recommendations are requested.
-    When fewer than K items received scores, these are considered a miss.
-    As such recommending fewer items is not beneficial for a
-    recommendation algorithm.
+    Given the prediction and true interaction in binary representation,
+    the matrix is multiplied elementwise. These will result in the true
+    positives to be 1 and the false positives to be 0. The sum of the
+    resulting true positives is then divided by the number of actual top-K
+    interactions to get the precision on user level.
+    
+    In simple terms, precision is the ratio of correctly predicted positive
+    observations to the total predictions made.
 
     Precision is computed per user as:
 
@@ -41,6 +43,7 @@ class PrecisionK(ListwiseMetricK):
         # ? csr to lil is costly, other alternatives?
         scores = scores.tocsr()
 
+        # true label/total predictions
         self._scores = csr_matrix(scores.sum(axis=1)) / self.K
         
         logger.debug(f"Precision compute complete - {self.name}")

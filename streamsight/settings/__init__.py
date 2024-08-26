@@ -26,7 +26,7 @@ the following components:
     SingleTimePointSetting
     SlidingWindowSetting
 
-A setting is stateful. Thus, the initialisation of the setting object only stores
+A setting is stateful. Thus, the initialization of the setting object only stores
 the parameters that are passed. Calling of :attr:`Setting.split` is necessary
 such that the attributes :attr:`Setting.background_data`, :attr:`Setting.unlabeled_data`
 and :attr:`Setting.ground_truth_data` are populated.
@@ -65,9 +65,19 @@ The processor module contains classes that are used to process the data.
 
     Processor
     PredictionDataProcessor
+    
+Exception
+------------
+The exception class :class:`EOWSetting` is used to raise an exception when the
+end of window is reached. Note that this exception is declared the base file.
+
+.. autosummary::
+    :toctree: generated/
+
+    EOWSetting
 """
 
-from streamsight.settings.base import Setting
+from streamsight.settings.base import Setting, EOWSetting
 from streamsight.settings.single_time_point_setting import (
     SingleTimePointSetting,
 )

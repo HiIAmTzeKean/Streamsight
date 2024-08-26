@@ -38,6 +38,9 @@ class SlidingWindowSetting(Setting):
     :type n_seq_data: int, optional
     :param top_K: Number of interaction per user that should be selected for evaluation purposes.
     :type top_K: int, optional
+    :param t_upper: Upper bound on the timestamp of interactions.
+        Defaults to maximal integer value (acting as infinity).
+    :type t_upper: int, optional
     :param seed: Seed for random number generator.
     :type seed: int, optional
     """
@@ -46,9 +49,10 @@ class SlidingWindowSetting(Setting):
         self,
         background_t: int,
         window_size: int = np.iinfo(np.int32).max,  # in seconds
-        n_seq_data: int = 1,
-        top_K: int = 1,
-        seed: Optional[int] = None,
+        n_seq_data: int = 10,
+        top_K: int = 10,
+        t_upper: int = np.iinfo(np.int32).max,
+        seed: Optional[int] = None
     ):
         super().__init__(seed=seed)
         self._sliding_window_setting = True
@@ -57,6 +61,11 @@ class SlidingWindowSetting(Setting):
         """Window size in seconds for splitter to slide over the data."""
         self.n_seq_data = n_seq_data
         self.top_K = top_K
+        self.t_upper = t_upper
+        """Upper bound on the timestamp of interactions. Defaults to maximal integer value (acting as infinity)."""
+        
+        if t_upper and t_upper < background_t:
+            raise ValueError("t_upper must be greater than background_t")
         
         self._background_splitter = TimestampSplitter(background_t, None, None)
         self._window_splitter = NPastInteractionTimestampSplitter(
@@ -75,6 +84,8 @@ class SlidingWindowSetting(Setting):
             warn(f"Splitting at time {self.t} is before the first "
                  "timestamp in the data. No data will be in the background(training) set."
             )
+        if self.t_upper:
+            data = data.timestamps_lt(self.t_upper)
 
         self._background_data, _ = self._background_splitter.split(data)
         self._ground_truth_data, self._unlabeled_data, self._t_window, self._incremental_data = [], [], [], []
@@ -118,4 +129,5 @@ class SlidingWindowSetting(Setting):
             "window_size": self.window_size,
             "n_seq_data": self.n_seq_data,
             "top_K": self.top_K,
+            "t_upper": self.t_upper
         }
