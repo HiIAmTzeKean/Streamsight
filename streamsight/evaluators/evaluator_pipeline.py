@@ -77,10 +77,24 @@ class EvaluatorPipeline(EvaluatorBase):
     def _ready_evaluator(self):
         """Pre-phase of the evaluator. (Phase 1)
         
+        Summary
+        -------
+        
         This method prepares the evaluator for the evaluation process.
         It instantiates the algorithm, trains the algorithm with the background data,
         instantiates the metric accumulator, and prepares the data generators.
-        The next phase of the evaluator is the evaluation phase.
+        The next phase of the evaluator is the evaluation phase (Phase 2).
+        
+        Specifics
+        ---------
+        
+        The evaluator is prepared by:
+        1. Instantiating the each algorithm from the algorithm entries
+        2. For each algorithm, train the algorithm with the background data from
+           :attr:`setting`
+        3. Instantiate the metric accumulator for micro and macro metrics
+        4. Create an entry for each metric in the macro metric accumulator
+        5. Prepare the data generators for the setting
         """
         logger.info("Phase 1: Preparing the evaluator...")
         self._instantiate_algorithm()
@@ -103,9 +117,28 @@ class EvaluatorPipeline(EvaluatorBase):
     def _evaluate_step(self):
         """Evaluate performance of the algorithms. (Phase 2)
         
+        Summary
+        -------
+        
         This method evaluates the performance of the algorithms with the metrics.
         It takes the unlabeled data, predicts the interaction, and evaluates the
         performance with the ground truth data.
+        
+        Specifics
+        ---------
+        
+        The evaluation is done by:
+        1. Get the next unlabeled data and ground truth data from the setting
+        2. Get the current timestamp from the setting
+        3. Update the unknown user/item base with the ground truth data
+        4. Mask the unlabeled data to the known user/item base shape
+        5. Mask the ground truth data based on the provided flags :attr:`ignore_unknown_user`
+           and :attr:`ignore_unknown_item`
+        6. Predict the interaction with the algorithms
+        7. Check the shape of the prediction matrix
+        8. Store the results in the micro metric accumulator
+        9. Cache the results in the macro metric accumulator
+        10. Repeat step 6 for each algorithm
         """
         logger.info("Phase 2: Evaluating the algorithms...")
 
@@ -141,16 +174,28 @@ class EvaluatorPipeline(EvaluatorBase):
             # macro metric purposes
             self._macro_acc.cache_results(algo.identifier, X_true, X_pred)
         
-        self.user_item_base._reset_unknown_user_item_base()
-    
     def _data_release_step(self):
         """Data release phase. (Phase 3)
+        
+        This method releases the data from the evaluator. This method should only
+        be called when the setting is a sliding window setting.
+        
+        The data is released by updating the known user/item base with the
+        incremental data. After updating the known user/item base, the incremental
+        data is masked to the known user/item base shape. The algorithms are then
+        trained with the incremental data.
+        
+        .. note::
+            Previously unknown user/item base is reset after the data release.
+            Since these unknown user/item base should be within the incremental
+            data released.
         """
         if not self.setting.is_sliding_window_setting:
             return
         logger.info("Phase 3: Releasing the data...")
         
         incremental_data = self.setting.next_incremental_data()
+        self.user_item_base._reset_unknown_user_item_base()
         self.user_item_base._update_known_user_item_base(incremental_data)
         incremental_data.mask_shape(self.user_item_base.known_shape)
         
@@ -192,6 +237,9 @@ class EvaluatorPipeline(EvaluatorBase):
     
     def run_steps(self, num_steps:int):
         """Run multiple steps of the evaluator.
+        
+        Effectively runs :meth:`run_step` method :param:`num_steps` times. Call
+        this method to run multiple steps of the evaluator at once.
 
         :param num_steps: Number of steps to run
         :type num_steps: int
