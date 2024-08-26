@@ -22,7 +22,7 @@ class ItemKNNIncremental(ItemKNN):
     def fit(self, X: InteractionMatrix) -> "Algorithm":
         start = time.time()
         if not hasattr(self, "historical_data"):
-            self.historical_data = X
+            self.historical_data = X.copy()
         else:
             self.historical_data = self.historical_data + X
         end = time.time()
