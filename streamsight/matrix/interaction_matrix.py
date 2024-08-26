@@ -444,6 +444,9 @@ class InteractionMatrix:
             True
         )
     
+    def __repr__(self):
+        return repr(self._df)
+    
     @overload
     def items_in(self, I: Set[int], inplace=False) -> "InteractionMatrix": ...
     @overload
