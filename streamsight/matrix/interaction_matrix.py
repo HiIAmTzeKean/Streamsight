@@ -113,7 +113,8 @@ class InteractionMatrix:
     def mask_shape(self, shape: Optional[Tuple[int, int]] = None,
                 #    drop_unknown: bool = False,
                    drop_unknown_user: bool = False,
-                   drop_unknown_item: bool = False):
+                   drop_unknown_item: bool = False,
+                   inherit_max_id: bool = False) -> None:
         """Masks global user and item ID.
         
         To ensure released matrix released to the models only contains data
@@ -161,20 +162,28 @@ class InteractionMatrix:
         :param drop_unknown_item: To drop unknown items in the dataset,
             defaults to False
         :type drop_unknown_item: bool, optional
+        :param inherit_max_id: To inherit the maximum user and item ID from the
+            given shape and the dataframe. This is useful when the shape is
+            defined and the dataframe contains unknown users/items. Defaults to False
+        :type inherit_max_id: bool, optional
         """
-        if not shape:
-            known_user = self._df[self._df!=-1][InteractionMatrix.USER_IX].nunique()
-            known_item = self._df[self._df!=-1][InteractionMatrix.ITEM_IX].nunique()
-            self.shape = (known_user,known_item)
-            return
-        
-        self.shape = shape
-        
         if drop_unknown_user:
             self._df = self._df[self._df[InteractionMatrix.USER_IX]<shape[0]]
         if drop_unknown_item:
             self._df = self._df[self._df[InteractionMatrix.ITEM_IX]<shape[1]]
-
+        
+        if not shape:
+            # infer shape from the data
+            known_user = self._df[self._df!=-1][InteractionMatrix.USER_IX].nunique()
+            known_item = self._df[self._df!=-1][InteractionMatrix.ITEM_IX].nunique()
+            self.shape = (known_user,known_item)
+        elif shape and inherit_max_id:
+            max_user = self._df[InteractionMatrix.USER_IX].max()
+            max_item = self._df[InteractionMatrix.ITEM_IX].max()
+            self.shape = (max(shape[0], max_user + 1), max(shape[1], max_item + 1))
+        elif shape:
+            self.shape = shape
+        
         self._check_shape()
         
     def _check_shape(self):
@@ -402,7 +411,7 @@ class InteractionMatrix:
         :return: Union of interactions in this InteractionMatrix and the other.
         :rtype: InteractionMatrix
         """
-        df = pd.concat([self._df, im._df])
+        df = pd.concat([self._df, im._df], copy=False)
         
         shape = None
         if hasattr(self, "shape") and hasattr(im, "shape"):
