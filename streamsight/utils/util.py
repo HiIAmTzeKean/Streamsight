@@ -111,6 +111,7 @@ def prepare_logger(path) -> dict:
     safe_dir(dir_name)
 
     logging.config.dictConfig(config)
+    logging.captureWarnings(True)
     return config
 
 #TODO memory cannot handle large matrices
