@@ -269,7 +269,8 @@ class EvaluatorStreamer(EvaluatorBase):
         unlabeled_data.mask_shape(self.user_item_base.known_shape)
         ground_truth_data.mask_shape(self.user_item_base.known_shape,
                                         drop_unknown_user=self.ignore_unknown_user,
-                                        drop_unknown_item=self.ignore_unknown_item)
+                                        drop_unknown_item=self.ignore_unknown_item,
+                                        inherit_max_id=True)
         
         self._unlabeled_data_cache = unlabeled_data
         self._ground_truth_data_cache = ground_truth_data
@@ -290,7 +291,9 @@ class EvaluatorStreamer(EvaluatorBase):
         :type X_pred: csr_matrix
         """
         X_true = self._ground_truth_data_cache.binary_values
+        X_pred = self._prediction_shape_handler(X_true, X_pred)
         algorithm_name = self.status_registry.get_algorithm_identifier(algo_id)
+        
         # evaluate the prediction
         for metric_entry in self.metric_entries:
             metric_cls = METRIC_REGISTRY.get(metric_entry.name)

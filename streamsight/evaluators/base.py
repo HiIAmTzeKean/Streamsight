@@ -2,6 +2,7 @@ import logging
 from typing import List, Literal, Optional, Union
 
 import pandas as pd
+from scipy.sparse import csr_matrix
 
 from streamsight.evaluators.accumulator import (MacroMetricAccumulator,
                                                 MicroMetricAccumulator)
@@ -48,6 +49,30 @@ class EvaluatorBase(object):
         self._run_step = 0
         self._current_timestamp: int
         
+    def _prediction_shape_handler(self, X_true: csr_matrix, X_pred: csr_matrix):
+        """Check the shape of the prediction matrix.
+        """
+        if X_pred.shape != X_true.shape:
+            # We cannot expect the algorithm to predict an unknown item, so we
+            # only check user dimension
+            if X_pred.shape[0] < X_true.shape[0] and not self.ignore_unknown_user:
+                raise ValueError("Prediction matrix shape, user dimension, is less than the ground truth matrix shape.")
+            
+            if not self.ignore_unknown_item:
+                # prediction matrix would not contain unknown item ID
+                # update the shape of the prediction matrix to include the ID
+                X_pred = csr_matrix((X_pred.data, X_pred.indices, X_pred.indptr), shape=(X_pred.shape[0], X_true.shape[1]))
+            
+            # shapes might not be the same in the case of dropping unknowns
+            # from the ground truth data. We ensure that the same unknowns
+            # are dropped from the predictions
+            if self.ignore_unknown_user:
+                X_pred = X_pred[:X_true.shape[0], :]
+            if self.ignore_unknown_item:
+                X_pred = X_pred[:, :X_true.shape[1]]
+        
+        return X_pred
+            
     def metric_results(self,
                        level:Union[Literal["micro","macro"], MetricLevelEnum]="macro",
                        only_current_timestamp=False,

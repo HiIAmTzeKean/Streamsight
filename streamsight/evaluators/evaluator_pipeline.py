@@ -28,7 +28,7 @@ class EvaluatorPipeline(EvaluatorBase):
     
     In the classical split setting, the evaluator will only run phase 1 and 2.
     In the sliding window setting, the evaluator will run all 3 phases, with
-    phase 2 and 3 repeated for each split.
+    phase 2 and 3 repeated for each window/split.
     """
     def __init__(self,
                  algorithm_entries: List[AlgorithmEntry],
@@ -93,10 +93,7 @@ class EvaluatorPipeline(EvaluatorBase):
         for algo in self.algorithm:
             for metric_entry in self.metric_entries:
                 metric_cls = METRIC_REGISTRY.get(metric_entry.name)
-                if metric_entry.K is not None:
-                    metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=None,cache=True)
-                else:
-                    metric:Metric = metric_cls(timestamp_limit=None,cache=True)
+                metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=None,cache=True)
                 self._macro_acc.add(metric=metric, algorithm_name=algo.identifier)
         logger.debug(f"Metric accumulator instantiated...")
         
@@ -111,41 +108,33 @@ class EvaluatorPipeline(EvaluatorBase):
         performance with the ground truth data.
         """
         logger.info("Phase 2: Evaluating the algorithms...")
-        # we assume that we ignore all unknown user and item now
+
         unlabeled_data = self.setting.next_unlabeled_data()
+        ground_truth_data = self.setting.next_ground_truth_data()
+        current_timestamp = self.setting.next_t_window()
+        self._current_timestamp = current_timestamp 
+        self.user_item_base._update_unknown_user_item_base(ground_truth_data)
+
         # unlabeled data will respect the unknown user and item
         # and thus will take the shape of the known user and item
-        ground_truth_data = self.setting.next_ground_truth_data()
         # the ground truth must follow the same shape as the unlabeled data
         # for evaluation purposes. This means that we drop the unknown user and item
         # from the ground truth data
-        current_timestamp = self.setting.next_t_window()
-        self._current_timestamp = current_timestamp
-        
-        self.user_item_base._update_unknown_user_item_base(ground_truth_data)
-        # Assume that we ignore unknowns
         with warnings.catch_warnings(action="ignore"):
             unlabeled_data.mask_shape(self.user_item_base.known_shape)
         ground_truth_data.mask_shape(self.user_item_base.known_shape,
                                         drop_unknown_user=self.ignore_unknown_user,
-                                        drop_unknown_item=self.ignore_unknown_item)
+                                        drop_unknown_item=self.ignore_unknown_item,
+                                        inherit_max_id=True)
         
         X_true = ground_truth_data.binary_values
         for algo in self.algorithm:
             X_pred = algo.predict(unlabeled_data)
-            
-            if X_pred.shape != X_true.shape:
-                # shapes might not be the same in the case of dropping unknowns
-                # from the ground truth data. We ensure that the same unknowns
-                # are dropped from the predictions
-                X_pred = X_pred[:X_true.shape[0], :X_true.shape[1]]
+            X_pred = self._prediction_shape_handler(X_true, X_pred)
 
             for metric_entry in self.metric_entries:
                 metric_cls = METRIC_REGISTRY.get(metric_entry.name)
-                if metric_entry.K is not None:
-                    metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=current_timestamp)
-                else:
-                    metric:Metric = metric_cls(timestamp_limit=current_timestamp)
+                metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=current_timestamp)
                 metric.calculate(X_true, X_pred)
                 self._micro_acc.add(metric=metric, algorithm_name=algo.identifier)
             
