@@ -2,6 +2,7 @@ import logging
 from typing import List, Literal, Optional, Union
 
 import pandas as pd
+import numpy as np
 from scipy.sparse import csr_matrix
 
 from streamsight.evaluators.accumulator import (MacroMetricAccumulator,
@@ -30,6 +31,7 @@ class EvaluatorBase(object):
         setting: Setting,
         ignore_unknown_user: bool = True,
         ignore_unknown_item: bool = True,
+        seed: Optional[int] = None
     ):
         self.metric_entries = metric_entries
         self.setting = setting
@@ -45,6 +47,10 @@ class EvaluatorBase(object):
         
         self.ignore_unknown_user = ignore_unknown_user
         self.ignore_unknown_item = ignore_unknown_item
+        
+        if not seed:
+            seed = 42
+        self.seed = seed
         
         self._run_step = 0
         self._current_timestamp: int
