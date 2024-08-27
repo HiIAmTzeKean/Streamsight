@@ -113,7 +113,7 @@ class EvaluatorStreamer(EvaluatorBase):
         
         self._cache_evaluation_data()
 
-    def register_algorithm(self, algorithm: Optional[Algorithm], algorithmName: Optional[str]) -> UUID:
+    def register_algorithm(self, algorithm: Optional[Algorithm], algorithm_name: Optional[str]) -> UUID:
         """Register the algorithm with the evaluator
         
         This method is called to register the algorithm with the evaluator.
@@ -124,27 +124,30 @@ class EvaluatorStreamer(EvaluatorBase):
         :param algorithm: The algorithm to be registered
         :type algorithm: Algorithm
         :raises ValueError: If the stream has already started
-        :raises ValueError: If neither algorithm nor algorithmName is provided
+        :raises ValueError: If neither algorithm nor algorithm_name is provided
         :return: The unique identifier of the algorithm
         :rtype: UUID
         """
         if self.has_started:
             raise ValueError("Cannot register algorithm after the stream has started")
 
-        if algorithm is None and algorithmName is None:
-            raise ValueError("Either 'algorithm' or 'algorithmName' must be provided")
+        if algorithm is None and algorithm_name is None:
+            raise ValueError("Either 'algorithm' or 'algorithm_name' must be provided")
 
-        # assign a unique identifier to the algorithm
-        algo_id = uuid.UUID(int=self.rd.getrandbits(128), version=4)
-
-        if algorithm is not None:
-            logger.info(f"Registering algorithm {algorithm.identifier} with ID: {algo_id}")
+        if algorithm and hasattr(algorithm, "identifier"):
             name = algorithm.identifier
             algo_ptr = algorithm
         else:
-            logger.info(f"Registering algorithm name {algorithmName} with ID: {algo_id}")
-            name = algorithmName
+            name = algorithm_name
             algo_ptr = None
+        
+        if name is None:
+            raise ValueError("No valid name provided for the algorithm, either the algorithm must implement an identifier property or a name must be provided")
+        
+        # assign a unique identifier to the algorithm
+        algo_id = uuid.UUID(int=self.rd.getrandbits(128), version=4)
+        
+        logger.info(f"Registering algorithm name {algorithm_name} with ID: {algo_id}")
             
         # store the algorithm in the registry
         self.status_registry[algo_id] = AlgorithmStatusEntry(
