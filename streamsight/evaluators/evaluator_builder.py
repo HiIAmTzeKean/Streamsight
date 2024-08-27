@@ -85,7 +85,7 @@ class BuilderBase(ABC):
         if K is None:
             K = self.setting.top_K
             warn(
-                "K not specified, using setting's top_K value. "
+                "K not specified when setting metric, using setting's top_K value. "
                 "We recommend specifying K value for metric."
             )
         elif K != self.setting.top_K:
