@@ -113,7 +113,7 @@ class EvaluatorStreamer(EvaluatorBase):
         
         self._cache_evaluation_data()
 
-    def register_algorithm(self, algorithm: Algorithm) -> UUID:
+    def register_algorithm(self, algorithm: Optional[Algorithm], algorithmName: Optional[str]) -> UUID:
         """Register the algorithm with the evaluator
         
         This method is called to register the algorithm with the evaluator.
@@ -124,22 +124,34 @@ class EvaluatorStreamer(EvaluatorBase):
         :param algorithm: The algorithm to be registered
         :type algorithm: Algorithm
         :raises ValueError: If the stream has already started
+        :raises ValueError: If neither algorithm nor algorithmName is provided
         :return: The unique identifier of the algorithm
         :rtype: UUID
         """
         if self.has_started:
             raise ValueError("Cannot register algorithm after the stream has started")
-    
+
+        if algorithm is None and algorithmName is None:
+            raise ValueError("Either 'algorithm' or 'algorithmName' must be provided")
+
         # assign a unique identifier to the algorithm
         algo_id = uuid.UUID(int=self.rd.getrandbits(128), version=4)
-        logger.info(f"Registering algorithm {algorithm.identifier} with ID: {algo_id}")
-        
+
+        if algorithm is not None:
+            logger.info(f"Registering algorithm {algorithm.identifier} with ID: {algo_id}")
+            name = algorithm.identifier
+            algo_ptr = algorithm
+        else:
+            logger.info(f"Registering algorithm name {algorithmName} with ID: {algo_id}")
+            name = algorithmName
+            algo_ptr = None
+            
         # store the algorithm in the registry
         self.status_registry[algo_id] = AlgorithmStatusEntry(
-            name=algorithm.identifier,
+            name=name,
             algo_id=algo_id,
             state=AlgorithmStateEnum.NEW,
-            algo_ptr=algorithm,
+            algo_ptr=algo_ptr,
         )
         logger.debug(f"Algorithm {algo_id} registered")
         return algo_id
