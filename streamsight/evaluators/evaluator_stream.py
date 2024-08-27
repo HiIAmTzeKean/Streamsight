@@ -67,9 +67,6 @@ class EvaluatorStreamer(EvaluatorBase):
         # self._current_timestamp: int
 
         self.has_started = False
-        
-        self.seed = 42
-        self.rd = random.Random(self.seed)
 
     def start_stream(self):
         """Start the streaming process
@@ -135,7 +132,7 @@ class EvaluatorStreamer(EvaluatorBase):
             raise ValueError("Either 'algorithm' or 'algorithmName' must be provided")
 
         # assign a unique identifier to the algorithm
-        algo_id = uuid.UUID(int=self.rd.getrandbits(128), version=4)
+        algo_id = uuid.uuid4()
 
         if algorithm is not None:
             logger.info(f"Registering algorithm {algorithm.identifier} with ID: {algo_id}")
