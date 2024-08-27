@@ -1,6 +1,6 @@
 import logging
 import warnings
-from typing import List
+from typing import List, Optional
 from warnings import warn
 
 from tqdm import tqdm
@@ -30,20 +30,29 @@ class EvaluatorPipeline(EvaluatorBase):
     In the sliding window setting, the evaluator will run all 3 phases, with
     phase 2 and 3 repeated for each window/split.
     """
-    def __init__(self,
-                 algorithm_entries: List[AlgorithmEntry],
-                 metric_entries: List[MetricEntry],
-                 setting: Setting,
-                 ignore_unknown_user: bool = True,
-                 ignore_unknown_item: bool = True):
-        super().__init__(metric_entries, setting, ignore_unknown_user, ignore_unknown_item)
-        
+    def __init__(
+        self,
+        algorithm_entries: List[AlgorithmEntry],
+        metric_entries: List[MetricEntry],
+        setting: Setting,
+        ignore_unknown_user: bool = True,
+        ignore_unknown_item: bool = True,
+        seed: Optional[int] = None,
+    ):
+        super().__init__(
+            metric_entries,
+            setting,
+            ignore_unknown_user,
+            ignore_unknown_item,
+            seed,
+        )
+
         self.algorithm_entries = algorithm_entries
         self.algorithm: List[Algorithm]
 
         # internal state
         self._current_timestamp: int
-            
+
     def _instantiate_algorithm(self):
         """Instantiate the algorithms from the algorithm entries.
         
@@ -54,7 +63,7 @@ class EvaluatorPipeline(EvaluatorBase):
         for algorithm_entry in self.algorithm_entries:
             params = algorithm_entry.params
             self.algorithm.append(ALGORITHM_REGISTRY.get(algorithm_entry.name)(**params))
-            
+
     def _ready_algo(self):
         """Train the algorithms with the background data.
         
@@ -70,10 +79,10 @@ class EvaluatorPipeline(EvaluatorBase):
         self.user_item_base._update_known_user_item_base(background_data)
         # TODO timeline is not respected, can use flag to indicate a override the known user and item
         background_data.mask_shape(self.user_item_base.known_shape)
-        
+
         for algo in self.algorithm:
             algo.fit(background_data)
-    
+
     def _ready_evaluator(self):
         """Pre-phase of the evaluator. (Phase 1)
         
@@ -100,9 +109,9 @@ class EvaluatorPipeline(EvaluatorBase):
         self._instantiate_algorithm()
         self._ready_algo()
         logger.debug(f"Algorithms trained with background data...")
-        
+
         self._micro_acc = MicroMetricAccumulator()
-        
+
         self._macro_acc = MacroMetricAccumulator()
         for algo in self.algorithm:
             for metric_entry in self.metric_entries:
@@ -110,10 +119,10 @@ class EvaluatorPipeline(EvaluatorBase):
                 metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=None,cache=True)
                 self._macro_acc.add(metric=metric, algorithm_name=algo.identifier)
         logger.debug(f"Metric accumulator instantiated...")
-        
+
         self.setting.reset_data_generators()
         logger.debug(f"Setting data generators ready...")
-    
+
     def _evaluate_step(self):
         """Evaluate performance of the algorithms. (Phase 2)
         
@@ -159,7 +168,7 @@ class EvaluatorPipeline(EvaluatorBase):
                                         drop_unknown_user=self.ignore_unknown_user,
                                         drop_unknown_item=self.ignore_unknown_item,
                                         inherit_max_id=True)
-        
+
         X_true = ground_truth_data.binary_values
         for algo in self.algorithm:
             X_pred = algo.predict(unlabeled_data)
@@ -170,10 +179,10 @@ class EvaluatorPipeline(EvaluatorBase):
                 metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=current_timestamp)
                 metric.calculate(X_true, X_pred)
                 self._micro_acc.add(metric=metric, algorithm_name=algo.identifier)
-            
+
             # macro metric purposes
             self._macro_acc.cache_results(algo.identifier, X_true, X_pred)
-        
+
     def _data_release_step(self):
         """Data release phase. (Phase 3)
         
@@ -193,15 +202,15 @@ class EvaluatorPipeline(EvaluatorBase):
         if not self.setting.is_sliding_window_setting:
             return
         logger.info("Phase 3: Releasing the data...")
-        
+
         incremental_data = self.setting.next_incremental_data()
         self.user_item_base._reset_unknown_user_item_base()
         self.user_item_base._update_known_user_item_base(incremental_data)
         incremental_data.mask_shape(self.user_item_base.known_shape)
-        
+
         for algo in self.algorithm:
             algo.fit(incremental_data)
-        
+
     def run_step(self, reset=False):
         """Run a single step of the evaluator.
         
@@ -216,7 +225,7 @@ class EvaluatorPipeline(EvaluatorBase):
         """
         if reset:
             self._run_step = 0
-        
+
         self._run_step += 1
         if self._run_step == 1:
             logger.info(f"There is a total of {self.setting.num_split} steps."
@@ -226,7 +235,7 @@ class EvaluatorPipeline(EvaluatorBase):
             self._evaluate_step()
             self._data_release_step()
             return
-        
+
         if self._run_step > self.setting.num_split:
             logger.info(f"Finished running all steps, call `run_step(reset=True)` to run the evaluation again")
             warn(f"Running this method again will not have any effect.")
@@ -234,7 +243,7 @@ class EvaluatorPipeline(EvaluatorBase):
         logger.info(f"Running step {self._run_step}")
         self._evaluate_step()
         self._data_release_step()
-    
+
     def run_steps(self, num_steps:int):
         """Run multiple steps of the evaluator.
         
@@ -257,7 +266,7 @@ class EvaluatorPipeline(EvaluatorBase):
         only one step at a time.
         """
         self._ready_evaluator()
-            
+
         for _ in tqdm(range(self.setting.num_split)):
             self._evaluate_step()
             self._data_release_step()

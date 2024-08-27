@@ -3,6 +3,7 @@ import logging
 from typing import Dict, List, Optional, Union
 from warnings import warn
 
+import numpy as np
 from streamsight.evaluators.evaluator_pipeline import EvaluatorPipeline
 from streamsight.evaluators.evaluator_stream import EvaluatorStreamer
 from streamsight.registries import (
@@ -28,6 +29,7 @@ class BuilderBase(ABC):
         self,
         ignore_unknown_user: bool = True,
         ignore_unknown_item: bool = True,
+        seed: Optional[int] = None
     ):
         self.metric_entries: Dict[str, MetricEntry] = dict()
         """Dict of metrics to evaluate algorithm on.
@@ -38,6 +40,9 @@ class BuilderBase(ABC):
         """Ignore unknown user in the evaluation"""
         self.ignore_unknown_item = ignore_unknown_item
         """Ignore unknown item in the evaluation"""
+        if not seed:
+            seed = 42
+        self.seed: int = seed
 
     def _check_setting_exist(self):
         """Check if setting is already set.
@@ -171,8 +176,9 @@ class EvaluatorBuilder(BuilderBase):
         self,
         ignore_unknown_user: bool = True,
         ignore_unknown_item: bool = True,
+        seed: Optional[int] = None
     ):
-        super().__init__(ignore_unknown_user, ignore_unknown_item)
+        super().__init__(ignore_unknown_user, ignore_unknown_item, seed)
         self.algorithm_entries: List[AlgorithmEntry] = []
         """List of algorithms to evaluate"""
 
@@ -248,6 +254,7 @@ class EvaluatorBuilder(BuilderBase):
             setting=self.setting,
             ignore_unknown_user=self.ignore_unknown_user,
             ignore_unknown_item=self.ignore_unknown_item,
+            seed=self.seed
         )
 
 class EvaluatorStreamerBuilder(BuilderBase):
@@ -265,8 +272,9 @@ class EvaluatorStreamerBuilder(BuilderBase):
         self,
         ignore_unknown_user: bool = True,
         ignore_unknown_item: bool = True,
+        seed: Optional[int] = None
     ):
-        super().__init__(ignore_unknown_user, ignore_unknown_item)
+        super().__init__(ignore_unknown_user, ignore_unknown_item, seed)
 
     def build(self) -> EvaluatorStreamer:
         """Build Evaluator object.
@@ -281,4 +289,5 @@ class EvaluatorStreamerBuilder(BuilderBase):
             setting=self.setting,
             ignore_unknown_user=self.ignore_unknown_user,
             ignore_unknown_item=self.ignore_unknown_item,
+            seed=self.seed
         )
