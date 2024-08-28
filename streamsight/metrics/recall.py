@@ -36,8 +36,8 @@ class RecallK(ListwiseMetricK):
 
         scores = scores.tocsr()
 
-        self._scores = csr_matrix(sparse_divide_nonzero(scores, csr_matrix(y_true.sum(axis=1))).sum(axis=1))
-
+        self._scores = csr_matrix(scores.sum(axis=1) / y_true.sum(axis=1))
+        
         logger.debug(f"Recall compute complete - {self.name}")
     
 
