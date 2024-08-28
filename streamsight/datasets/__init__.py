@@ -63,3 +63,4 @@ from streamsight.datasets.amazon import (AmazonBookDataset,
                                          AmazonMovieDataset,
                                          AmazonMusicDataset)
 from streamsight.datasets.yelp import YelpDataset
+from streamsight.datasets.movielens import MovieLens100K
