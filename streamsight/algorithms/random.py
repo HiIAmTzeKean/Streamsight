@@ -7,22 +7,23 @@ from streamsight.algorithms.base import Algorithm
 from streamsight.algorithms.utils import get_top_K_values
 
 class Random(Algorithm):
-    """Random algorithm that recommends items uniformly at random.
-
-    :param K: How many items to sample for recommendation, defaults to 10
+    """Random recommendation for users.
+    
+    The Random algorithm recommends K random items to all users in the predict frame.
+    
+    :param K: Number of items to recommendation, defaults to 10
     :type K: int, optional
-    :param seed: Seed for the random number generator used, defaults to None
+    :param seed: Seed for the random number, defaults to None
     :type seed: int, optional
     """
 
     def __init__(self, K: Optional[int] = 10, seed: Optional[int] = None):
         super().__init__()
         self.K = K
-        
-        # if seed is None:
-        #     seed = np.random.get_state()[1][0]
-        # self.seed = seed
-        # self.rand_gen = np.random.default_rng(seed=self.seed)
+        # overwrite seed if provided
+        if seed:
+            self.seed = 42
+        self.rand_gen = np.random.default_rng(seed=self.seed)
 
     def _fit(self, X: csr_matrix) -> "Random":
         self.fit_complete_ = True

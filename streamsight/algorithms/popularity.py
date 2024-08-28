@@ -1,4 +1,3 @@
-
 from typing import Optional
 from warnings import warn
 
@@ -9,13 +8,13 @@ from scipy.sparse import csr_matrix, lil_matrix
 from streamsight.algorithms.base import Algorithm
 
 class Popularity(Algorithm):
-    """Baseline algorithm recommending the most popular items in training data.
+    """Recommends K most popular items
 
-    During training the occurrences of each item is counted,
-    and then normalized by dividing each count by the max count over items.
-    As a result, all users are recommended the same items and all scores are between zero and one.
+    The Popularity algorithm recommends the K most popular items to all users
+    in the predict frame. The popularity of an item is determined by the number
+    of interactions it has received over the total number of interactions.
 
-    :param K: How many items to recommend when predicting, defaults to 10
+    :param K: Number of items to recommend, defaults to 10
     :type K: int, optional
     """
 
@@ -23,8 +22,18 @@ class Popularity(Algorithm):
         super().__init__()
         self.K = K
 
-    def _fit(self, X: csr_matrix) -> "Popularity":
-        # Get popularity score for every item
+    def _fit(self, X: csr_matrix) -> None:
+        """Fit the Popularity algorithm.
+        
+        The popularity of an item is determined by the number of interactions it
+        has received over the total number of interactions. The top K items are
+        selected based on this popularity score.
+        
+        This code is adapted from RecPack :cite:`recpack`
+        
+        :param X: Interaction matrix
+        :type X: csr_matrix
+        """
         interaction_counts = X.sum(axis=0).A[0]
         sorted_scores = interaction_counts / interaction_counts.max()
 
@@ -39,7 +48,6 @@ class Popularity(Algorithm):
         # set columns of top K to the scores
         a[ind] = sorted_scores[ind]
         self.sorted_scores_ = a
-        return self
 
     def _predict(self, X: csr_matrix, predict_frame:Optional[pd.DataFrame]=None) -> csr_matrix:
         """Predict the K most popular items
