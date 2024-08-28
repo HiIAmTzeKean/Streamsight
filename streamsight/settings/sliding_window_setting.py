@@ -118,7 +118,7 @@ class SlidingWindowSetting(Setting):
         self._num_split_set = len(self._unlabeled_data)
         logger.info(
             f"Finished split with window size {self.window_size} seconds. "
-            f"Number of splits: {self._num_split_set}"
+            f"Number of splits: {self._num_split_set + 1} in total."
         )
 
     @property
