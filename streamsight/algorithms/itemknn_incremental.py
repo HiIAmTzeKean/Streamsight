@@ -24,10 +24,11 @@ class ItemKNNIncremental(ItemKNN):
         if not hasattr(self, "historical_data"):
             self.historical_data = X.copy()
         else:
+            logger.debug("Updating historical data")
             self.historical_data = self.historical_data + X
         end = time.time()
         logger.info(
-            f"Updating historical data for {self.name} - Took {end - start :.3}s"
+            f"Updated historical data for {self.name} - Took {end - start :.3}s"
         )
         super().fit(self.historical_data)
         return self

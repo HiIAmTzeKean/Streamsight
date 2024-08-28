@@ -15,6 +15,15 @@ a new algorithm.
     :toctree: generated/
 
     Algorithm
+    
+Baseline Algorithms
+-------------------
+
+.. autosummary::
+    :toctree: generated/
+
+    Random
+    Popularity
 
 Item Similarity Algorithms
 ----------------------------
@@ -32,7 +41,8 @@ they have interacted with.
     ItemKNNStatic
 """
 from streamsight.algorithms.base import Algorithm
-from streamsight.algorithms.baseline import Random
+from streamsight.algorithms.random import Random
+from streamsight.algorithms.popularity import Popularity
 from streamsight.algorithms.itemknn import ItemKNN
 from streamsight.algorithms.itemknn_incremental import ItemKNNIncremental
 from streamsight.algorithms.itemknn_rolling import ItemKNNRolling

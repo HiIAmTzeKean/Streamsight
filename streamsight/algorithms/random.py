@@ -1,6 +1,4 @@
 from typing import Optional
-import warnings
-
 import pandas as pd
 
 import numpy as np
@@ -21,10 +19,10 @@ class Random(Algorithm):
         super().__init__()
         self.K = K
         
-        if seed is None:
-            seed = np.random.get_state()[1][0]
-        self.seed = seed
-        self.rand_gen = np.random.default_rng(seed=self.seed)
+        # if seed is None:
+        #     seed = np.random.get_state()[1][0]
+        # self.seed = seed
+        # self.rand_gen = np.random.default_rng(seed=self.seed)
 
     def _fit(self, X: csr_matrix) -> "Random":
         self.fit_complete_ = True
@@ -45,7 +43,7 @@ class Random(Algorithm):
         """
         if predict_frame is None:
             raise AttributeError("Predict frame with requested ID is required for Random algorithm")
-
+        
         known_item_id = X.shape[1]
         
         # predict_frame contains (user_id, -1) pairs
@@ -56,9 +54,8 @@ class Random(Algorithm):
         row = []
         col = []
         for user_id in to_predict.index:
-            for _ in range(to_predict[user_id]):
-                row.append(user_id)
-                col.append(np.random.randint(0, known_item_id))
+            row += [user_id] * to_predict[user_id]
+            col += self.rand_gen.integers(0, known_item_id, to_predict[user_id]).tolist()
         scores = csr_matrix((np.ones(len(row)), (row, col)), shape=intended_shape)
         
         # Get top K of allowed items per user

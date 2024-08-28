@@ -24,6 +24,9 @@ class Algorithm(BaseEstimator,ABC):
 
     def __init__(self):
         super().__init__()
+        if not hasattr(self, "seed"):
+            self.seed = 42
+        self.rand_gen = np.random.default_rng(seed=self.seed)
 
     @property
     def name(self):
@@ -98,7 +101,7 @@ class Algorithm(BaseEstimator,ABC):
         Data will be turned into a binary csr matrix.
 
         :param X: User-item interaction matrix to fit the model to
-        :type X: Matrix
+        :type X: InteractionMatrix
         :return: Transformed user-item interaction matrix to fit the model
         :rtype: csr_matrix
         """
@@ -110,7 +113,7 @@ class Algorithm(BaseEstimator,ABC):
         Data will be turned into a binary csr matrix.
 
         :param X: User-item interaction matrix used as input to predict
-        :type X: Matrix
+        :type X: InteractionMatrix
         :return: Transformed user-item interaction matrix used as input to predict
         :rtype: csr_matrix
         """
@@ -125,13 +128,13 @@ class Algorithm(BaseEstimator,ABC):
         was successful using :meth:`_check_fit_complete`.
 
         :param X: The interactions to fit the model on.
-        :type X: Matrix
-        :return: **self**, fitted algorithm
+        :type X: InteractionMatrix
+        :return: Fitted algorithm
         :rtype: Algorithm
         """
         start = time.time()
-        X = self._transform_fit_input(X)
-        self._fit(X)
+        X_transformed = self._transform_fit_input(X)
+        self._fit(X_transformed)
 
         self._check_fit_complete()
         end = time.time()
@@ -150,10 +153,10 @@ class Algorithm(BaseEstimator,ABC):
         :return: The padded prediction matrix
         :rtype: csr_matrix
         """
-        known_user_id, known_item_id = X_pred.shape
         if X_pred.shape == intended_shape:
             return X_pred
 
+        known_user_id, known_item_id = X_pred.shape
         X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0]-known_user_id)
         # pad users with random items
         logger.debug(f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with random items")
@@ -162,9 +165,11 @@ class Algorithm(BaseEstimator,ABC):
         col = []
         for user_id in to_predict.index:
             if user_id >= known_user_id:
-                for _ in range(to_predict[user_id]):
-                    row.append(user_id)
-                    col.append(np.random.randint(0, known_item_id))
+                row += [user_id] * to_predict[user_id]
+                col += self.rand_gen.integers(0, known_item_id, to_predict[user_id]).tolist()
+                # for _ in range(to_predict[user_id]):
+                #     row.append(user_id)
+                #     col.append(np.random.randint(0, known_item_id))
         pad = csr_matrix((np.ones(len(row)), (row, col)), shape=intended_shape)
         X_pred += pad
         logger.debug(f"Padding completed")
@@ -190,6 +195,9 @@ class Algorithm(BaseEstimator,ABC):
         to_predict_frame = X.get_prediction_data()
         prev_interaction = X.get_interaction_data()
         prev_interaction = self._transform_predict_input(prev_interaction)
+        
+        if to_predict_frame._df.empty:
+            return csr_matrix(X.shape, dtype=int)
 
         X_pred = self._predict(prev_interaction, to_predict_frame._df)
         # known_user_id, known_item_id = X_pred.shape
@@ -199,6 +207,5 @@ class Algorithm(BaseEstimator,ABC):
         max_user_id  = to_predict_frame.max_user_id + 1 
         max_item_id  = to_predict_frame.max_item_id + 1 
         intended_shape = (max(max_user_id, X.shape[0]), max(max_item_id, X.shape[1]))
-        # ? did not add col which represents the unknown items
         
         return self._pad_predict(X_pred, intended_shape, to_predict_frame._df)
