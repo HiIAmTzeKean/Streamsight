@@ -39,6 +39,7 @@ class SingleTimePointSetting(Setting):
         n_seq_data: int = 1,
         top_K: int = 1,
         t_upper: int = np.iinfo(np.int32).max,
+        include_all_past_data: bool = False,
         seed: Optional[int] = None,
     ):
         super().__init__(seed=seed)
@@ -57,7 +58,7 @@ class SingleTimePointSetting(Setting):
             background_t, None, t_upper
         )
         self._splitter = NPastInteractionTimestampSplitter(
-            background_t, t_upper, n_seq_data
+            background_t, t_upper, n_seq_data, include_all_past_data
         )
         self._t_window = background_t
 
