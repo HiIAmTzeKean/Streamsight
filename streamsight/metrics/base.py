@@ -29,10 +29,16 @@ class Metric:
         self._timestamp_limit = timestamp_limit
         self.cache = cache
         
-        self._scores: csr_matrix
+        self._scores: Optional[csr_matrix]
         self._value: float
         self._y_true: csr_matrix
         self._y_pred: csr_matrix
+        self._true_positive: int
+        """Number of true positives computed. Used for caching to obtain macro results."""
+        self._false_negative: int
+        """Number of false negatives computed. Used for caching to obtain macro results."""
+        self._false_positive: int
+        """Number of false positives computed. Used for caching to obtain macro results."""
         
     @property
     def name(self):
@@ -55,9 +61,9 @@ class Metric:
         paramstring = ",".join((f"{k}={v}" for k, v in self.get_params().items() if v is not None))
         return self.__class__.__name__ + "(" + paramstring + ")"
 
-    def _calculate(self, y_true, y_pred) -> None:
+    def _calculate(self, y_true: csr_matrix, y_pred: csr_matrix) -> None:
         raise NotImplementedError()
-
+    
     def calculate(self, y_true: csr_matrix, y_pred: csr_matrix) -> None:
         """Calculates this metric for all nonzero users in ``y_true``,
         given true labels and predicted scores.
@@ -72,7 +78,26 @@ class Metric:
         self._set_shape(y_true)
         self._calculate(y_true, y_pred)
 
-    def cache_values(self, y_true:csr_matrix, y_pred:csr_matrix):
+    def cache_values(self, y_true:csr_matrix, y_pred:csr_matrix) -> None:
+        """Cache the values of y_true and y_pred for later use.
+        
+        Basic method to cache the values of y_true and y_pred for later use.
+        This is useful when the metric can be calculated with the cumulative
+        values of y_true and y_pred.
+        
+        .. note::
+            This method should be over written in the child class if the metric
+            cannot be calculated with the cumulative values of y_true and y_pred.
+            For example, in the case of Precision@K, the metric default behavior
+            is to obtain the top-K ranks of y_pred and and y_true, this will
+            cause cumulative values to be possibly dropped.
+            
+        :param y_true: True user-item interactions.
+        :type y_true: csr_matrix
+        :param y_pred: Predicted affinity of users for items.
+        :type y_pred: csr_matrix
+        :raises ValueError: If caching is disabled for the metric.
+        """
         if not self.cache:
             raise ValueError("Caching is disabled for this metric.")
         
@@ -91,11 +116,21 @@ class Metric:
         self._y_pred = vstack([self._y_pred, y_pred])
     
     def calculate_cached(self):
+        """Calculate the metric using the cached values of y_true and y_pred.
+        
+        This method calculates the metric using the cached values of y_true and y_pred.
+        :meth:`calculate` will be called on the cached values.
+        
+        .. note::
+            This method should be overwritten in the child class if the metric
+            cannot be calculated with the cumulative values of y_true and y_pred.
+
+        :raises ValueError: If caching is disabled for the metric.
+        """
         if not self.cache:
             raise ValueError("Caching is disabled for this metric.")
         if not hasattr(self, "_y_true") or not hasattr(self, "_y_pred"):
             self._scores = None
-            # raise AttributeError("No cached values found. Call cache_values() first.")
             return
         
         self.calculate(self._y_true, self._y_pred)
@@ -171,8 +206,9 @@ class Metric:
     def _eliminate_empty_users(self, y_true: csr_matrix, y_pred: csr_matrix) -> Tuple[csr_matrix, csr_matrix]:
         """Eliminate users that have no interactions in ``y_true``.
 
-        We cannot make accurate predictions of interactions for
-        these users as there are none.
+        Users with no interactions in ``y_true`` are eliminated from the
+        prediction matrix ``y_pred``. This is done to avoid division by zero
+        and to also reduce the computational overhead.
 
         :param y_true: True user-item interactions.
         :type y_true: csr_matrix
@@ -245,7 +281,31 @@ class MetricTopK(Metric):
         :type y_pred_top_K: csr_matrix
         """
         raise NotImplementedError()
+    
+    def prepare_matrix(self, y_true: csr_matrix, y_pred: csr_matrix) -> Tuple[csr_matrix, csr_matrix]:
+        """Prepare the matrices for the metric calculation.
 
+        This method is used to prepare the matrices for the metric calculation.
+        It is used to eliminate empty users and to set the shape of the matrices.
+
+        :param y_true: True user-item interactions.
+        :type y_true: csr_matrix
+        :param y_pred: Predicted affinity of users for items.
+        :type y_pred: csr_matrix
+        :return: Tuple of the prepared matrices.
+        :rtype: Tuple[csr_matrix, csr_matrix]
+        """
+        # Perform checks and cleaning
+        y_true, y_pred = self._eliminate_empty_users(y_true, y_pred)
+        self._verify_shape(y_true, y_pred)
+        self._set_shape(y_true)
+
+        # Compute the topK for the predicted affinities
+        y_pred_top_K = get_top_K_ranks(y_pred, self.K)
+        self.y_pred_top_K_ = y_pred_top_K
+        
+        return y_true, y_pred_top_K
+    
     def calculate(self, y_true: csr_matrix, y_pred: csr_matrix) -> None:
         """Computes metric given true labels ``y_true`` and predicted scores ``y_pred``. Only Top-K recommendations are considered.
 
@@ -258,81 +318,11 @@ class MetricTopK(Metric):
         :type y_pred: csr_matrix
         """
         # Perform checks and cleaning
-        y_true, y_pred = self._eliminate_empty_users(y_true, y_pred)
-        self._verify_shape(y_true, y_pred)
-        self._set_shape(y_true)
-
-        # Compute the topK for the predicted affinities
-        y_pred_top_K = get_top_K_ranks(y_pred, self.K)
+        y_true, y_pred_top_K = self.prepare_matrix(y_true, y_pred)
         self.y_pred_top_K_ = y_pred_top_K
-
-        # Compute the metric.
-        self._calculate(y_true, y_pred_top_K)
-
-
-class ElementwiseMetricK(MetricTopK):
-    """Base class for all metrics that can be calculated for
-    each user-item pair in the Top-K recommendations.
-
-    :attr:`results` contains an entry for each user-item pair.
-
-    Examples are: HitK, IPSHitRateK
-
-    :param K: Size of the recommendation list consisting of the Top-K item predictions.
-    :type K: int
-    """
-
-    @property
-    def col_names(self):
-        """The names of the columns in the results DataFrame."""
-        return ["user_id", "item_id", "score"]
-
-    @property
-    def micro_result(self) -> dict[str, np.ndarray]:
-        """Get the detailed results for this metric.
-
-        Contains an entry for every user-item pair in the Top-K recommendations list of every user.
-
-        If there is a user with no recommendations,
-        the results DataFrame will contain K rows for
-        that user with item_id = NaN and score = 0.
-
-        :return: The results DataFrame with columns: user_id, item_id, score
-        :rtype: pd.DataFrame
-        """
-        if not hasattr(self, "_scores"):
-            raise ValueError("Metric has not been calculated yet.")
-        elif self._scores is None:
-            warn(UserWarning("No scores were computed. Returning empty dict."))
-            return dict(zip(self.col_names, (np.array([]), np.array([]), np.array([]))))
         
-        scores = self._scores.toarray()
-
-        all_users = set(range(self._scores.shape[0]))
-        int_users, items = self._indices
-        values = scores[int_users, items]
-
-        # For all users in all_users but not in int_users,
-        # add K items np.nan with value = 0
-        missing_users = all_users.difference(set(int_users))
-
-        # This should barely occur, so it's not too bad to append np arrays.
-        for u in list(missing_users):
-            for i in range(self.K):
-                int_users = np.append(int_users, u)
-                values = np.append(values, 0)
-                items = np.append(items, np.nan)
-
-        users = self._map_users(int_users)
-
-        return dict(zip(self.col_names, (users, items, values)))
-
-    @property
-    def macro_result(self):
-        """Global metric value obtained by summing up scores for every user then taking the average over all users."""
-        return self._scores.sum(axis=1).mean()
-
-
+        self._calculate(y_true, y_pred_top_K)
+        
 class ListwiseMetricK(MetricTopK):
     """Base class for all metrics that can be calculated for every Top-K recommendation list,
     i.e. one value for each user.
@@ -380,12 +370,17 @@ class ListwiseMetricK(MetricTopK):
     
 
     @property
-    def macro_result(self):
-        """Global metric value obtained by taking the average over all users."""
+    def macro_result(self) -> Optional[float]:
+        """Global metric value obtained by taking the average over all users.
+
+        :raises ValueError: If the metric has not been calculated yet.
+        :return: The global metric value.
+        :rtype: float, optional
+        """
         if not hasattr(self, "_scores"):
             raise ValueError("Metric has not been calculated yet.")
         elif self._scores is None:
-            warn(UserWarning("No scores were computed. Returning None."))
+            warn(UserWarning("No scores were computed. Returning Null value."))
             return None
         
         return self._scores.mean()
