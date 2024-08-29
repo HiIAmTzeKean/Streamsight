@@ -54,6 +54,7 @@ class EvaluatorStreamer(EvaluatorBase):
         self,
         metric_entries: List[MetricEntry],
         setting: Setting,
+        metric_k: int,
         ignore_unknown_user: bool = True,
         ignore_unknown_item: bool = True,
         seed: Optional[int] = None,
@@ -61,6 +62,7 @@ class EvaluatorStreamer(EvaluatorBase):
         super().__init__(
             metric_entries,
             setting,
+            metric_k,
             ignore_unknown_user,
             ignore_unknown_item,
             seed
@@ -332,15 +334,16 @@ class EvaluatorStreamer(EvaluatorBase):
         4. All other state, raise warning that the algorithm has completed
         
 
-        :param algo_id: _description_
+        :param algo_id: The unique identifier of the algorithm
         :type algo_id: UUID
-        :param X_pred: _description_
+        :param X_pred: The prediction of the algorithm
         :type X_pred: csr_matrix
+        :raises ValueError: If X_pred is not an InteractionMatrix or csr_matrix
         """
         status = self.status_registry[algo_id].state
-        X_pred = self._transform_prediction(X_pred)
 
         if status == AlgorithmStateEnum.READY:
+            X_pred = self._transform_prediction(X_pred)
             self._evaluate(algo_id, X_pred)
             self.status_registry.update(algo_id, AlgorithmStateEnum.PREDICTED)
 
@@ -359,8 +362,30 @@ class EvaluatorStreamer(EvaluatorBase):
             warn(AlgorithmStatusWarning(algo_id, status, "complete"))
 
     def _transform_prediction(self, X_pred: Union[csr_matrix, InteractionMatrix]) -> csr_matrix:
+        """Transform the prediction matrix
+        
+        This method is called to transform the prediction matrix to a csr_matrix.
+        The method will check if the prediction matrix is an InteractionMatrix
+        and if the shape attribute is defined. If the shape attribute is not
+        defined, the method will set the shape to the known shape of the user/item
+        base.
+
+        :param X_pred: The prediction matrix
+        :type X_pred: Union[csr_matrix, InteractionMatrix]
+        :raises ValueError: If X_pred is not an InteractionMatrix or csr_matrix
+        :return: The prediction matrix as a csr_matrix
+        :rtype: csr_matrix
+        """
         if isinstance(X_pred, InteractionMatrix):
+            # check if shape is defined
+            if not hasattr(X_pred, "shape"):
+                # set shape to the known shape
+                X_pred.mask_shape(self.user_item_base.known_shape)
             X_pred = X_pred.binary_values
+        elif isinstance(X_pred, csr_matrix):
+            pass
+        else:
+            raise ValueError("X_pred must be either InteractionMatrix or csr_matrix")
         return X_pred
 
     def _cache_evaluation_data(self):
@@ -424,8 +449,10 @@ class EvaluatorStreamer(EvaluatorBase):
         :param X_pred: The prediction of the algorithm
         :type X_pred: csr_matrix
         """
-        X_true = self._ground_truth_data_cache.binary_values
-        X_pred = self._prediction_shape_handler(X_true, X_pred)
+        X_true = self._ground_truth_data_cache.get_users_n_first_interaction(self.metric_k)
+        X_true = X_true.binary_values
+        
+        X_pred = self._prediction_shape_handler(X_true.shape, X_pred)
         algorithm_name = self.status_registry.get_algorithm_identifier(algo_id)
 
         # evaluate the prediction

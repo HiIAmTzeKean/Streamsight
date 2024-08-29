@@ -35,6 +35,7 @@ class EvaluatorPipeline(EvaluatorBase):
         algorithm_entries: List[AlgorithmEntry],
         metric_entries: List[MetricEntry],
         setting: Setting,
+        metric_k: int,
         ignore_unknown_user: bool = True,
         ignore_unknown_item: bool = True,
         seed: Optional[int] = None,
@@ -42,9 +43,10 @@ class EvaluatorPipeline(EvaluatorBase):
         super().__init__(
             metric_entries,
             setting,
+            metric_k,
             ignore_unknown_user,
             ignore_unknown_item,
-            seed,
+            seed
         )
 
         self.algorithm_entries = algorithm_entries
@@ -168,11 +170,13 @@ class EvaluatorPipeline(EvaluatorBase):
                                         drop_unknown_user=self.ignore_unknown_user,
                                         drop_unknown_item=self.ignore_unknown_item,
                                         inherit_max_id=True)
-
-        X_true = ground_truth_data.binary_values
+        
+        # get the top k interaction per user
+        X_true = ground_truth_data.get_users_n_first_interaction(self.metric_k)
+        X_true = X_true.binary_values
         for algo in self.algorithm:
             X_pred = algo.predict(unlabeled_data)
-            X_pred = self._prediction_shape_handler(X_true, X_pred)
+            X_pred = self._prediction_shape_handler(X_true.shape, X_pred)
 
             for metric_entry in self.metric_entries:
                 metric_cls = METRIC_REGISTRY.get(metric_entry.name)
