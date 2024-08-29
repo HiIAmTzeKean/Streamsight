@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "streamsight"
-version = "0.2.3"
+version = "0.2.4"
 description = "RecSys toolkit for evaluation in a fair manner."
 authors = ["Ng Tze Kean <ngtzekean@gmail.com>"]
 readme = "README.md"
@@ -28,6 +28,7 @@ sphinxcontrib-bibtex = "^2.6.2"
 setuptools = "^73.0.0"
 sphinx = "7.4.7"
 sphinx-rtd-theme = "^2.0.0"
+ipywidgets = "^8.1.5"
 
 [build-system]
 requires = ["poetry-core"]

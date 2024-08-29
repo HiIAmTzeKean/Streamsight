@@ -96,7 +96,7 @@ class EvaluatorStreamer(EvaluatorBase):
         self.has_started = True
         self.setting.reset_data_generators()
 
-        logger.debug(f"Preparing ")
+        logger.debug(f"Preparing evaluator for streaming")
         self._micro_acc = MicroMetricAccumulator()
 
         self._macro_acc = MacroMetricAccumulator()
@@ -388,6 +388,8 @@ class EvaluatorStreamer(EvaluatorBase):
         """
         self._run_step += 1
 
+        logger.debug(f"Caching evaluation data for step {self._run_step}")
+        
         try:
             unlabeled_data = self.setting.next_unlabeled_data()
             ground_truth_data = self.setting.next_ground_truth_data()
@@ -404,6 +406,8 @@ class EvaluatorStreamer(EvaluatorBase):
 
         self._unlabeled_data_cache = unlabeled_data
         self._ground_truth_data_cache = ground_truth_data
+        
+        logger.debug(f"Data cached for step {self._run_step} complete")
 
     def _evaluate(self, algo_id: UUID, X_pred: csr_matrix):
         """Evaluate the prediction

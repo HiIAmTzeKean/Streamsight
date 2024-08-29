@@ -41,6 +41,9 @@ class SlidingWindowSetting(Setting):
     :param t_upper: Upper bound on the timestamp of interactions.
         Defaults to maximal integer value (acting as infinity).
     :type t_upper: int, optional
+    :param t_ground_truth_window: Size of the window in seconds to slide over the data for ground truth data.
+        If not provided, defaults to window_size during computation.
+    :type t_ground_truth_window: int, optional
     :param seed: Seed for random number generator.
     :type seed: int, optional
     """
@@ -52,6 +55,7 @@ class SlidingWindowSetting(Setting):
         n_seq_data: int = 10,
         top_K: int = 10,
         t_upper: int = np.iinfo(np.int32).max,
+        t_ground_truth_window: Optional[int] = None,
         seed: Optional[int] = None
     ):
         super().__init__(seed=seed)
@@ -67,9 +71,12 @@ class SlidingWindowSetting(Setting):
         if t_upper and t_upper < background_t:
             raise ValueError("t_upper must be greater than background_t")
         
+        if t_ground_truth_window is None:
+            t_ground_truth_window = window_size
+        
         self._background_splitter = TimestampSplitter(background_t, None, None)
         self._window_splitter = NPastInteractionTimestampSplitter(
-            background_t, window_size, n_seq_data
+            background_t, t_ground_truth_window, n_seq_data
         )
 
     def _split(self, data: InteractionMatrix):
@@ -118,7 +125,7 @@ class SlidingWindowSetting(Setting):
         self._num_split_set = len(self._unlabeled_data)
         logger.info(
             f"Finished split with window size {self.window_size} seconds. "
-            f"Number of splits: {self._num_split_set}"
+            f"Number of splits: {self._num_split_set + 1} in total."
         )
 
     @property
