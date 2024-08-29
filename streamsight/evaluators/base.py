@@ -40,21 +40,21 @@ class EvaluatorBase(object):
         """To ignore unknown users during evaluation."""
         self.ignore_unknown_item = ignore_unknown_item
         """To ignore unknown items during evaluation."""
-        
+
         self._micro_acc: MicroMetricAccumulator
         self._macro_acc: MacroMetricAccumulator
         self.user_item_base = UserItemBaseStatus()
-        
+
         self.ignore_unknown_user = ignore_unknown_user
         self.ignore_unknown_item = ignore_unknown_item
-        
+
         if not seed:
             seed = 42
         self.seed = seed
-        
+
         self._run_step = 0
         self._current_timestamp: int
-        
+
     def _prediction_shape_handler(self, X_true: csr_matrix, X_pred: csr_matrix):
         """Check the shape of the prediction matrix.
         """
@@ -63,12 +63,12 @@ class EvaluatorBase(object):
             # only check user dimension
             if X_pred.shape[0] < X_true.shape[0] and not self.ignore_unknown_user:
                 raise ValueError("Prediction matrix shape, user dimension, is less than the ground truth matrix shape.")
-            
+
             if not self.ignore_unknown_item:
                 # prediction matrix would not contain unknown item ID
                 # update the shape of the prediction matrix to include the ID
                 X_pred = csr_matrix((X_pred.data, X_pred.indices, X_pred.indptr), shape=(X_pred.shape[0], X_true.shape[1]))
-            
+
             # shapes might not be the same in the case of dropping unknowns
             # from the ground truth data. We ensure that the same unknowns
             # are dropped from the predictions
@@ -76,29 +76,48 @@ class EvaluatorBase(object):
                 X_pred = X_pred[:X_true.shape[0], :]
             if self.ignore_unknown_item:
                 X_pred = X_pred[:, :X_true.shape[1]]
-        
+
         return X_pred
-            
-    def metric_results(self,
-                       level:Union[Literal["micro","macro"], MetricLevelEnum]="macro",
-                       only_current_timestamp=False,
-                       filter_algo:Optional[str]=None) -> pd.DataFrame:
+
+    def metric_results(
+        self,
+        level: Union[Literal["micro", "macro"], MetricLevelEnum] = "macro",
+        only_current_timestamp: bool = False,
+        filter_timestamp: Optional[int] = None,
+        filter_algo: Optional[str] = None,
+    ) -> pd.DataFrame:
         """Results of the metrics computed.
-        
+
         Computes the metrics of all algorithms based on the level specified and
         return the results in a pandas DataFrame. The results can be filtered
         based on the algorithm name and the current timestamp.
-        
+
         If the level specified is "macro", then the filtering on the current timestamp
         will be ignored.
+
+        :param level: Level of the metric to compute, defaults to "macro"
+        :type level: Union[Literal["micro","macro"], MetricLevelEnum], optional
+        :param only_current_timestamp: Filter only the current timestamp, defaults to False
+        :type only_current_timestamp: bool, optional
+        :param filter_timestamp: Timestamp value to filter on, defaults to None.
+            If both `only_current_timestamp` and `filter_timestamp` are provided,
+            `filter_timestamp` will be used.
+        :type filter_timestamp: Optional[int], optional
+        :param filter_algo: Algorithm name to filter on, defaults to None
+        :type filter_algo: Optional[str], optional
+        :return: Dataframe representation of the metric
+        :rtype: pd.DataFrame
         """
         timestamp = None
         if only_current_timestamp:
             timestamp = self._current_timestamp
 
+        if filter_timestamp:
+            timestamp = filter_timestamp
+
         acc = self._macro_acc
         if level == MetricLevelEnum.MICRO:
             acc = self._micro_acc
-        
+
         return acc.df_metric(filter_algo=filter_algo,
                              filter_timestamp=timestamp)
