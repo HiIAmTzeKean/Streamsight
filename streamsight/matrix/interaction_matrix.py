@@ -167,17 +167,21 @@ class InteractionMatrix:
             defined and the dataframe contains unknown users/items. Defaults to False
         :type inherit_max_id: bool, optional
         """
+        
+        if not shape:
+            # infer shape from the data, it does not make sense for user to
+            # drop unknown user and item if shape is not defined
+            known_user = self._df[self._df!=-1][InteractionMatrix.USER_IX].nunique()
+            known_item = self._df[self._df!=-1][InteractionMatrix.ITEM_IX].nunique()
+            self.shape = (known_user,known_item)
+            return
+        
         if drop_unknown_user:
             self._df = self._df[self._df[InteractionMatrix.USER_IX]<shape[0]]
         if drop_unknown_item:
             self._df = self._df[self._df[InteractionMatrix.ITEM_IX]<shape[1]]
         
-        if not shape:
-            # infer shape from the data
-            known_user = self._df[self._df!=-1][InteractionMatrix.USER_IX].nunique()
-            known_item = self._df[self._df!=-1][InteractionMatrix.ITEM_IX].nunique()
-            self.shape = (known_user,known_item)
-        elif shape and inherit_max_id:
+        if shape and inherit_max_id:
             max_user = self._df[InteractionMatrix.USER_IX].max()
             max_item = self._df[InteractionMatrix.ITEM_IX].max()
             self.shape = (max(shape[0], max_user + 1), max(shape[1], max_item + 1))
@@ -189,6 +193,9 @@ class InteractionMatrix:
     def _check_shape(self):
         if not hasattr(self, "shape"):
             raise AttributeError("InteractionMatrix has no shape attribute. Please call mask_shape() first.")
+        if self.shape[0] is None or self.shape[1] is None:
+            raise ValueError("Shape must be defined.")
+        
         if self.shape[0] < self._df[self._df!=-1][InteractionMatrix.USER_IX].nunique()\
             or self.shape[1] < self._df[self._df!=-1][InteractionMatrix.ITEM_IX].nunique():
             warn("Provided shape does not match dataframe, can't have "
@@ -416,6 +423,7 @@ class InteractionMatrix:
         shape = None
         if hasattr(self, "shape") and hasattr(im, "shape"):
             shape = (max(self.shape[0], im.shape[0]), max(self.shape[1], im.shape[1]))
+            self.shape = shape
             
         return InteractionMatrix(
             df,
