@@ -138,7 +138,7 @@ class Algorithm(BaseEstimator,ABC):
 
         self._check_fit_complete()
         end = time.time()
-        logger.info(f"Fitting {self.name} complete - Took {end - start :.3}s")
+        logger.debug(f"Fitting {self.name} complete - Took {end - start :.3}s")
         return self
 
     def _pad_predict(self, X_pred: csr_matrix, intended_shape: tuple, to_predict_frame: pd.DataFrame) -> csr_matrix:
@@ -167,9 +167,6 @@ class Algorithm(BaseEstimator,ABC):
             if user_id >= known_user_id:
                 row += [user_id] * to_predict[user_id]
                 col += self.rand_gen.integers(0, known_item_id, to_predict[user_id]).tolist()
-                # for _ in range(to_predict[user_id]):
-                #     row.append(user_id)
-                #     col.append(np.random.randint(0, known_item_id))
         pad = csr_matrix((np.ones(len(row)), (row, col)), shape=intended_shape)
         X_pred += pad
         logger.debug(f"Padding completed")
