@@ -3,11 +3,10 @@ import warnings
 from typing import List, Optional
 from warnings import warn
 
+from streamsight.evaluators.accumulator import MetricAccumulator
 from tqdm import tqdm
 
 from streamsight.algorithms import Algorithm
-from streamsight.evaluators.accumulator import (MacroMetricAccumulator,
-                                                MicroMetricAccumulator)
 from streamsight.evaluators.base import EvaluatorBase
 from streamsight.metrics import Metric
 from streamsight.registries import (ALGORITHM_REGISTRY, METRIC_REGISTRY,
@@ -112,14 +111,7 @@ class EvaluatorPipeline(EvaluatorBase):
         self._ready_algo()
         logger.debug(f"Algorithms trained with background data...")
 
-        self._micro_acc = MicroMetricAccumulator()
-
-        self._macro_acc = MacroMetricAccumulator()
-        for algo in self.algorithm:
-            for metric_entry in self.metric_entries:
-                metric_cls = METRIC_REGISTRY.get(metric_entry.name)
-                metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=None,cache=True)
-                self._macro_acc.add(metric=metric, algorithm_name=algo.identifier)
+        self._acc = MetricAccumulator()
         logger.debug(f"Metric accumulator instantiated...")
 
         self.setting.reset_data_generators()
@@ -182,10 +174,10 @@ class EvaluatorPipeline(EvaluatorBase):
                 metric_cls = METRIC_REGISTRY.get(metric_entry.name)
                 metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=current_timestamp)
                 metric.calculate(X_true, X_pred)
-                self._micro_acc.add(metric=metric, algorithm_name=algo.identifier)
+                self._acc.add(metric=metric, algorithm_name=algo.identifier)
 
             # macro metric purposes
-            self._macro_acc.cache_results(algo.identifier, X_true, X_pred)
+            # self._macro_acc.cache_results(algo.identifier, X_true, X_pred)
 
     def _data_release_step(self):
         """Data release phase. (Phase 3)

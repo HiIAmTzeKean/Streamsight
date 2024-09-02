@@ -9,8 +9,7 @@ from warnings import warn
 from scipy.sparse import csr_matrix
 
 from streamsight.algorithms import Algorithm
-from streamsight.evaluators.accumulator import (MacroMetricAccumulator,
-                                                MicroMetricAccumulator)
+from streamsight.evaluators.accumulator import MetricAccumulator
 from streamsight.evaluators.base import EvaluatorBase
 from streamsight.evaluators.util import AlgorithmStatusWarning
 from streamsight.matrix import InteractionMatrix
@@ -99,19 +98,7 @@ class EvaluatorStreamer(EvaluatorBase):
         self.setting.reset_data_generators()
 
         logger.debug(f"Preparing evaluator for streaming")
-        self._micro_acc = MicroMetricAccumulator()
-
-        self._macro_acc = MacroMetricAccumulator()
-        for algo_id in self.status_registry:
-            algo_name = self.status_registry.get_algorithm_identifier(algo_id)
-            for metric_entry in self.metric_entries:
-                metric_cls = METRIC_REGISTRY.get(metric_entry.name)
-                if metric_entry.K is not None:
-                    metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=None,cache=True)
-                else:
-                    metric:Metric = metric_cls(timestamp_limit=None,cache=True)
-                self._macro_acc.add(metric=metric, algorithm_name=algo_name)
-
+        self._acc = MetricAccumulator()
         background_data = self.setting.background_data
         self.user_item_base._update_known_user_item_base(background_data)
         background_data.mask_shape(self.user_item_base.known_shape)
@@ -343,6 +330,7 @@ class EvaluatorStreamer(EvaluatorBase):
         status = self.status_registry[algo_id].state
 
         if status == AlgorithmStateEnum.READY:
+            # TODO check if all requested prediction made #86 bug
             X_pred = self._transform_prediction(X_pred)
             self._evaluate(algo_id, X_pred)
             self.status_registry.update(algo_id, AlgorithmStateEnum.PREDICTED)
@@ -388,7 +376,7 @@ class EvaluatorStreamer(EvaluatorBase):
             raise ValueError("X_pred must be either InteractionMatrix or csr_matrix")
         return X_pred
 
-    def _cache_evaluation_data(self):
+    def _cache_evaluation_data(self) -> None:
         """Cache the evaluation data for the current step.
         
         Summary
@@ -434,7 +422,7 @@ class EvaluatorStreamer(EvaluatorBase):
         
         logger.debug(f"Data cached for step {self._run_step} complete")
 
-    def _evaluate(self, algo_id: UUID, X_pred: csr_matrix):
+    def _evaluate(self, algo_id: UUID, X_pred: csr_matrix) -> None:
         """Evaluate the prediction
         
         Given the prediction and the algorithm ID, the method will evaluate the
@@ -463,6 +451,6 @@ class EvaluatorStreamer(EvaluatorBase):
             else:
                 metric:Metric = metric_cls(timestamp_limit=self._current_timestamp)
             metric.calculate(X_true, X_pred)
-            self._micro_acc.add(metric=metric, algorithm_name=algorithm_name)
-
-        self._macro_acc.cache_results(algorithm_name, X_true, X_pred)
+            self._acc.add(metric=metric, algorithm_name=algorithm_name)
+        
+        logger.debug(f"Prediction evaluated for algorithm {algo_id} complete")

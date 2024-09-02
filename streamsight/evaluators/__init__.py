@@ -74,8 +74,7 @@ used to accumulate the metrics.
     :toctree: generated/
 
     MetricAccumulator
-    MacroMetricAccumulator
-    MicroMetricAccumulator
+
     
 Utility
 ----------------------------
@@ -97,7 +96,5 @@ from streamsight.evaluators.evaluator_pipeline import EvaluatorPipeline
 from streamsight.evaluators.evaluator_stream import EvaluatorStreamer
 from streamsight.evaluators.util import MetricLevelEnum, UserItemBaseStatus, AlgorithmStatusWarning
 from streamsight.evaluators.accumulator import (
-    MetricAccumulator,
-    MacroMetricAccumulator,
-    MicroMetricAccumulator,
+    MetricAccumulator
 )
