@@ -4,6 +4,7 @@ from warnings import warn
 
 import numpy as np
 from scipy.sparse import csr_matrix, vstack
+from deprecation import deprecated
 
 from streamsight.algorithms.utils import get_top_K_ranks
 from streamsight.utils.util import add_columns_to_csr_matrix
@@ -28,7 +29,7 @@ class Metric:
         self._num_items = 0
         self._timestamp_limit = timestamp_limit
         self.cache = cache
-        
+
         self._scores: Optional[csr_matrix]
         self._value: float
         self._y_true: csr_matrix
@@ -39,21 +40,21 @@ class Metric:
         """Number of false negatives computed. Used for caching to obtain macro results."""
         self._false_positive: int
         """Number of false positives computed. Used for caching to obtain macro results."""
-        
+
     @property
     def name(self):
         """Name of the metric."""
         return self.__class__.__name__
-    
+
     @property
     def params(self):
         """Parameters of the metric."""
         return {"timestamp_limit": self._timestamp_limit}
-    
+
     def get_params(self):
         """Get the parameters of the metric."""
         return self.params
-    
+
     @property
     def identifier(self):
         """Name of the metric."""
@@ -63,7 +64,7 @@ class Metric:
 
     def _calculate(self, y_true: csr_matrix, y_pred: csr_matrix) -> None:
         raise NotImplementedError()
-    
+
     def calculate(self, y_true: csr_matrix, y_pred: csr_matrix) -> None:
         """Calculates this metric for all nonzero users in ``y_true``,
         given true labels and predicted scores.
@@ -78,6 +79,9 @@ class Metric:
         self._set_shape(y_true)
         self._calculate(y_true, y_pred)
 
+    @deprecated(
+        details="Caching values for metric is no longer needed for core functionalities due to change in compute method."
+    )
     def cache_values(self, y_true:csr_matrix, y_pred:csr_matrix) -> None:
         """Cache the values of y_true and y_pred for later use.
         
@@ -100,21 +104,24 @@ class Metric:
         """
         if not self.cache:
             raise ValueError("Caching is disabled for this metric.")
-        
+
         if not hasattr(self, "_y_true") or not hasattr(self, "_y_pred"):
             self._y_true = y_true
             self._y_pred = y_pred
             return
-        
+
         # reshape old y_true and y_pred to add the new columns
         if y_true.shape[1] > self._y_true.shape[1]:
             self._y_true = add_columns_to_csr_matrix(self._y_true, y_true.shape[1]-self._y_true.shape[1])
             self._y_pred = add_columns_to_csr_matrix(self._y_pred, y_pred.shape[1]-self._y_pred.shape[1])
-            
-        #? np.vstack([self._y_true.toarray(), y_true.toarray()]) faster ?
+
+        # ? np.vstack([self._y_true.toarray(), y_true.toarray()]) faster ?
         self._y_true = vstack([self._y_true, y_true])
         self._y_pred = vstack([self._y_pred, y_pred])
-    
+
+    @deprecated(
+        details="Caching values for metric is no longer needed for core functionalities due to change in compute method."
+    )
     def calculate_cached(self):
         """Calculate the metric using the cached values of y_true and y_pred.
         
@@ -132,7 +139,7 @@ class Metric:
         if not hasattr(self, "_y_true") or not hasattr(self, "_y_pred"):
             self._scores = None
             return
-        
+
         self.calculate(self._y_true, self._y_pred)
 
     @property
@@ -302,7 +309,6 @@ class MetricTopK(Metric):
 
         # Compute the topK for the predicted affinities
         y_pred_top_K = get_top_K_ranks(y_pred, self.K)
-        self.y_pred_top_K_ = y_pred_top_K
         
         return y_true, y_pred_top_K
     
@@ -318,15 +324,16 @@ class MetricTopK(Metric):
         :type y_pred: csr_matrix
         """
         # Perform checks and cleaning
+        # TODO check if y_true is empty?
         y_true, y_pred_top_K = self.prepare_matrix(y_true, y_pred)
         self.y_pred_top_K_ = y_pred_top_K
         
         self._calculate(y_true, y_pred_top_K)
-        
+
 class ListwiseMetricK(MetricTopK):
     """Base class for all metrics that can be calculated for every Top-K recommendation list,
     i.e. one value for each user.
-    Examples are: DiversityK, NDCGK, ReciprocalRankK, RecallK
+    Examples are: PrecisionK, RecallK
 
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
@@ -346,7 +353,7 @@ class ListwiseMetricK(MetricTopK):
 
     @property
     def micro_result(self) -> dict[str, np.ndarray]:
-        """Get the detailed results for this metric.
+        """User level results for the metric.
 
         Contains an entry for every user.
 
@@ -382,5 +389,7 @@ class ListwiseMetricK(MetricTopK):
         elif self._scores is None:
             warn(UserWarning("No scores were computed. Returning Null value."))
             return None
-        
+        elif self._scores.size == 0:
+            warn(UserWarning(f"All predictions were off or the ground truth matrix was empty during compute of {self.identifier}."))
+            return 0
         return self._scores.mean()
