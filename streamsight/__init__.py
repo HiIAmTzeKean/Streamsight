@@ -17,6 +17,3 @@ LOGGING_CONFIG = "LOGGING_CONFIG.yaml"
 prepare_logger(LOGGING_CONFIG)
 
 logger = logging.getLogger(__name__)
-logger.debug("Logging is configured.")
-logger.info("Logging started")
-logger.warning("Logging warning works")

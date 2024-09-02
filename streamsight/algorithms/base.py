@@ -138,10 +138,15 @@ class Algorithm(BaseEstimator,ABC):
 
         self._check_fit_complete()
         end = time.time()
-        logger.info(f"Fitting {self.name} complete - Took {end - start :.3}s")
+        logger.debug(f"Fitting {self.name} complete - Took {end - start :.3}s")
         return self
 
-    def _pad_predict(self, X_pred: csr_matrix, intended_shape: tuple, to_predict_frame: pd.DataFrame) -> csr_matrix:
+    def _pad_predict(
+        self,
+        X_pred: csr_matrix,
+        intended_shape: tuple,
+        to_predict_frame: pd.DataFrame,
+    ) -> csr_matrix:
         """Pad the predictions with random items for users that are not in the training data.
 
         :param X_pred: Predictions made by the algorithm
@@ -157,9 +162,13 @@ class Algorithm(BaseEstimator,ABC):
             return X_pred
 
         known_user_id, known_item_id = X_pred.shape
-        X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0]-known_user_id)
+        X_pred = add_rows_to_csr_matrix(
+            X_pred, intended_shape[0] - known_user_id
+        )
         # pad users with random items
-        logger.debug(f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with random items")
+        logger.debug(
+            f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with random items"
+        )
         to_predict = to_predict_frame.value_counts("uid")
         row = []
         col = []
@@ -167,9 +176,6 @@ class Algorithm(BaseEstimator,ABC):
             if user_id >= known_user_id:
                 row += [user_id] * to_predict[user_id]
                 col += self.rand_gen.integers(0, known_item_id, to_predict[user_id]).tolist()
-                # for _ in range(to_predict[user_id]):
-                #     row.append(user_id)
-                #     col.append(np.random.randint(0, known_item_id))
         pad = csr_matrix((np.ones(len(row)), (row, col)), shape=intended_shape)
         X_pred += pad
         logger.debug(f"Padding completed")
@@ -195,7 +201,7 @@ class Algorithm(BaseEstimator,ABC):
         to_predict_frame = X.get_prediction_data()
         prev_interaction = X.get_interaction_data()
         prev_interaction = self._transform_predict_input(prev_interaction)
-        
+
         if to_predict_frame._df.empty:
             return csr_matrix(X.shape, dtype=int)
 
@@ -204,8 +210,11 @@ class Algorithm(BaseEstimator,ABC):
         logger.debug("Predictions by algorithm completed")
 
         # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
-        max_user_id  = to_predict_frame.max_user_id + 1 
-        max_item_id  = to_predict_frame.max_item_id + 1 
-        intended_shape = (max(max_user_id, X.shape[0]), max(max_item_id, X.shape[1]))
-        
+        max_user_id = to_predict_frame.max_user_id + 1
+        max_item_id = to_predict_frame.max_item_id + 1
+        intended_shape = (
+            max(max_user_id, X.shape[0]),
+            max(max_item_id, X.shape[1]),
+        )
+
         return self._pad_predict(X_pred, intended_shape, to_predict_frame._df)

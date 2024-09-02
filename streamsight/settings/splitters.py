@@ -170,9 +170,11 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
         t,
         t_upper: Optional[int] = None,
         n_seq_data: int = 1,
+        include_all_past_data: bool = False,
     ):
         super().__init__(t, None, t_upper)
         self.n_seq_data = n_seq_data
+        self.include_all_past_data = include_all_past_data
 
     def update_split_point(self, t: int):
         logger.debug(f"{self.identifier} - Updating split point to t={t}")
@@ -198,8 +200,12 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
                 self.t + self.t_upper
             ).timestamps_gte(self.t)
         
-        past_interaction = data.get_users_n_last_interaction(
-                self.n_seq_data, self.t,future_interaction.user_ids
-            )
+        if self.include_all_past_data:
+            past_interaction = data.timestamps_lt(self.t)
+        else:
+            past_interaction = data.get_users_n_last_interaction(
+                    self.n_seq_data, self.t,future_interaction.user_ids
+                )
+            
         logger.debug(f"{self.identifier} has complete split")
         return past_interaction, future_interaction

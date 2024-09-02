@@ -1,7 +1,5 @@
 import logging
-from typing import Optional
 
-import numpy as np
 import scipy.sparse
 from scipy.sparse import csr_matrix
 
@@ -38,12 +36,11 @@ class PrecisionK(ListwiseMetricK):
     def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:
         scores = scipy.sparse.lil_matrix(y_pred_top_K.shape)
 
-        # Elementwise multiplication of top K predicts and true interactions
+        # obtain true positives
         scores[y_pred_top_K.multiply(y_true).astype(bool)] = 1
-        # ? csr to lil is costly, other alternatives?
         scores = scores.tocsr()
 
-        # true label/total predictions
+        # true positive/total predictions
         self._scores = csr_matrix(scores.sum(axis=1)) / self.K
-        
+
         logger.debug(f"Precision compute complete - {self.name}")

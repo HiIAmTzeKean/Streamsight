@@ -1,10 +1,14 @@
 import logging
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+from tqdm import tqdm
+
 from streamsight.datasets.base import Dataset
 
 logger = logging.getLogger(__name__)
+tqdm.pandas()
 
 class AmazonDataset(Dataset):
     USER_IX = "userId"

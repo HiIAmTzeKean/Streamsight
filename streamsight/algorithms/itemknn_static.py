@@ -1,5 +1,4 @@
 import logging
-import time
 from typing import Optional
 
 import pandas as pd
@@ -30,7 +29,9 @@ class ItemKNNStatic(ItemKNN):
         super().fit(X)
         return self
 
-    def _predict(self, X: csr_matrix, predict_frame:Optional[pd.DataFrame]=None) -> csr_matrix:
+    def _predict(
+        self, X: csr_matrix, predict_frame: Optional[pd.DataFrame] = None
+    ) -> csr_matrix:
         num_item, _ = self.similarity_matrix_.shape
         # reduce X to only the items that are in the similarity matrix
         X = X[:, :num_item]

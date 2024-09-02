@@ -120,7 +120,7 @@ class Setting(ABC):
         :param data: Interaction matrix that should be split.
         :type data: InteractionMatrix
         """
-        logger.info("Splitting data...")
+        logger.debug("Splitting data...")
         self._num_full_interactions = data.num_interactions
         self._split(data)
 
@@ -481,9 +481,9 @@ class Setting(ABC):
         data series. API allows the programmer to reset the data generators
         of the setting object to the beginning of the data series.
         """
-        logger.info("Resetting data generators.")
+        logger.debug("Resetting data generators.")
         self._unlabeled_data_generator()
         self._ground_truth_data_generator()
         self._next_t_window_generator()
         self._incremental_data_generator()
-        logger.info("Data generators are reset.")
+        logger.debug("Data generators are reset.")

@@ -40,6 +40,7 @@ class BuilderBase(ABC):
         """Ignore unknown user in the evaluation"""
         self.ignore_unknown_item = ignore_unknown_item
         """Ignore unknown item in the evaluation"""
+        self.metric_k: int
         if not seed:
             seed = 42
         self.seed: int = seed
@@ -55,8 +56,16 @@ class BuilderBase(ABC):
                                "the setting first. Call add_setting() method.")
         return True
 
+    def set_metric_K(self, K: int) -> None:
+        """Set K value for all metrics.
+
+        :param K: K value to set for all metrics
+        :type K: int
+        """
+        self.metric_k = K
+
     def add_metric(
-        self, metric: Union[str, type], K: Optional[int] = None
+        self, metric: Union[str, type]
     ) -> None:
         """Add metric to evaluate algorithm on.
         
@@ -64,7 +73,7 @@ class BuilderBase(ABC):
         converted to a list when the evaluator is constructed.
         
         .. note::
-            If K is not specified, the setting's top_K value will be used. This
+            If K is not yet specified, the setting's top_K value will be used. This
             requires the setting to be set before adding the metric.
 
         :param metric: Metric to evaluate algorithm on
@@ -87,21 +96,15 @@ class BuilderBase(ABC):
         if metric not in METRIC_REGISTRY:
             raise ValueError(f"Metric {metric} could not be resolved.")
 
-        if K is None:
-            K = self.setting.top_K
+        if not hasattr(self, "metric_k"):
+            self.metric_k = self.setting.top_K
             warn(
-                "K not specified when setting metric, using setting's top_K value. "
-                "We recommend specifying K value for metric."
-            )
-        elif K != self.setting.top_K:
-            warn(
-                f"K value specified is {K} but setting's top_K value is"
-                f" {self.setting.top_K}. The number of requested predictions"
-                " from the model will mismatch the K value specified. This may"
-                " distort the metric value."
+                "K value not yet specified before setting metric, using setting's top_K value."
+                " We recommend specifying K value for metric. If you want to change the K value,"
+                " you can clear all metric entry and set the K value before adding metrics."
             )
 
-        metric_name = f"{metric}_{K}"
+        metric_name = f"{metric}_{self.metric_k}"
         if metric_name in self.metric_entries:
             logger.warning(
                 f"Metric {metric_name} already exists."
@@ -109,7 +112,7 @@ class BuilderBase(ABC):
             )
             return
 
-        self.metric_entries[metric_name] = MetricEntry(metric, K)
+        self.metric_entries[metric_name] = MetricEntry(metric, self.metric_k)
         
     def add_setting(self, setting: Setting) -> None:
         """Add setting to the evaluator builder.
@@ -131,11 +134,24 @@ class BuilderBase(ABC):
         
         self.setting = setting
     
+    def clear_metrics(self) -> None:
+        """Clear all metrics from the builder."""
+        self.metric_entries.clear()
+        self.metric_k = None
+    
     def _check_ready(self):
         """Check if the builder is ready to construct Evaluator.
 
         :raises RuntimeError: If there are invalid configurations
         """
+        if not hasattr(self, "metric_k"):
+            self.metric_k = self.setting.top_K
+            warn(
+                "K value not yet specified before setting metric, using setting's top_K value."
+                " We recommend specifying K value for metric. If you want to change the K value,"
+                " you can clear all metric entry and set the K value before adding metrics."
+            )
+        
         if len(self.metric_entries) == 0:
             raise RuntimeError(
                 "No metrics specified, can't construct Evaluator"
@@ -235,9 +251,9 @@ class EvaluatorBuilder(BuilderBase):
             ):
                 warn(
                     f"Algorithm {algo.name} has K={algo.params['K']} but setting"
-                    f" is configured top_K={self.setting.top_K}. Mismatch in K will"
-                    " cause metric to evaluate on algorithm's K value but number of"
-                    " prediction requested from model will mismatch that K value"
+                    f" is configured top_K={self.setting.top_K}. The number of predictions"
+                    " returned by the model is less than the K value to evaluate the predictions"
+                    " on. This may distort the metric value."
                 )
 
     def build(self) -> EvaluatorPipeline:
@@ -252,6 +268,7 @@ class EvaluatorBuilder(BuilderBase):
             algorithm_entries=self.algorithm_entries,
             metric_entries=list(self.metric_entries.values()),
             setting=self.setting,
+            metric_k=self.metric_k,
             ignore_unknown_user=self.ignore_unknown_user,
             ignore_unknown_item=self.ignore_unknown_item,
             seed=self.seed
@@ -287,6 +304,7 @@ class EvaluatorStreamerBuilder(BuilderBase):
         return EvaluatorStreamer(
             metric_entries=list(self.metric_entries.values()),
             setting=self.setting,
+            metric_k=self.metric_k,
             ignore_unknown_user=self.ignore_unknown_user,
             ignore_unknown_item=self.ignore_unknown_item,
             seed=self.seed

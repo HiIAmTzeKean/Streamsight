@@ -32,6 +32,9 @@ class SlidingWindowSetting(Setting):
     :param background_t: Time point to split the data into background and evaluation data. Split will be from `[0, t)`
     :type background_t: int
     :param window_size: Size of the window in seconds to slide over the data.
+        Affects the incremental data being released to the model. If
+        :param:`t_ground_truth_window` is not provided, ground truth data will also
+        take this window.
     :type window_size: int, optional
     :param n_seq_data: Number of last sequential interactions to provide as
         unlabeled data for model to make prediction.
@@ -78,6 +81,7 @@ class SlidingWindowSetting(Setting):
         self._window_splitter = NPastInteractionTimestampSplitter(
             background_t, t_ground_truth_window, n_seq_data
         )
+        self.t_ground_truth_window = t_ground_truth_window
 
     def _split(self, data: InteractionMatrix):
         """Splits dataset into a background, unlabeled and ground truth data.
@@ -125,7 +129,7 @@ class SlidingWindowSetting(Setting):
         self._num_split_set = len(self._unlabeled_data)
         logger.info(
             f"Finished split with window size {self.window_size} seconds. "
-            f"Number of splits: {self._num_split_set + 1} in total."
+            f"Number of splits: {self._num_split_set} in total."
         )
 
     @property
@@ -136,5 +140,6 @@ class SlidingWindowSetting(Setting):
             "window_size": self.window_size,
             "n_seq_data": self.n_seq_data,
             "top_K": self.top_K,
-            "t_upper": self.t_upper
+            "t_upper": self.t_upper,
+            "t_ground_truth_window": self.t_ground_truth_window
         }

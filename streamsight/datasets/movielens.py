@@ -4,8 +4,10 @@ import zipfile
 import pandas as pd
 import numpy as np
 from streamsight.datasets.base import Dataset
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+tqdm.pandas()
 
 class MovieLensDataset(Dataset):
     """Base class for Movielens datasets.

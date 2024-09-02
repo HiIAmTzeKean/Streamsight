@@ -176,10 +176,13 @@ class InteractionMatrix:
             self.shape = (known_user,known_item)
             return
         
+        logger.debug(f"(user x item) shape defined is {shape}")
+        logger.debug(f"Shape of dataframe stored in matrix was {self._df.shape} before masking")
         if drop_unknown_user:
             self._df = self._df[self._df[InteractionMatrix.USER_IX]<shape[0]]
         if drop_unknown_item:
             self._df = self._df[self._df[InteractionMatrix.ITEM_IX]<shape[1]]
+        logger.debug(f"Shape of dataframe stored in matrix is now {self._df.shape} after masking")
         
         if shape and inherit_max_id:
             max_user = self._df[InteractionMatrix.USER_IX].max()
@@ -187,7 +190,7 @@ class InteractionMatrix:
             self.shape = (max(shape[0], max_user + 1), max(shape[1], max_item + 1))
         elif shape:
             self.shape = shape
-        
+        logger.debug(f"Final (user x item) shape defined is {self.shape}")
         self._check_shape()
         
     def _check_shape(self):
