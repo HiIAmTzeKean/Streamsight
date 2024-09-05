@@ -330,8 +330,12 @@ class EvaluatorStreamer(EvaluatorBase):
         status = self.status_registry[algo_id].state
 
         if status == AlgorithmStateEnum.READY:
+            try:
+                X_pred = self._transform_prediction(X_pred)
+            except ValueError as e:
+                warn(f"Prediction failed for algorithm {algo_id} due to {e}")
+                return
             # TODO check if all requested prediction made #86 bug
-            X_pred = self._transform_prediction(X_pred)
             self._evaluate(algo_id, X_pred)
             self.status_registry.update(algo_id, AlgorithmStateEnum.PREDICTED)
 
@@ -367,8 +371,13 @@ class EvaluatorStreamer(EvaluatorBase):
         if isinstance(X_pred, InteractionMatrix):
             # check if shape is defined
             if not hasattr(X_pred, "shape"):
-                # set shape to the known shape
-                X_pred.mask_shape(self.user_item_base.known_shape)
+                # prediction may be done on unknown users as well
+                # we mask based on the larger shape
+                X_pred.mask_shape(self.user_item_base.global_shape)
+            # if there still exists ID outside the global shape, then the algorithm
+            # is giving us ID that is not known to us, raise exception
+            if X_pred.user_ids.difference(self.user_item_base.global_user_ids) or X_pred.item_ids.difference(self.user_item_base.global_item_ids):
+                raise ValueError("Prediction matrix contains unknown user/item ids")
             X_pred = X_pred.binary_values
         elif isinstance(X_pred, csr_matrix):
             pass
@@ -404,18 +413,9 @@ class EvaluatorStreamer(EvaluatorBase):
         logger.debug(f"Caching evaluation data for step {self._run_step}")
         
         try:
-            unlabeled_data = self.setting.next_unlabeled_data()
-            ground_truth_data = self.setting.next_ground_truth_data()
-            self._current_timestamp = self.setting.next_t_window()
-        except EOWSetting:
-            raise EOWSetting("There is no more data to be processed, please ensure that the setting has more data")
-        self.user_item_base._update_unknown_user_item_base(ground_truth_data)
-        # Assume that we ignore unknowns
-        unlabeled_data.mask_shape(self.user_item_base.known_shape)
-        ground_truth_data.mask_shape(self.user_item_base.known_shape,
-                                        drop_unknown_user=self.ignore_unknown_user,
-                                        drop_unknown_item=self.ignore_unknown_item,
-                                        inherit_max_id=True)
+            unlabeled_data, ground_truth_data, _ = self._get_evaluation_data()
+        except EOWSetting as e:
+            raise e
 
         self._unlabeled_data_cache = unlabeled_data
         self._ground_truth_data_cache = ground_truth_data

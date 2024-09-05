@@ -1,3 +1,4 @@
+import itertools
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, List, Optional, Union
@@ -487,3 +488,41 @@ class Setting(ABC):
         self._next_t_window_generator()
         self._incremental_data_generator()
         logger.debug("Data generators are reset.")
+    
+    def destruct_generators(self) -> None:
+        """Destruct data generators.
+        
+        Destructs the data generators of the setting object. This method is
+        useful when the setting object needs to be be pickled or saved to disk.
+        """
+        logger.debug("Destructing data generators.")
+        del self.unlabeled_data_iter
+        del self.ground_truth_data_iter
+        del self.t_window_iter
+        del self.incremental_data_iter
+        logger.debug("Data generators are destructed.")
+    
+    def restore_generators(self, n:Optional[int]=None) -> None:
+        """Restore data generators.
+        
+        Restores the data generators of the setting object. If :param:`n` is
+        provided, then it will restore the data generators to the iteration
+        number :param:`n`. If :param:`n` is not provided, then it will restore
+        the data generators to the beginning of the data series.
+
+        :param n: iteration number to restore generator to, defaults to int
+        :type n: int, optional
+        """
+        if n is None:
+            n = 0
+        
+        logger.debug("Restoring data generators.")
+        self.reset_data_generators()
+        if n > 0:
+            for _ in range(n):
+                itertools.islice(self.unlabeled_data_iter, n)
+                itertools.islice(self.ground_truth_data_iter, n)
+                itertools.islice(self.incremental_data_iter, n)
+                itertools.islice(self.t_window_iter, n)
+        logger.debug(f"Data generators are restored to iter={n}.")
+        
