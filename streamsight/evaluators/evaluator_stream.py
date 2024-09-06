@@ -251,6 +251,7 @@ class EvaluatorStreamer(EvaluatorBase):
         elif status == AlgorithmStateEnum.PREDICTED and self.status_registry[algo_id].data_segment == self._current_timestamp:
             # if algo has predicted, check if current timestamp has not changed
             return_msg = f"Algorithm {algo_id} has already predicted for this data segment, please wait for all other algorithms to predict"
+            warn(AlgorithmStatusWarning(algo_id, status, "not_all_predicted"))
             logger.info(return_msg)
             print(return_msg)
 
