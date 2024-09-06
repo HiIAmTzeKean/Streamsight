@@ -92,4 +92,5 @@ class AlgorithmStatusWarning(UserWarning):
             super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm should request for unlabeled data first.")
         elif phase == "complete":
             super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm has completed stream evaluation. No more data release available.")
-        super().__init__(f"Algorithm:{algo_id} current status is {status}.")
+        else:
+            super().__init__(f"Algorithm:{algo_id} current status is {status}.")
