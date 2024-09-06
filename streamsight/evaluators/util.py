@@ -92,5 +92,7 @@ class AlgorithmStatusWarning(UserWarning):
             super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm should request for unlabeled data first.")
         elif phase == "complete":
             super().__init__(f"Algorithm:{algo_id} current status is {status}. Algorithm has completed stream evaluation. No more data release available.")
+        elif phase == "not_all_predicted":
+            super().__init__(f"Algorithm {algo_id} has already predicted for this data segment, please wait for all other algorithms to predict")
         else:
             super().__init__(f"Algorithm:{algo_id} current status is {status}.")
