@@ -38,11 +38,11 @@ class ItemUserBasedEnum(StrEnum):
     
 
 class InteractionMatrix:
-    """An InteractionMatrix contains interactions between users and items at a certain time.
+    """Matrix of interaction data between users and items.
 
     It provides a number of properties and methods for easy manipulation of this interaction data.
 
-    .. note::
+    .. attention::
 
         - The InteractionMatrix does not assume binary user-item pairs.
           If a user interacts with an item more than once, there will be two
@@ -50,7 +50,9 @@ class InteractionMatrix:
         
         - We assume that the user and item IDs are integers starting from 0. IDs
           that are indicated by "-1" are reserved to label the user or item to
-          be predicted.
+          be predicted. This assumption is crucial as it will be used during the
+          split scheme and evaluation of the RS since it will affect the 2D shape
+          of the CSR matrix
 
     :param df: Dataframe containing user-item interactions. Must contain at least
         item ids and user ids.

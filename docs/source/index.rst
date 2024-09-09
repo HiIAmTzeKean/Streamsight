@@ -1,9 +1,28 @@
 Welcome to Streamsight's documentation!
 =======================================
 
-Streamsight is a Python library for building and evaluating recommender systems
-that can handle streaming data. It is designed to be modular so that you can
-easily swap out different components of the system to suit your needs.
+.. image:: /_static/logo.png
+    :align: center
+
+Streamsight is an open-source python toolkit developed that provides a framework
+which observes the context of time to accurately model offline setting to actual
+real-world scenarios.
+
+The overall architecture of the package is shown in the figure below. We split
+the toolkit into three main components: data handling, recommendation system,
+and evaluation. The data handling component is responsible for loading and
+preprocessing the data, the RecSys on implementing the recommendation algorithms
+and the Evaluation for evaluating the recommendation algorithms.
+
+.. image:: /_static/architecture.png
+    :align: center
+
+The demo notebooks can be found in the `examples` directory. The notebooks
+demonstrate how to use the toolkit to build a recommendation system and evaluate
+the recommendation algorithms.
+
+Contents
+========
 
 .. toctree::
     :maxdepth: 1

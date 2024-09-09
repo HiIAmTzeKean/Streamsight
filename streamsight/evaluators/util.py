@@ -55,6 +55,45 @@ class UserItemBaseStatus:
         """
         return (len(self.known_user), len(self.known_item))
 
+    @property
+    def global_shape(self) -> Tuple[int, int]:
+        """Global shape of the user-item interaction matrix.
+
+        This is the shape of the user-item interaction matrix considering all
+        the users and items that has been possibly exposed. The global shape
+        considers the fact that an unknown user/item can be exposed during the
+        prediction stage when an unknown user/item id is requested for prediction
+        on the algorithm.
+
+        :return: Tuple of (`|user|`, `|item|`)
+        :rtype: Tuple[int, int]
+        """
+        return (len(self.known_user) + len(self.unknown_user), len(self.known_item) + len(self.unknown_item))
+    
+    @property
+    def global_user_ids(self) -> set:
+        """Set of global user ids.
+        
+        Returns the set of global user ids. The global user ids are the union of
+        known and unknown user ids.
+
+        :return: Set of global user ids.
+        :rtype: set
+        """
+        return self.known_user.union(self.unknown_user)
+    
+    @property
+    def global_item_ids(self):
+        """Set of global item ids.
+        
+        Returns the set of global item ids. The global item ids are the union of
+        known and unknown item ids.
+        
+        :return: Set of global item ids.
+        :rtype: set
+        """
+        return self.known_item.union(self.unknown_item)
+
     def _update_known_user_item_base(self, data: InteractionMatrix):
         """Updates the known user and item set with the data.
 

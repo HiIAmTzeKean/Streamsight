@@ -1,9 +1,25 @@
 # Streamsight
 
+![logo](docs/source/_static/logo.png)
+
 The purpose of this Final Year Project is to design and implement a toolkit for
 evaluating Recommendation System (RecSys) which respects the temporal aspect
 during the data splitting process and incrementally release data as close
 to a live production setting as possible.
+
+[![PyPI Latest Release](https://img.shields.io/pypi/v/streamsight.svg)](https://pypi.org/project/streamsight/)&nbsp;&nbsp;
+[![Docs](https://github.com/HiIAmTzeKean/Streamsight/actions/workflows/pages/pages-build-deployment/badge.svg)](https://hiiamtzekean.github.io/Streamsight/)&nbsp;&nbsp;
+[![Python version](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/downloads/)
+
+## Table Table of Contents
+- [Streamsight](#streamsight)
+  - [Table Table of Contents](#table-table-of-contents)
+  - [Installation with code base](#installation-with-code-base)
+    - [Installation with poetry](#installation-with-poetry)
+    - [Installation with pip](#installation-with-pip)
+  - [Installation from open source](#installation-from-open-source)
+  - [Documentation](#documentation)
+
 
 ## Installation with code base
 
@@ -50,3 +66,8 @@ pip install streamsight
 # To install with streamsight as a dependency
 poetry add streamsight
 ```
+
+## Documentation
+
+The documentation can be found [here](https://hiiamtzekean.github.io/Streamsight/)
+and [repository](https://github.com/HiIAmTzeKean/Streamsight) on Github.

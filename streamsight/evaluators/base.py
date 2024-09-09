@@ -1,14 +1,17 @@
 import logging
+import warnings
 from typing import List, Literal, Optional, Tuple, Union
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix
 
 from streamsight.evaluators.accumulator import MetricAccumulator
 from streamsight.evaluators.util import MetricLevelEnum, UserItemBaseStatus
+from streamsight.matrix import InteractionMatrix
 from streamsight.registries import MetricEntry
 from streamsight.settings import Setting
+from streamsight.settings.base import EOWSetting
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +58,45 @@ class EvaluatorBase(object):
 
         self._run_step = 0
         self._current_timestamp: int
+    
+    def _get_evaluation_data(self) -> Tuple[InteractionMatrix, InteractionMatrix, int]:
+        """Get the evaluation data for the current step.
+        
+        Internal method to get the evaluation data for the current step. The
+        evaluation data consists of the unlabeled data, ground truth data, and
+        the current timestamp which will be returned as a tuple. The shapes
+        are masked based through :attr:`user_item_base`. The unknown users in
+        the ground truth data are also updated in :attr:`user_item_base`.
+        
+        .. note::
+            :attr:`_current_timestamp` is updated with the current timestamp.
+        
+        :return: Tuple of unlabeled data, ground truth data, and current timestamp
+        :rtype: Tuple[csr_matrix, csr_matrix, int]
+        :raises EOWSetting: If there is no more data to be processed
+        """
+        try:
+            unlabeled_data = self.setting.next_unlabeled_data()
+            ground_truth_data = self.setting.next_ground_truth_data()
+            current_timestamp = self.setting.next_t_window()
+            self._current_timestamp = current_timestamp
+        except EOWSetting:
+            raise EOWSetting("There is no more data to be processed, EOW reached")
+        
+        self.user_item_base._update_unknown_user_item_base(ground_truth_data)
+
+        # unlabeled data will respect the unknown user and item
+        # and thus will take the shape of the known user and item
+        # the ground truth must follow the same shape as the unlabeled data
+        # for evaluation purposes. This means that we drop the unknown user and item
+        # from the ground truth data
+        with warnings.catch_warnings(action="ignore"):
+            unlabeled_data.mask_shape(self.user_item_base.known_shape)
+        ground_truth_data.mask_shape(self.user_item_base.known_shape,
+                                        drop_unknown_user=self.ignore_unknown_user,
+                                        drop_unknown_item=self.ignore_unknown_item,
+                                        inherit_max_id=True)
+        return unlabeled_data, ground_truth_data, current_timestamp
 
     def _prediction_shape_handler(
         self, X_true_shape: Tuple[int, int], X_pred: csr_matrix
@@ -158,3 +200,21 @@ class EvaluatorBase(object):
         return self._acc.df_metric(filter_algo=filter_algo,
                              filter_timestamp=timestamp,
                              level=level)
+
+    def restore(self) -> None:
+        """Restore the generators before pickling.
+        
+        This method is used to restore the generators after loading the object
+        from a pickle file.
+        """
+        self.setting.restore_generators(self._run_step)
+        logger.debug("Generators restored")
+    
+    def prepare_dump(self) -> None:
+        """Prepare evaluator for pickling.
+        
+        This method is used to prepare the evaluator for pickling. The method
+        will destruct the generators to avoid pickling issues.
+        """
+        self.setting.destruct_generators()
+        logger.debug("Generators destructed")

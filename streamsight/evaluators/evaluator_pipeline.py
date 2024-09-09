@@ -3,15 +3,15 @@ import warnings
 from typing import List, Optional
 from warnings import warn
 
-from streamsight.evaluators.accumulator import MetricAccumulator
 from tqdm import tqdm
 
 from streamsight.algorithms import Algorithm
+from streamsight.evaluators.accumulator import MetricAccumulator
 from streamsight.evaluators.base import EvaluatorBase
 from streamsight.metrics import Metric
 from streamsight.registries import (ALGORITHM_REGISTRY, METRIC_REGISTRY,
                                     AlgorithmEntry, MetricEntry)
-from streamsight.settings import Setting
+from streamsight.settings import EOWSetting, Setting
 
 logger = logging.getLogger(__name__)
 
@@ -142,26 +142,14 @@ class EvaluatorPipeline(EvaluatorBase):
         8. Store the results in the micro metric accumulator
         9. Cache the results in the macro metric accumulator
         10. Repeat step 6 for each algorithm
+        
+        :raises EOWSetting: If there is no more data to be processed
         """
         logger.info("Phase 2: Evaluating the algorithms...")
-
-        unlabeled_data = self.setting.next_unlabeled_data()
-        ground_truth_data = self.setting.next_ground_truth_data()
-        current_timestamp = self.setting.next_t_window()
-        self._current_timestamp = current_timestamp 
-        self.user_item_base._update_unknown_user_item_base(ground_truth_data)
-
-        # unlabeled data will respect the unknown user and item
-        # and thus will take the shape of the known user and item
-        # the ground truth must follow the same shape as the unlabeled data
-        # for evaluation purposes. This means that we drop the unknown user and item
-        # from the ground truth data
-        with warnings.catch_warnings(action="ignore"):
-            unlabeled_data.mask_shape(self.user_item_base.known_shape)
-        ground_truth_data.mask_shape(self.user_item_base.known_shape,
-                                        drop_unknown_user=self.ignore_unknown_user,
-                                        drop_unknown_item=self.ignore_unknown_item,
-                                        inherit_max_id=True)
+        try:
+            unlabeled_data, ground_truth_data, current_timestamp = self._get_evaluation_data()
+        except EOWSetting as e:
+            raise e
         
         # get the top k interaction per user
         X_true = ground_truth_data.get_users_n_first_interaction(self.metric_k)
@@ -175,9 +163,6 @@ class EvaluatorPipeline(EvaluatorBase):
                 metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=current_timestamp)
                 metric.calculate(X_true, X_pred)
                 self._acc.add(metric=metric, algorithm_name=algo.identifier)
-
-            # macro metric purposes
-            # self._macro_acc.cache_results(algo.identifier, X_true, X_pred)
 
     def _data_release_step(self):
         """Data release phase. (Phase 3)
