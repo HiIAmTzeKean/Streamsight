@@ -1,15 +1,12 @@
 """
-Matrix
-----------
-This module provides the functionality to create interaction matrix from the stream data.
-The interaction matrix can be used to build recommendation systems.
-
 .. currentmodule:: streamsight.matrix
 
 Interaction Matrix
 -------------------
-The InteractionMatrix class is used to create an interaction matrix from the stream data.
-The interaction matrix can be used to build recommendation systems.
+The InteractionMatrix class is used to create an interaction matrix from the
+dataset loaded. The interaction matrix stores a dataframe under the hood and
+provides functionality to convert the dataframe to a CSR matrix and other 
+operations which are useful for building recommendation systems.
 
 .. autosummary::
     :toctree: generated/
