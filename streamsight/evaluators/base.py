@@ -200,3 +200,21 @@ class EvaluatorBase(object):
         return self._acc.df_metric(filter_algo=filter_algo,
                              filter_timestamp=timestamp,
                              level=level)
+
+    def restore(self) -> None:
+        """Restore the generators before pickling.
+        
+        This method is used to restore the generators after loading the object
+        from a pickle file.
+        """
+        self.setting.restore_generators(self._run_step)
+        logger.debug("Generators restored")
+    
+    def prepare_dump(self) -> None:
+        """Prepare evaluator for pickling.
+        
+        This method is used to prepare the evaluator for pickling. The method
+        will destruct the generators to avoid pickling issues.
+        """
+        self.setting.destruct_generators()
+        logger.debug("Generators destructed")
