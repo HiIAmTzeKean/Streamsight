@@ -77,11 +77,12 @@ class SlidingWindowSetting(Setting):
         if t_ground_truth_window is None:
             t_ground_truth_window = window_size
         
+        self.t_ground_truth_window = t_ground_truth_window
+        
         self._background_splitter = TimestampSplitter(background_t, None, None)
         self._window_splitter = NPastInteractionTimestampSplitter(
             background_t, t_ground_truth_window, n_seq_data
         )
-        self.t_ground_truth_window = t_ground_truth_window
 
     def _split(self, data: InteractionMatrix):
         """Splits dataset into a background, unlabeled and ground truth data.
