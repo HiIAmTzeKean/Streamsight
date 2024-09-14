@@ -28,6 +28,21 @@ class EvaluatorPipeline(EvaluatorBase):
     In the classical split setting, the evaluator will only run phase 1 and 2.
     In the sliding window setting, the evaluator will run all 3 phases, with
     phase 2 and 3 repeated for each window/split.
+    
+    :param algorithm_entries: List of algorithm entries
+    :type algorithm_entries: List[AlgorithmEntry]
+    :param metric_entries: List of metric entries
+    :type metric_entries: List[MetricEntry]
+    :param setting: Setting object
+    :type setting: Setting
+    :param metric_k: Number of top interactions to consider
+    :type metric_k: int
+    :param ignore_unknown_user: To ignore unknown users
+    :type ignore_unknown_user: bool
+    :param ignore_unknown_item: To ignore unknown items
+    :type ignore_unknown_item: bool
+    :param seed: Random seed for the evaluator
+    :type seed: Optional[int]
     """
     def __init__(
         self,

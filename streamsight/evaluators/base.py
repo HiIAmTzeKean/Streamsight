@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 class EvaluatorBase(object):
     """Base class for evaluator.
     
+    Provides the common methods and attributes for the evaluator classes. Should
+    there be a need to create a new evaluator, it should inherit from this class.
+    
     :param metric_entries: List of metric entries to compute
     :type metric_entries: List[MetricEntry]
     :param setting: Setting object

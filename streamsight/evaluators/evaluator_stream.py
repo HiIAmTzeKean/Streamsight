@@ -44,10 +44,14 @@ class EvaluatorStreamer(EvaluatorBase):
     :type metric_entries: List[MetricEntry]
     :param setting: Setting object
     :type setting: Setting
+    :param metric_k: Number of top interactions to consider
+    :type metric_k: int
     :param ignore_unknown_user: To ignore unknown users
     :type ignore_unknown_user: bool
     :param ignore_unknown_item: To ignore unknown items
     :type ignore_unknown_item: bool
+    :param seed: Random seed for the evaluator
+    :type seed: Optional[int]
     """
     def __init__(
         self,
