@@ -3,6 +3,7 @@ import pytest
 
 from streamsight.datasets import Dataset, TestDataset
 
+SEED = 42
 BACKGROUND_T = 4
 WINDOW_SIZE = 3
 SEED = 42
