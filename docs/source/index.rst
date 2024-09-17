@@ -6,7 +6,8 @@ Welcome to Streamsight's documentation!
 
 Streamsight is an open-source python toolkit developed that provides a framework
 which observes the context of time to accurately model offline setting to actual
-real-world scenarios.
+real-world scenarios. We aim to provide API for the programmer to build and
+evaluate recommendation systems.
 
 The overall architecture of the package is shown in the figure below. We split
 the toolkit into three main components: data handling, recommendation system,
@@ -17,9 +18,10 @@ and the Evaluation for evaluating the recommendation algorithms.
 .. image:: /_static/architecture.png
     :align: center
 
-The demo notebooks can be found in the `examples` directory. The notebooks
-demonstrate how to use the toolkit to build a recommendation system and evaluate
-the recommendation algorithms.
+The demo notebooks can be found in the `examples` directory
+`here <https://github.com/HiIAmTzeKean/Streamsight/tree/master/examples>`_.
+The notebooks demonstrate how to use the toolkit to build a recommendation
+system and evaluate them.
 
 Contents
 ========
@@ -51,6 +53,7 @@ Contents
     :caption: Other supporting modules
 
     streamsight.registries
+    streamsight.utils
 
 
 Indices and References
