@@ -1,11 +1,7 @@
 import numpy as np
 from streamsight.preprocessing import MinItemsPerUser
 from streamsight.matrix import InteractionMatrix
-
-TIMESTAMP_IX = "time"
-ITEM_IX = "item"
-USER_IX = "user"
-MIN_ITEM_USER = 2
+from test.conftest import TIMESTAMP_IX, ITEM_IX, USER_IX, MIN_ITEM_USER
 
 def test_min_items_per_user_dataframe(test_dataframe):
     """Test the MinItemsPerUser filter on a DataFrame."""

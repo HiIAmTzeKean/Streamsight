@@ -51,7 +51,7 @@ class DataFramePreprocessor:
         """
         return pd.DataFrame.from_records(
             list(self._item_id_mapping.items()),
-            columns=[self.item_ix, InteractionMatrix.ITEM_IX],
+            columns=[InteractionMatrix.ITEM_IX, self.item_ix],
         )
 
     @property
@@ -66,7 +66,7 @@ class DataFramePreprocessor:
         """
         return pd.DataFrame.from_records(
             list(self._user_id_mapping.items()),
-            columns=[self.user_ix, InteractionMatrix.USER_IX],
+            columns=[InteractionMatrix.USER_IX, self.user_ix],
         )
 
     def add_filter(self, filter: Filter):
