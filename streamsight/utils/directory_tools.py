@@ -2,11 +2,28 @@ import os
 
 
 def safe_dir(path):
+    """Check if directory is safe
+    
+    Check if the directory exists, if not create it.
+
+    :param path: The path to the directory.
+    :type path: str
+    """
     if not os.path.exists(path):
         os.makedirs(path)
 
 
 def create_config_yaml(filename):
+    """
+    Create a configuration file for the logger.
+    
+    Writes a default configuration file for the logger in YAML format.
+    The configuration file specifies the format of the log messages,
+    the output stream, and the log level.
+    
+    :param filename: The name of the file to be created.
+    :type filename: str
+    """
     content = """\
 version: 1
 formatters:

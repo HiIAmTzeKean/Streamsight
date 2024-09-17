@@ -26,6 +26,18 @@ warnings.simplefilter('always', AlgorithmStatusWarning)
 class EvaluatorStreamer(EvaluatorBase):
     """Evaluation via streaming through API
     
+    The diagram below shows the diagram of the streamer evaluator for the 
+    sliding window setting. Instead of the pipeline, we allow the user to
+    stream the data release to the algorithm. The data communication is shown
+    between the evaluator and the algorithm. Note that while only 2 splits are
+    shown here, the evaluator will continue to stream the data until the end
+    of the setting where there are no more splits.
+    
+    .. image:: /_static/stream_scheme.png
+        :align: center
+        :scale: 40 %
+        :alt: Streamer diagram
+    
     This class exposes a few of the core API that allows the user to stream
     the evaluation process. The following API are exposed:
     
@@ -44,10 +56,14 @@ class EvaluatorStreamer(EvaluatorBase):
     :type metric_entries: List[MetricEntry]
     :param setting: Setting object
     :type setting: Setting
+    :param metric_k: Number of top interactions to consider
+    :type metric_k: int
     :param ignore_unknown_user: To ignore unknown users
     :type ignore_unknown_user: bool
     :param ignore_unknown_item: To ignore unknown items
     :type ignore_unknown_item: bool
+    :param seed: Random seed for the evaluator
+    :type seed: Optional[int]
     """
     def __init__(
         self,

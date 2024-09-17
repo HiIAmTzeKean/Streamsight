@@ -161,6 +161,8 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
     :param n_seq_data: Number of last interactions to provide as unlabeled data
         for model to make prediction.
     :type n_seq_data: int, optional
+    :param include_all_past_data: If True, include all past data in the past_interaction.
+    :type include_all_past_data: bool, optional
     :return: A 2-tuple containing the `past_interaction` and `future_interaction` matrices.
     :rtype: Tuple[InteractionMatrix, InteractionMatrix]
     """

@@ -164,7 +164,7 @@ class AlgorithmEntry(NamedTuple):
     
     The intended use of this class is to store the name of the algorithm and the
     parameters that the algorithm should take. Mainly this will happen during
-    the building phase of the evaluator pipeline in :class:`EvaluatorBuilder`.
+    the building phase of the evaluator pipeline in :class:`Builder`.
 
     :param name: Name of the algorithm
     :type name: str
@@ -181,7 +181,7 @@ class MetricEntry(NamedTuple):
     
     The intended use of this class is to store the name of the metric and the
     top K value for the metric specified by the user. Mainly this will happen
-    during the building phase of the evaluator pipeline in :class:`EvaluatorBuilder`.
+    during the building phase of the evaluator pipeline in :class:`Builder`.
 
     :param name: Name of the algorithm
     :type name: str
@@ -222,7 +222,7 @@ class AlgorithmStatusEntry():
     :param state: State of the algorithm
     :type state: AlgorithmStateEnum
     :param data_segment: Data segment the algorithm is associated with
-    :type data_segment: str
+    :type data_segment: Optional[int]
     :param algo_ptr: Pointer to the algorithm object
     :type algo_ptr: Optional[Any]
     """

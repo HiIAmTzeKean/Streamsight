@@ -22,6 +22,14 @@ def to_tuple(el):
 
 
 def arg_to_str(arg: Union[type, str]) -> str:
+    """Converts a type to its name or returns the string.
+    
+    :param arg: Argument to convert to string.
+    :type arg: Union[type, str]
+    :return: String representation of the argument.
+    :rtype: str
+    :raises TypeError: If the argument is not a string or a type.
+    """
     if type(arg) == type:
         arg = arg.__name__
 
@@ -91,7 +99,9 @@ def invert(x: Union[np.ndarray, csr_matrix]) -> Union[np.ndarray, csr_matrix]:
     return ret
 
 
-class MyProgressBar:
+class ProgressBar:
+    """Progress bar as visual.
+    """
     def __init__(self):
         self.pbar = None
 
@@ -107,7 +117,17 @@ class MyProgressBar:
             self.pbar.finish()
 
 
-def prepare_logger(path) -> dict:
+def prepare_logger(path: str) -> dict:
+    """Prepare the logger.
+    
+    Prepare the logger by reading the configuration file and setting up the logger.
+    If the configuration file does not exist, it will be created.
+    
+    :param path: Path to the configuration file.
+    :type path: str
+    :return: Configuration dictionary.
+    :rtype: dict
+    """
     if not os.path.exists(path):
         create_config_yaml(path)
 

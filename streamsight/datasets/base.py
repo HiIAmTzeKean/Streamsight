@@ -13,7 +13,7 @@ from streamsight.matrix import InteractionMatrix
 from streamsight.preprocessing.filter import (Filter, MinItemsPerUser,
                                               MinUsersPerItem)
 from streamsight.preprocessing.preprocessor import DataFramePreprocessor
-from streamsight.utils.util import MyProgressBar
+from streamsight.utils import ProgressBar
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +193,7 @@ class Dataset(ABC):
         :rtype: str
         """
         logger.debug(f"{self.name} will fetch dataset from remote url at {url}.")
-        urlretrieve(url, filename, MyProgressBar())
+        urlretrieve(url, filename, ProgressBar())
         return filename
 
     @abstractmethod

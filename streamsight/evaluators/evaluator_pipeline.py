@@ -18,6 +18,16 @@ logger = logging.getLogger(__name__)
 class EvaluatorPipeline(EvaluatorBase):
     """Evaluation via pipeline
     
+    The diagram below shows the diagram of the pipeline evaluator for the 
+    sliding window setting. If the setting is a single time point setting, the
+    evaluator will only run phase 1 and 2. This is the same as setting the sliding
+    window setting to only having 1 split.
+    
+    .. image:: /_static/pipeline_scheme.png
+        :align: center
+        :scale: 40 %
+        :alt: Pipeline diagram
+    
     The pipeline is responsible for evaluating algorithms with metrics and evaluates
     the algorithms in 3 phases:
     
@@ -25,9 +35,25 @@ class EvaluatorPipeline(EvaluatorBase):
     2. Evaluation phase
     3. Data release phase
     
-    In the classical split setting, the evaluator will only run phase 1 and 2.
-    In the sliding window setting, the evaluator will run all 3 phases, with
-    phase 2 and 3 repeated for each window/split.
+    In Setting 3 (single time point split), the evaluator will only run phase 1 and 2.
+    In Setting 1 (sliding window setting), the evaluator will run all 3 phases, with
+    phase 2 and 3 repeated for each window/split. This can be seen in the diagram
+    above.
+    
+    :param algorithm_entries: List of algorithm entries
+    :type algorithm_entries: List[AlgorithmEntry]
+    :param metric_entries: List of metric entries
+    :type metric_entries: List[MetricEntry]
+    :param setting: Setting object
+    :type setting: Setting
+    :param metric_k: Number of top interactions to consider
+    :type metric_k: int
+    :param ignore_unknown_user: To ignore unknown users
+    :type ignore_unknown_user: bool
+    :param ignore_unknown_item: To ignore unknown items
+    :type ignore_unknown_item: bool
+    :param seed: Random seed for the evaluator
+    :type seed: Optional[int]
     """
     def __init__(
         self,

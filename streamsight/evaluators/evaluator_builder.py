@@ -18,7 +18,7 @@ from streamsight.utils import arg_to_str
 logger = logging.getLogger(__name__)
 
 
-class BuilderBase(ABC):
+class Builder(ABC):
     """Base class for Builder objects.
 
     Provides methods to set specific values for the builder and enforce checks
@@ -177,7 +177,7 @@ class BuilderBase(ABC):
         raise NotImplementedError
 
 
-class EvaluatorBuilder(BuilderBase):
+class EvaluatorPipelineBuilder(Builder):
     """Builder to facilitate construction of evaluator.
     Provides methods to set specific values for the evaluator and enforce checks
     such that the evaluator can be constructed correctly and to avoid possible
@@ -274,7 +274,8 @@ class EvaluatorBuilder(BuilderBase):
             seed=self.seed
         )
 
-class EvaluatorStreamerBuilder(BuilderBase):
+
+class EvaluatorStreamerBuilder(Builder):
     """Builder to facilitate construction of evaluator.
     Provides methods to set specific values for the evaluator and enforce checks
     such that the evaluator can be constructed correctly and to avoid possible
