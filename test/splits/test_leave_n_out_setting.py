@@ -10,7 +10,7 @@ N_SEQ_DATA = 10
 N = 1
 
 @pytest.fixture()
-def setting(): #TODO change name as no more user
+def setting():
     return LeaveNOutSetting(n_seq_data=N_SEQ_DATA,
                             N=1,
                             seed=SEED)
