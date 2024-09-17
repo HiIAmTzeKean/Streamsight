@@ -4,20 +4,43 @@
 Setting
 ------------
 
-The setting module contains classes that define how the data is split. The
-specifics of the split are defined in paper referenced. A setting will contain
-the following components:
+The setting module contains classes that define how the data is split. To
+generalize the splitting of the data, the interactions are first sorted in
+temporal order, and then the split is performed based on the setting. As this
+library only considers dataset with timestamp, we will consider the case of the
+single time point setting and the sliding window setting. The single time point
+setting is analogous to Setting 3 of :cite:`Sun_2023`. The sliding window setting
+is analogous to Setting 1 of :cite:`Sun_2023`.
 
-- background_data: Data that is used to train the algorithm before the first\
-    split.
+Observe the diagram below where the data split for Setting 1 is shown below. The
+unlabeled data will contain interactions that are masked which occurs after the
+current timestamp. The ground truth data will contain the actual interactions
+which will be used for evaluation and then released to the algorithm.
+
+.. image:: /_static/setting1.png
+    :align: center
+    :scale: 50 %
+    :alt: Setting 1 diagram
     
-- unlabeled_data: Data that is released to the algorithm for prediction. Contains\
-    the last n interactions split. The purpose is to provide sequential data\
-    to the algorithm. The data also contains the ID to be predicted and is labeled\
-    with "-1". Timestamps of the interactions to be predicted are preserved.
+While the this setting allows us to test the algorithm in a real-world scenario,
+there are times when the algorithm might require some sequential data before
+a prediction can be made. While it is not the role of the evaluating platform
+to provide this data, we have included the option to provide the last n interactions
+
+
+- **background_data**: Data that is used to train the algorithm before the first
+  split.
     
-- ground_truth_data: Data that is used to evaluate the algorithm. This data\
-    will contain the actual interactions.
+- **unlabeled_data**: Data that is released to the algorithm for prediction.
+  Contains the ID to be predicted and is labeled with "-1". Timestamps of the
+  interactions to be predicted are preserved. Can contain the last n interactions
+  split if specified in the parameter. The purpose is to provide sequential
+  data to the algorithm.
+    
+- **ground_truth_data**: Data that is used to evaluate the algorithm. This data
+  will contain the actual interactions. The unlabeled data with the masked data
+  is a subset of the ground truth to ensure that there is an actual corresponding
+  value to evaluate the prediction against.
 
 .. autosummary::
     :toctree: generated/
@@ -30,6 +53,28 @@ A setting is stateful. Thus, the initialization of the setting object only store
 the parameters that are passed. Calling of :attr:`Setting.split` is necessary
 such that the attributes :attr:`Setting.background_data`, :attr:`Setting.unlabeled_data`
 and :attr:`Setting.ground_truth_data` are populated.
+
+Example
+~~~~~~~~~
+
+If the file specified does not exist, the dataset is downloaded and written into this file.
+Subsequent loading of the dataset will not require downloading the dataset again,
+and will be obtained from the file in the directory.
+
+.. code-block:: python
+
+    from streamsight.datasets import AmazonMovieDataset
+    from streamsight.settings import SlidingWindowSetting
+
+    dataset = AmazonMovieDataset(use_default_filters=False)
+    data = dataset.load()
+    setting_sliding = SlidingWindowSetting(
+        background_t=1530000000,
+        window_size=60 * 60 * 24 * 30, # day times N
+        n_seq_data=1,
+        top_K=k
+    )
+    setting_sliding.split(data)
 
 Splitters
 ------------
@@ -57,8 +102,11 @@ splitter and reuse the existing setting.
 
 Processor
 ------------
-The processor module contains classes that are used to process the data.
-
+The processor module contains classes that are used to process the data. In the
+current implementation, the processor is used to mask the data that is to be
+predicted and inject it into the unlabeled data. The programmer may define
+other processor that is required to do any further processing of the data for
+the data created in the setting.
 
 .. autosummary::
     :toctree: generated/
