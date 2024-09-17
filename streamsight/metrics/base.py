@@ -330,6 +330,7 @@ class MetricTopK(Metric):
         
         self._calculate(y_true, y_pred_top_K)
 
+
 class ListwiseMetricK(MetricTopK):
     """Base class for all metrics that can be calculated for every Top-K recommendation list,
     i.e. one value for each user.
