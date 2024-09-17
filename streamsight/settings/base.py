@@ -1,6 +1,7 @@
 import itertools
 import logging
 from abc import ABC, abstractmethod
+import time
 from typing import Any, Dict, Generator, List, Optional, Union
 from warnings import warn
 
@@ -123,7 +124,10 @@ class Setting(ABC):
         """
         logger.debug("Splitting data...")
         self._num_full_interactions = data.num_interactions
+        start = time.time()
         self._split(data)
+        end = time.time()
+        logger.info(f"{self.name} data split - Took {end - start:.3}s")
 
         logger.debug("Checking split attribute and sizes.")
         self._check_split()
