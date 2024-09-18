@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "streamsight"
 version = "0.2.8"
-description = "RecSys toolkit for evaluation in a fair manner."
+description = "A toolkit for offline evaluation of Recommender Systems"
 authors = ["Ng Tze Kean <ngtzekean@gmail.com>"]
 readme = "README.md"
 
