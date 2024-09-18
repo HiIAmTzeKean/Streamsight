@@ -1,7 +1,6 @@
-import itertools
 import logging
-from abc import ABC, abstractmethod
 import time
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Generator, List, Optional, Union
 from warnings import warn
 
@@ -73,27 +72,27 @@ class Setting(ABC):
         :rtype: str
         """
         return self.__class__.__name__
-    
+
     def __str__(self):
         attrs = self.params
         return f"{self.__class__.__name__}({', '.join((f'{k}={v}' for k, v in attrs.items()))})"
-    
+
     @property
     def params(self) -> Dict[str, Any]:
         """Parameters of the setting."""
         return {}
-    
+
     def get_params(self) -> Dict[str, Any]:
         """Get the parameters of the setting."""
         return self.params
-    
+
     @property
     def identifier(self) -> str:
         """Name of the setting."""
         # return f"{super().identifier[:-1]},K={self.K})"
         paramstring = ",".join((f"{k}={v}" for k, v in self.params.items() if v is not None))
         return self.name + "(" + paramstring + ")"
-    
+
     @abstractmethod
     def _split(self, data: InteractionMatrix) -> None:
         """Abstract method to be implemented by the setting.
@@ -281,7 +280,7 @@ class Setting(ABC):
         def check_ratio(name, count, total, threshold) -> None:
             if check_empty(name, count):
                 return
-            
+
             if (count + 1e-9) / (total + 1e-9) < threshold:
                 warn(
                     UserWarning(
@@ -333,7 +332,7 @@ class Setting(ABC):
         else:
             for data in getattr(self, attribute):
                 yield data
-                
+
     def _unlabeled_data_generator(self):
         """Generates unlabeled data.
         
@@ -375,7 +374,7 @@ class Setting(ABC):
         """
         self.ground_truth_data_iter: Generator[InteractionMatrix] = self._create_generator(
             "_ground_truth_data")
-        
+
     def _next_t_window_generator(self):
         """Generates t_window data.
         
@@ -457,7 +456,7 @@ class Setting(ABC):
         except StopIteration:
             raise EOWSetting()
 
-    #? t_window_data
+    # ? t_window_data
     def next_t_window(self, reset=False) -> int:
         """Get the next data timestamp limit.
         
@@ -492,7 +491,7 @@ class Setting(ABC):
         self._next_t_window_generator()
         self._incremental_data_generator()
         logger.debug("Data generators are reset.")
-    
+
     def destruct_generators(self) -> None:
         """Destruct data generators.
         
@@ -505,7 +504,7 @@ class Setting(ABC):
         del self.t_window_iter
         del self.incremental_data_iter
         logger.debug("Data generators are destructed.")
-    
+
     def restore_generators(self, n:Optional[int]=None) -> None:
         """Restore data generators.
         
@@ -519,14 +518,14 @@ class Setting(ABC):
         """
         if n is None:
             n = 0
-        
+
         logger.debug("Restoring data generators.")
         self.reset_data_generators()
         if n > 0:
             for _ in range(n):
-                itertools.islice(self.unlabeled_data_iter, n)
-                itertools.islice(self.ground_truth_data_iter, n)
-                itertools.islice(self.incremental_data_iter, n)
-                itertools.islice(self.t_window_iter, n)
+                self.unlabeled_data_iter.__next__()
+                self.ground_truth_data_iter.__next__()
+                self.incremental_data_iter.__next__()
+                self.t_window_iter.__next__()
         logger.debug(f"Data generators are restored to iter={n}.")
-        
+
