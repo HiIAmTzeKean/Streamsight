@@ -499,10 +499,14 @@ class Setting(ABC):
         useful when the setting object needs to be be pickled or saved to disk.
         """
         logger.debug("Destructing data generators.")
-        del self.unlabeled_data_iter
-        del self.ground_truth_data_iter
-        del self.t_window_iter
-        del self.incremental_data_iter
+        if hasattr(self, 'unlabeled_data_iter'):
+            del self.unlabeled_data_iter
+        if hasattr(self, 'ground_truth_data_iter'):
+            del self.ground_truth_data_iter
+        if hasattr(self, 't_window_iter'):
+            del self.t_window_iter
+        if hasattr(self, 'incremental_data_iter'):
+            del self.incremental_data_iter
         logger.debug("Data generators are destructed.")
 
     def restore_generators(self, n:Optional[int]=None) -> None:
