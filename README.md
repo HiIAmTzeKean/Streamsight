@@ -58,7 +58,8 @@ pip install -e .
 ## Installation with PyPI
 
 Alternatively `streamsight` is available on PyPi and can be installed through
-either of the commands below
+either of the commands below. The link to PyPI can be found
+[here](https://pypi.org/project/streamsight/).
 
 ```shell
 # To install via pip
