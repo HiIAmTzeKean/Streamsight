@@ -10,7 +10,7 @@ SEED = 42
 N_SEQ_DATA=1
 
 @pytest.fixture()
-def setting(): #TODO change name as no more user
+def setting():
     return SingleTimePointSetting(background_t=BACKGROUND_T,
                                   n_seq_data=N_SEQ_DATA,
                                   seed=SEED)
