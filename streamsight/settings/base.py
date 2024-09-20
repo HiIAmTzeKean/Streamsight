@@ -526,7 +526,12 @@ class Setting(ABC):
         logger.debug("Restoring data generators.")
         self.reset_data_generators()
         if n > 0:
-            for _ in range(n):
+            # the incremental data is always 1 window behind the other windows
+            # as it is supposed to release historical data
+            self.unlabeled_data_iter.__next__()
+            self.ground_truth_data_iter.__next__()
+            self.t_window_iter.__next__()
+            for _ in range(n-1):
                 self.unlabeled_data_iter.__next__()
                 self.ground_truth_data_iter.__next__()
                 self.incremental_data_iter.__next__()
