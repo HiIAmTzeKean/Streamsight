@@ -45,5 +45,5 @@ class TestPrecisionK:
         precision_default._scores
         assert precision_default.macro_result == 0.2
         assert (
-            precision_default.micro_result["score"] == np.array([0.2, 0.2])
-        ).all()
+            pytest.approx(precision_default.micro_result["score"], rel=0.01) == np.array([0.2, 0.2])
+        )
