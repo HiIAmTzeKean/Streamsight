@@ -1,6 +1,6 @@
 # Streamsight
 
-![logo](https://hiiamtzekean.github.io/Streamsight/_static/logo.png)
+![logo](https://hiiamtzekean.github.io/Streamsight/_static/logo_removebg.png)
 
 The purpose of this Final Year Project is to design and implement a toolkit for
 evaluating Recommendation System (RecSys) which respects the temporal aspect
