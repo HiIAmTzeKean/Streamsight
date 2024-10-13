@@ -17,7 +17,7 @@ unlabeled data will contain interactions that are masked which occurs after the
 current timestamp. The ground truth data will contain the actual interactions
 which will be used for evaluation and then released to the algorithm.
 
-.. image:: /_static/setting1.png
+.. image:: /_static/setting1_no_seq.png
     :align: center
     :scale: 50 %
     :alt: Setting 1 diagram
