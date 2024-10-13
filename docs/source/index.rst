@@ -1,7 +1,7 @@
 Welcome to Streamsight's documentation!
 =======================================
 
-.. image:: /_static/logo.png
+.. image:: /_static/logo_removebg.png
     :align: center
 
 Streamsight is an open-source python toolkit developed that provides a framework
