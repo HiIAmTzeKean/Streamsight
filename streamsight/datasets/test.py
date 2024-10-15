@@ -15,6 +15,8 @@ class TestDataset(Dataset):
     """Name of the column in the DataFrame that contains item identifiers."""
     TIMESTAMP_IX = "timestamp"
     """Name of the column in the DataFrame that contains time of interaction in seconds since epoch."""
+    RATING_IX = "rating"
+    """Name of the column in the DataFrame that contains the rating a user gave to the item."""
     DEFAULT_FILENAME = "dummy_input.csv"
 
     def _download_dataset(self):
@@ -34,6 +36,7 @@ class TestDataset(Dataset):
             self.USER_IX:      [1, 2, 3, 1, 2, 2, 4, 3, 3, 4, 5, 5, 5],
             self.ITEM_IX:      [1, 1, 2, 3, 2, 3, 2, 1, 3, 3, 1, 2, 3],
             self.TIMESTAMP_IX: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 10, 10],
+            self.RATING_IX:    [1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3],
         }
 
         df = pd.DataFrame.from_dict(input_dict)

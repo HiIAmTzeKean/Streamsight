@@ -106,7 +106,10 @@ class InteractionMatrix:
             return
         
         df = df.rename(columns=col_mapper)
-        df = df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX, InteractionMatrix.TIMESTAMP_IX]].copy()
+        # df = df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX, InteractionMatrix.TIMESTAMP_IX]].copy()
+        required_columns = [InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX, InteractionMatrix.TIMESTAMP_IX]
+        extra_columns = [col for col in df.columns if col not in required_columns]
+        df = df[required_columns + extra_columns].copy()
         df = df.reset_index(drop=True).reset_index().rename(columns={"index": InteractionMatrix.INTERACTION_IX})
 
         self._df = df
