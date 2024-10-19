@@ -12,9 +12,9 @@ provision of API for the programmer to interact with the objects in the library.
 [![Docs](https://github.com/HiIAmTzeKean/Streamsight/actions/workflows/pages/pages-build-deployment/badge.svg)](https://hiiamtzekean.github.io/Streamsight/)&nbsp;&nbsp;
 [![Python version](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/downloads/)
 
-## Table Table of Contents
+## Table of Contents
 - [Streamsight](#streamsight)
-  - [Table Table of Contents](#table-table-of-contents)
+  - [Table of Contents](#table-of-contents)
   - [Installation with Github](#installation-with-github)
     - [Installation through poetry](#installation-through-poetry)
     - [Installation through pip](#installation-through-pip)
