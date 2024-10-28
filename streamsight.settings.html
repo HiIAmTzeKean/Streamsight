@@ -124,11 +124,12 @@ library only considers dataset with timestamp, we will consider the case of the
 single time point setting and the sliding window setting. The single time point
 setting is analogous to Setting 3 of <span id="id1">[<a class="reference internal" href="zreferences.html#id4" title="Aixin Sun. Take a fresh look at recommender systems from an evaluation standpoint. In Proceedings of the 46th International ACM SIGIR Conference on Research and Development in Information Retrieval, SIGIR ’23. ACM, July 2023. URL: http://dx.doi.org/10.1145/3539618.3591931, doi:10.1145/3539618.3591931.">Sun23</a>]</span>. The sliding window setting
 is analogous to Setting 1 of <span id="id2">[<a class="reference internal" href="zreferences.html#id4" title="Aixin Sun. Take a fresh look at recommender systems from an evaluation standpoint. In Proceedings of the 46th International ACM SIGIR Conference on Research and Development in Information Retrieval, SIGIR ’23. ACM, July 2023. URL: http://dx.doi.org/10.1145/3539618.3591931, doi:10.1145/3539618.3591931.">Sun23</a>]</span>.</p>
+<a class="reference internal image-reference" href="_images/data_split_definition.png"><img alt="Setting 1 diagram" class="align-center" src="_images/data_split_definition.png" style="width: 634.4000000000001px; height: 334.40000000000003px;" /></a>
 <p>Observe the diagram below where the data split for Setting 1 is shown below. The
 unlabeled data will contain interactions that are masked which occurs after the
 current timestamp. The ground truth data will contain the actual interactions
 which will be used for evaluation and then released to the algorithm.</p>
-<a class="reference internal image-reference" href="_images/setting1_no_seq.png"><img alt="Setting 1 diagram" class="align-center" src="_images/setting1_no_seq.png" style="width: 295.5px; height: 241.0px;" /></a>
+<a class="reference internal image-reference" href="_images/setting1_no_seq.png"><img alt="Setting 1 diagram" class="align-center" src="_images/setting1_no_seq.png" style="width: 591.0px; height: 482.0px;" /></a>
 <p>While the this setting allows us to test the algorithm in a real-world scenario,
 there are times when the algorithm might require some sequential data before
 a prediction can be made. While it is not the role of the evaluating platform
