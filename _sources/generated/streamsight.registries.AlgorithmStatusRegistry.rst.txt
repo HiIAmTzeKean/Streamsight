@@ -23,6 +23,7 @@
       ~AlgorithmStatusRegistry.get
       ~AlgorithmStatusRegistry.get_algorithm_identifier
       ~AlgorithmStatusRegistry.is_all_predicted
+      ~AlgorithmStatusRegistry.is_all_same_data_segment
       ~AlgorithmStatusRegistry.register
       ~AlgorithmStatusRegistry.set_all_ready
       ~AlgorithmStatusRegistry.update
