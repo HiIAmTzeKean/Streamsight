@@ -463,6 +463,12 @@ class InteractionMatrix:
     def __repr__(self):
         return repr(self._df)
     
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, InteractionMatrix):
+            logger.debug(f"Comparing {type(value)} with InteractionMatrix is not supported")
+            return False
+        return self._df.equals(value._df)
+    
     @overload
     def items_in(self, I: Set[int], inplace=False) -> "InteractionMatrix": ...
     @overload
