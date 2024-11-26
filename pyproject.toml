@@ -1,15 +1,15 @@
 [tool.poetry]
 name = "streamsight"
 version = "0.2.11"
-description = "A toolkit for offline evaluation of Recommender Systems"
+description = "A toolkit for offline evaluation of Recommender Systems."
 authors = ["Ng Tze Kean <ngtzekean@gmail.com>"]
 readme = "README.md"
 repository = "https://github.com/HiIAmTzeKean/Streamsight"
 documentation = "https://hiiamtzekean.github.io/Streamsight/"
-keywords = ["RecSys", "toolkit", "streamsight"]
+keywords = ["recsys", "toolkit", "streamsight", "evaluation"]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "3.12.5"
 colorama = "^0.4.6"
 colorlog = "^6.8.2"
 pyyaml = "^6.0.1"
@@ -21,6 +21,7 @@ tqdm = "^4.66.4"
 progressbar = "^2.5"
 typing-extensions = "^4.12.2"
 deprecation = "^2.1.0"
+sphinxcontrib-pdfembed = {git = "https://github.com/SuperKogito/sphinxcontrib-pdfembed"}
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
@@ -36,3 +37,6 @@ ipywidgets = "^8.1.5"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.urls]
+"Report" = "https://hdl.handle.net/10356/181114"
