@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>streamsight.metrics &mdash; streamsight 0.2.1 documentation</title>
+  <title>Poster &mdash; streamsight 0.2.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
 
@@ -18,12 +18,10 @@
         <script src="_static/documentation_options.js?v=37f418d5"></script>
         <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="streamsight.metrics.Metric" href="generated/streamsight.metrics.Metric.html" />
-    <link rel="prev" title="streamsight.evaluators.AlgorithmStatusWarning" href="generated/streamsight.evaluators.AlgorithmStatusWarning.html" /> 
+    <link rel="prev" title="streamsight.utils.ProgressBar" href="generated/streamsight.utils.ProgressBar.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -57,17 +55,9 @@
 <li class="toctree-l1"><a class="reference internal" href="streamsight.algorithms.html">streamsight.algorithms</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Evaluation</span></p>
-<ul class="current">
+<ul>
 <li class="toctree-l1"><a class="reference internal" href="streamsight.evaluators.html">streamsight.evaluators</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">streamsight.metrics</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#metrics">Metrics</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="generated/streamsight.metrics.Metric.html">streamsight.metrics.Metric</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/streamsight.metrics.PrecisionK.html">streamsight.metrics.PrecisionK</a></li>
-<li class="toctree-l3"><a class="reference internal" href="generated/streamsight.metrics.RecallK.html">streamsight.metrics.RecallK</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="streamsight.metrics.html">streamsight.metrics</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Other supporting modules</span></p>
 <ul>
@@ -75,8 +65,8 @@
 <li class="toctree-l1"><a class="reference internal" href="streamsight.utils.html">streamsight.utils</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Additional Resources</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="poster.html">Poster</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Poster</a></li>
 </ul>
 
         </div>
@@ -93,9 +83,9 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">streamsight.metrics</li>
+      <li class="breadcrumb-item active">Poster</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="_sources/streamsight.metrics.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/poster.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -103,33 +93,18 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="module-streamsight.metrics">
-<span id="streamsight-metrics"></span><h1>streamsight.metrics<a class="headerlink" href="#module-streamsight.metrics" title="Link to this heading"></a></h1>
-<section id="metrics">
-<h2>Metrics<a class="headerlink" href="#metrics" title="Link to this heading"></a></h2>
-<p>This module provides the functionality to evaluate the performance of the recommendation system.</p>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/streamsight.metrics.Metric.html#streamsight.metrics.Metric" title="streamsight.metrics.Metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Metric</span></code></a>([timestamp_limit, cache])</p></td>
-<td><p>Base class for all metrics.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="generated/streamsight.metrics.PrecisionK.html#streamsight.metrics.PrecisionK" title="streamsight.metrics.PrecisionK"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PrecisionK</span></code></a>([K, timestamp_limit, cache])</p></td>
-<td><p>Computes the fraction of top-K recommendations that correspond to true interactions.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/streamsight.metrics.RecallK.html#streamsight.metrics.RecallK" title="streamsight.metrics.RecallK"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RecallK</span></code></a>([K, timestamp_limit, cache])</p></td>
-<td><p>Computes the fraction of true interactions that made it into the Top-K recommendations.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
+  <section id="poster">
+<span id="id1"></span><h1>Poster<a class="headerlink" href="#poster" title="Link to this heading"></a></h1>
+<iframe src="_static/poster.pdf" width="100%" height="800px">
+Your browser does not support embedded PDFs. You can download the file <a href="_static/poster.pdf">here</a>.
+</iframe><p>You can also download the PDF file directly: <a class="reference download internal" download="" href="_downloads/352b89f37daa88692efce59df982bb24/poster.pdf"><code class="xref download docutils literal notranslate"><span class="pre">poster.pdf</span></code></a>.</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="generated/streamsight.evaluators.AlgorithmStatusWarning.html" class="btn btn-neutral float-left" title="streamsight.evaluators.AlgorithmStatusWarning" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="generated/streamsight.metrics.Metric.html" class="btn btn-neutral float-right" title="streamsight.metrics.Metric" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="generated/streamsight.utils.ProgressBar.html" class="btn btn-neutral float-left" title="streamsight.utils.ProgressBar" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
   <hr/>
