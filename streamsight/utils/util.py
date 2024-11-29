@@ -131,8 +131,13 @@ def prepare_logger(path: str) -> dict:
     if not os.path.exists(path):
         create_config_yaml(path)
 
-    with open(path, "r") as stream:
-        config = yaml.load(stream, Loader=yaml.FullLoader)
+    try:
+        with open(path, "r") as stream:
+            config = yaml.load(stream, Loader=yaml.FullLoader)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Configuration file not found at {path}.")
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing YAML configuration: {e}")
 
     dir_name = os.path.dirname(config["handlers"]["file"]["filename"])
     safe_dir(dir_name)
