@@ -1,5 +1,7 @@
 import os
 
+import yaml
+
 
 def safe_dir(path):
     """Check if directory is safe
@@ -13,7 +15,7 @@ def safe_dir(path):
         os.makedirs(path)
 
 
-def create_config_yaml(filename):
+def create_config_yaml(path: str):
     """
     Create a configuration file for the logger.
     
@@ -21,34 +23,47 @@ def create_config_yaml(filename):
     The configuration file specifies the format of the log messages,
     the output stream, and the log level.
     
-    :param filename: The name of the file to be created.
-    :type filename: str
+    :param path: The name of the file to be created.
+    :type path: str
     """
-    content = """\
-version: 1
-formatters:
-  colored:
-    (): colorlog.ColoredFormatter
-    format: '%(log_color)s%(levelname)-8s%(reset)s - %(name)s - %(blue)s%(message)s'
-  simple:
-    format: '%(asctime)s: - %(name)s - %(levelname)s - %(message)s'
-    datefmt: "%Y-%m-%d %H:%M:%S"
-    class: logging.Formatter
-handlers:
-  console:
-    class: logging.StreamHandler
-    level: DEBUG
-    formatter: colored
-    stream: ext://sys.stdout
-  file:
-    class: logging.FileHandler
-    level: DEBUG
-    formatter: simple
-    filename: ./log/output.log
-loggers:
-  root:
-    level: DEBUG
-    handlers: [console,file]
-"""
-    with open(filename, "w") as f:
-        f.write(content)
+    default_config = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "detailed": {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            },
+            "simple": {
+                "format": "%(levelname)s - %(message)s"
+            },
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": "DEBUG",
+                "formatter": "simple",
+                "stream": "ext://sys.stdout",
+            },
+            "file": {
+                "class": "logging.FileHandler",
+                "level": "DEBUG",
+                "formatter": "detailed",
+                "filename": "logs/streamsight.log",
+            },
+        },
+        "loggers": {
+            "streamsight": {
+                "level": "DEBUG",
+                "handlers": ["console", "file"],
+                "propagate": False,
+            },
+        },
+        "root": {
+            "level": "WARNING",
+            "handlers": ["console"],
+        },
+    }
+
+    # Write the YAML content
+    with open(path, "w") as file:
+        yaml.dump(default_config, file, default_flow_style=False)
