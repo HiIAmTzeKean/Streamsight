@@ -122,8 +122,8 @@ class MetricAccumulator():
         """
         df = pd.DataFrame.from_dict(self.user_level_metrics, orient="index").explode(["user_id","score"])
         df = df.rename_axis(["Algorithm", "Timestamp", "Metric"])
-        result =  df.groupby(["Algorithm", "Metric"]).mean()["score"].to_frame()
-        result["num_user"] = df.groupby(["Algorithm", "Metric"]).count()["score"]
+        result = df.groupby(["Algorithm", "Metric"])["score"].mean().to_frame()
+        result["num_user"] = df.groupby(["Algorithm", "Metric"])["score"].count()
         result = result.rename(columns={"score": "micro_score"})
         return result
 
