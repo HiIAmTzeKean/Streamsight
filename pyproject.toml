@@ -21,7 +21,6 @@ tqdm = "^4.66.4"
 progressbar = "^2.5"
 typing-extensions = "^4.12.2"
 deprecation = "^2.1.0"
-sphinxcontrib-pdfembed = {git = "https://github.com/SuperKogito/sphinxcontrib-pdfembed"}
 pyfiglet = "^1.0.2"
 
 [tool.poetry.group.dev.dependencies]
@@ -35,6 +34,7 @@ sphinx = "7.4.7"
 sphinx-rtd-theme = "^2.0.0"
 ipywidgets = "^8.1.5"
 pyfiglet = "^1.0.2"
+sphinxcontrib-pdfembed = {git = "https://github.com/SuperKogito/sphinxcontrib-pdfembed"}
 
 [build-system]
 requires = ["poetry-core"]
