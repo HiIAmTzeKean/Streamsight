@@ -711,6 +711,12 @@ class InteractionMatrix:
     
     def get_interaction_data(self) -> "InteractionMatrix":
         """Get the data that is not denoted by "-1".
+        
+        User and item IDs that are not denoted by "-1" are the ones that are
+        known to the model.
+        
+        :return: InteractionMatrix with only the known data.
+        :rtype: InteractionMatrix
         """
         mask = (self._df[InteractionMatrix.USER_IX]!=-1) & (self._df[InteractionMatrix.ITEM_IX]!=-1)
         return self._apply_mask(mask)
