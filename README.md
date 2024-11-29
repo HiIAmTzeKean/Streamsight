@@ -20,6 +20,7 @@ provision of API for the programmer to interact with the objects in the library.
     - [Installation through pip](#installation-through-pip)
   - [Installation with PyPI](#installation-with-pypi)
   - [Documentation](#documentation)
+  - [Report and Citation](#report-and-citation)
 
 
 ## Installation with Github
@@ -73,3 +74,12 @@ poetry add streamsight
 
 The documentation can be found [here](https://hiiamtzekean.github.io/Streamsight/)
 and [repository](https://github.com/HiIAmTzeKean/Streamsight) on Github.
+
+## Report and Citation
+
+The report for this project [Streamsight: a toolkit for offline evaluation of recommender systems](https://hdl.handle.net/10356/181114)
+can be found in the NTU repository.
+
+```
+Ng, T. K. (2024). Streamsight: a toolkit for offline evaluation of recommender systems. Final Year Project (FYP), Nanyang Technological University, Singapore. https://hdl.handle.net/10356/181114
+```
