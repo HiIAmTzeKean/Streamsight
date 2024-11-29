@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>streamsight.utils.arg_to_str &mdash; streamsight 0.2.1 documentation</title>
+  <title>streamsight.utils.suppress_specific_warnings &mdash; streamsight 0.2.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
 
@@ -21,8 +21,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="streamsight.utils.df_to_sparse" href="streamsight.utils.df_to_sparse.html" />
-    <link rel="prev" title="streamsight.utils.add_rows_to_csr_matrix" href="streamsight.utils.add_rows_to_csr_matrix.html" /> 
+    <link rel="next" title="Poster" href="../poster.html" />
+    <link rel="prev" title="streamsight.utils.suppress_warnings" href="streamsight.utils.suppress_warnings.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -64,23 +64,17 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../streamsight.registries.html">streamsight.registries</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../streamsight.utils.html">streamsight.utils</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="../streamsight.utils.html#utility">Utility</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.create_config_yaml.html">streamsight.utils.create_config_yaml</a></li>
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.safe_dir.html">streamsight.utils.safe_dir</a></li>
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.add_columns_to_csr_matrix.html">streamsight.utils.add_columns_to_csr_matrix</a></li>
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.add_rows_to_csr_matrix.html">streamsight.utils.add_rows_to_csr_matrix</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#">streamsight.utils.arg_to_str</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#streamsight.utils.arg_to_str"><code class="docutils literal notranslate"><span class="pre">arg_to_str()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="../streamsight.utils.html#utility">Utility</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../streamsight.utils.html#logging">Logging</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../streamsight.utils.html#example">Example</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="streamsight.utils.log_level.html">streamsight.utils.log_level</a></li>
+<li class="toctree-l4"><a class="reference internal" href="streamsight.utils.log_level_by_name.html">streamsight.utils.log_level_by_name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="streamsight.utils.suppress_warnings.html">streamsight.utils.suppress_warnings</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">streamsight.utils.suppress_specific_warnings</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.df_to_sparse.html">streamsight.utils.df_to_sparse</a></li>
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.prepare_logger.html">streamsight.utils.prepare_logger</a></li>
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.to_binary.html">streamsight.utils.to_binary</a></li>
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.to_tuple.html">streamsight.utils.to_tuple</a></li>
-<li class="toctree-l3"><a class="reference internal" href="streamsight.utils.ProgressBar.html">streamsight.utils.ProgressBar</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../streamsight.utils.html#logging">Logging</a></li>
 </ul>
 </li>
 </ul>
@@ -104,9 +98,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../streamsight.utils.html">streamsight.utils</a></li>
-      <li class="breadcrumb-item active">streamsight.utils.arg_to_str</li>
+      <li class="breadcrumb-item active">streamsight.utils.suppress_specific_warnings</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/generated/streamsight.utils.arg_to_str.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/streamsight.utils.suppress_specific_warnings.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -114,24 +108,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="streamsight-utils-arg-to-str">
-<h1>streamsight.utils.arg_to_str<a class="headerlink" href="#streamsight-utils-arg-to-str" title="Link to this heading"></a></h1>
+  <section id="streamsight-utils-suppress-specific-warnings">
+<h1>streamsight.utils.suppress_specific_warnings<a class="headerlink" href="#streamsight-utils-suppress-specific-warnings" title="Link to this heading"></a></h1>
 <dl class="py function">
-<dt class="sig sig-object py" id="streamsight.utils.arg_to_str">
-<span class="sig-prename descclassname"><span class="pre">streamsight.utils.</span></span><span class="sig-name descname"><span class="pre">arg_to_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#streamsight.utils.arg_to_str" title="Link to this definition"></a></dt>
-<dd><p>Converts a type to its name or returns the string.</p>
+<dt class="sig sig-object py" id="streamsight.utils.suppress_specific_warnings">
+<span class="sig-prename descclassname"><span class="pre">streamsight.utils.</span></span><span class="sig-name descname"><span class="pre">suppress_specific_warnings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">category</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">type</span><span class="p"><span class="pre">[</span></span><span class="pre">Warning</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#streamsight.utils.suppress_specific_warnings" title="Link to this definition"></a></dt>
+<dd><p>Suppress specific warnings by category.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>arg</strong> (<em>Union</em><em>[</em><em>type</em><em>, </em><em>str</em><em>]</em>) – Argument to convert to string.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>String representation of the argument.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>TypeError</strong> – If the argument is not a string or a type.</p>
+<dd class="field-odd"><p><strong>category</strong> (<em>type</em>) – The warning category to suppress (e.g., DeprecationWarning).</p>
 </dd>
 </dl>
 </dd></dl>
@@ -142,8 +127,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="streamsight.utils.add_rows_to_csr_matrix.html" class="btn btn-neutral float-left" title="streamsight.utils.add_rows_to_csr_matrix" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="streamsight.utils.df_to_sparse.html" class="btn btn-neutral float-right" title="streamsight.utils.df_to_sparse" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="streamsight.utils.suppress_warnings.html" class="btn btn-neutral float-left" title="streamsight.utils.suppress_warnings" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../poster.html" class="btn btn-neutral float-right" title="Poster" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

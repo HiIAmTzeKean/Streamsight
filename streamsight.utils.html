@@ -77,6 +77,16 @@
 <li class="toctree-l3"><a class="reference internal" href="generated/streamsight.utils.ProgressBar.html">streamsight.utils.ProgressBar</a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#logging">Logging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="generated/streamsight.utils.log_level.html">streamsight.utils.log_level</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/streamsight.utils.log_level_by_name.html">streamsight.utils.log_level_by_name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/streamsight.utils.suppress_warnings.html">streamsight.utils.suppress_warnings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/streamsight.utils.suppress_specific_warnings.html">streamsight.utils.suppress_specific_warnings</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -119,7 +129,7 @@ specific and also contains functions that are used in the top level such as
 preparing the logger and creating the configuration file.</p>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="generated/streamsight.utils.create_config_yaml.html#streamsight.utils.create_config_yaml" title="streamsight.utils.create_config_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_config_yaml</span></code></a>(filename)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/streamsight.utils.create_config_yaml.html#streamsight.utils.create_config_yaml" title="streamsight.utils.create_config_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_config_yaml</span></code></a>(path)</p></td>
 <td><p>Create a configuration file for the logger.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/streamsight.utils.safe_dir.html#streamsight.utils.safe_dir" title="streamsight.utils.safe_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">safe_dir</span></code></a>(path)</p></td>
@@ -151,6 +161,44 @@ preparing the logger and creating the configuration file.</p>
 </tr>
 </tbody>
 </table>
+</section>
+<section id="logging">
+<h2>Logging<a class="headerlink" href="#logging" title="Link to this heading"></a></h2>
+<p>The logging module provides functions to control the logging level and
+suppression of warnings.</p>
+<section id="example">
+<h3>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">streamsight</span>
+
+<span class="c1"># Set log level to INFO and suppress warnings</span>
+<span class="n">streamsight</span><span class="o">.</span><span class="n">log_level_by_name</span><span class="p">(</span><span class="s2">&quot;INFO&quot;</span><span class="p">)</span>
+<span class="n">streamsight</span><span class="o">.</span><span class="n">suppress_warnings</span><span class="p">(</span><span class="n">suppress</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Log some information</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;streamsight&quot;</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;This is an informational message.&quot;</span><span class="p">)</span>
+
+<span class="c1"># Emit a warning (this will be suppressed)</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;This warning will not appear.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/streamsight.utils.log_level.html#streamsight.utils.log_level" title="streamsight.utils.log_level"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_level</span></code></a>(level)</p></td>
+<td><p>Change the logging level for root logger.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/streamsight.utils.log_level_by_name.html#streamsight.utils.log_level_by_name" title="streamsight.utils.log_level_by_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_level_by_name</span></code></a>(level_name)</p></td>
+<td><p>Change the logging level using level names like 'DEBUG', 'INFO', etc.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/streamsight.utils.suppress_warnings.html#streamsight.utils.suppress_warnings" title="streamsight.utils.suppress_warnings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suppress_warnings</span></code></a>([suppress])</p></td>
+<td><p>Enable or disable the suppression of warnings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/streamsight.utils.suppress_specific_warnings.html#streamsight.utils.suppress_specific_warnings" title="streamsight.utils.suppress_specific_warnings"><code class="xref py py-obj docutils literal notranslate"><span class="pre">suppress_specific_warnings</span></code></a>(category)</p></td>
+<td><p>Suppress specific warnings by category.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 </section>
 

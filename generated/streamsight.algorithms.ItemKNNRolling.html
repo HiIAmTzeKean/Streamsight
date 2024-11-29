@@ -226,7 +226,7 @@ should set `reset=False`.
 <dt class="sig sig-object py" id="streamsight.algorithms.ItemKNNRolling._check_fit_complete">
 <span class="sig-name descname"><span class="pre">_check_fit_complete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#streamsight.algorithms.ItemKNNRolling._check_fit_complete" title="Link to this definition"></a></dt>
 <dd><p>Helper function to check if model was correctly fitted</p>
-<p>Uses the sklear check_is_fitted function,
+<p>Uses the sklearn check_is_fitted function,
 <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.utils.validation.check_is_fitted.html">https://scikit-learn.org/stable/modules/generated/sklearn.utils.validation.check_is_fitted.html</a></p>
 </dd></dl>
 
@@ -570,18 +570,34 @@ contained subobjects that are estimators.</p>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="streamsight.algorithms.ItemKNNRolling.identifier">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">identifier</span></span><a class="headerlink" href="#streamsight.algorithms.ItemKNNRolling.identifier" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">identifier</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#streamsight.algorithms.ItemKNNRolling.identifier" title="Link to this definition"></a></dt>
 <dd><p>Identifier of the object.</p>
 <p>Identifier is made by combining the class name with the parameters
 passed at construction time.</p>
 <p>Constructed by recreating the initialisation call.
 Example: <cite>Algorithm(param_1=value)</cite></p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Identifier of the object</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py property">
 <dt class="sig sig-object py" id="streamsight.algorithms.ItemKNNRolling.name">
-<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#streamsight.algorithms.ItemKNNRolling.name" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#streamsight.algorithms.ItemKNNRolling.name" title="Link to this definition"></a></dt>
 <dd><p>Name of the object’s class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Name of the object’s class</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">

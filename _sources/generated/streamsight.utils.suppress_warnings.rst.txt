@@ -1,0 +1,6 @@
+﻿streamsight.utils.suppress\_warnings
+====================================
+
+.. currentmodule:: streamsight.utils
+
+.. autofunction:: suppress_warnings

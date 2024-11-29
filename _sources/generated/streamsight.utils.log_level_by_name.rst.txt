@@ -1,0 +1,6 @@
+﻿streamsight.utils.log\_level\_by\_name
+======================================
+
+.. currentmodule:: streamsight.utils
+
+.. autofunction:: log_level_by_name
