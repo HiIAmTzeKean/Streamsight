@@ -11,7 +11,7 @@ from streamsight.preprocessing import MinItemsPerUser
 
 @pytest.fixture()
 def dataset_path(filename):
-    return os.path.join(os.getcwd(),"test","data")
+    return os.path.join(os.getcwd(),"data")
 
 @pytest.fixture()
 def filename():
