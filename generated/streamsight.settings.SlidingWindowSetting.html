@@ -119,8 +119,10 @@
 <p>Sliding window setting for splitting data.</p>
 <p>The data is split into a background set and evaluation set. The evaluation set is defined by a sliding window
 that moves over the data. The window size is defined by the <a class="reference internal" href="#streamsight.settings.SlidingWindowSetting.window_size" title="streamsight.settings.SlidingWindowSetting.window_size"><code class="xref py py-data docutils literal notranslate"><span class="pre">window_size</span></code></a> parameter. The evaluation set comprises of the
-unlabeled data and ground truth data stored in a list. The unlabeled data is the last <a class="reference internal" href="#streamsight.settings.SlidingWindowSetting.n_seq_data" title="streamsight.settings.SlidingWindowSetting.n_seq_data"><code class="xref py py-data docutils literal notranslate"><span class="pre">n_seq_data</span></code></a> interactions of the users/item before the
-split point. The ground truth data is the interactions after the split point and spans <a class="reference internal" href="#streamsight.settings.SlidingWindowSetting.window_size" title="streamsight.settings.SlidingWindowSetting.window_size"><code class="xref py py-data docutils literal notranslate"><span class="pre">window_size</span></code></a> seconds.</p>
+unlabeled data and ground truth data stored in a list. The unlabeled data contains the last <a class="reference internal" href="#streamsight.settings.SlidingWindowSetting.n_seq_data" title="streamsight.settings.SlidingWindowSetting.n_seq_data"><code class="xref py py-data docutils literal notranslate"><span class="pre">n_seq_data</span></code></a> interactions
+of the users/item before the split point along with masked interactions after the split point. The number of
+interactions per user/item is limited to <a class="reference internal" href="#streamsight.settings.SlidingWindowSetting.top_K" title="streamsight.settings.SlidingWindowSetting.top_K"><code class="xref py py-data docutils literal notranslate"><span class="pre">top_K</span></code></a>.
+The ground truth data is the interactions after the split point and spans <a class="reference internal" href="#streamsight.settings.SlidingWindowSetting.window_size" title="streamsight.settings.SlidingWindowSetting.window_size"><code class="xref py py-data docutils literal notranslate"><span class="pre">window_size</span></code></a> seconds.</p>
 <section id="core-attribute">
 <h2>Core attribute<a class="headerlink" href="#core-attribute" title="Link to this heading"></a></h2>
 <ul class="simple">
@@ -148,7 +150,7 @@ take this window.</p>
 </dd>
 <dt class="field-odd">param n_seq_data<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Number of last sequential interactions to provide as
-unlabeled data for model to make prediction.</p>
+data for model to make prediction.</p>
 </dd>
 <dt class="field-even">type n_seq_data<span class="colon">:</span></dt>
 <dd class="field-even"><p>int, optional</p>

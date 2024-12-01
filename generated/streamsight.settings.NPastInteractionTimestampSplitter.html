@@ -123,6 +123,8 @@ and the future interaction contains interactions after the timestamp <cite>t</ci
 <ul class="simple">
 <li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">past_interaction</span></code>: List of unlabeled data. Interval is <cite>[0, t)</cite>.</p></li>
 <li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">future_interaction</span></code>: Data used for training the model. Interval is <cite>[t, t+t_upper)</cite> or <cite>[t,inf]</cite>.</p></li>
+<li><p><code class="xref py py-attr docutils literal notranslate"><span class="pre">n_seq_data</span></code>: Number of last interactions to provide as data for model to make prediction.
+These interactions are past interactions from before the timestamp <cite>t</cite>.</p></li>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">param t<span class="colon">:</span></dt>
@@ -139,7 +141,7 @@ of interactions. Defaults to None (infinity).</p>
 <dd class="field-even"><p>int, optional</p>
 </dd>
 <dt class="field-odd">param n_seq_data<span class="colon">:</span></dt>
-<dd class="field-odd"><p>Number of last interactions to provide as unlabeled data
+<dd class="field-odd"><p>Number of last interactions to provide as data
 for model to make prediction.</p>
 </dd>
 <dt class="field-even">type n_seq_data<span class="colon">:</span></dt>
