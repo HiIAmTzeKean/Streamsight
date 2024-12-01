@@ -19,8 +19,7 @@ class SingleTimePointSetting(Setting):
 
     :param background_t: Time point to split the data into background and evaluation data. Split will be from ``[0, t)``
     :type background_t: int
-    :param n_seq_data: Number of last sequential interactions to provide as
-        unlabeled data for model to make prediction.
+    :param n_seq_data: Number of last sequential interactions to provide as data for model to make prediction.
     :type n_seq_data: int, optional
     :param top_K: Number of interaction per user that should be selected for evaluation purposes.
     :type top_K: int, optional
