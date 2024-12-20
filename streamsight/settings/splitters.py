@@ -152,13 +152,15 @@ class NPastInteractionTimestampSplitter(TimestampSplitter):
     
     - :attr:`past_interaction`: List of unlabeled data. Interval is `[0, t)`.
     - :attr:`future_interaction`: Data used for training the model. Interval is `[t, t+t_upper)` or `[t,inf]`.
+    - :attr:`n_seq_data`: Number of last interactions to provide as data for model to make prediction.
+      These interactions are past interactions from before the timestamp `t`.
 
     :param t: Timestamp to split on in seconds since epoch.
     :type t: int
     :param t_upper: Seconds past t. Upper bound on the timestamp
         of interactions. Defaults to None (infinity).
     :type t_upper: int, optional
-    :param n_seq_data: Number of last interactions to provide as unlabeled data
+    :param n_seq_data: Number of last interactions to provide as data
         for model to make prediction.
     :type n_seq_data: int, optional
     :param include_all_past_data: If True, include all past data in the past_interaction.
