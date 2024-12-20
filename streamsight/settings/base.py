@@ -60,7 +60,7 @@ class Setting(ABC):
         self._t_window: Union[None, int, List[int]]
         """This is the upper timestamp of the window in split. The actual interaction might have a smaller timestamp value than this because this will is the t cut off value."""
         self.n_seq_data: int
-        """Number of last sequential interactions to provide in :attr:`unlabeled_data` as unlabeled data for model to make prediction."""
+        """Number of last sequential interactions to provide in :attr:`unlabeled_data` as data for model to make prediction."""
         self.top_K: int
         """Number of interaction per user that should be selected for evaluation purposes in :attr:`ground_truth_data`."""
 
@@ -132,6 +132,7 @@ class Setting(ABC):
         self._check_split()
 
         self._split_complete = True
+        logger.info(f"{self.name} data split complete.")
 
     def _check_split_complete(self):
         """Check if the setting is ready to be used for evaluation.

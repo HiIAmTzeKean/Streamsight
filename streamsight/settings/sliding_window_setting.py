@@ -18,8 +18,10 @@ class SlidingWindowSetting(Setting):
 
     The data is split into a background set and evaluation set. The evaluation set is defined by a sliding window
     that moves over the data. The window size is defined by the :data:`window_size` parameter. The evaluation set comprises of the
-    unlabeled data and ground truth data stored in a list. The unlabeled data is the last :data:`n_seq_data` interactions of the users/item before the
-    split point. The ground truth data is the interactions after the split point and spans :data:`window_size` seconds.
+    unlabeled data and ground truth data stored in a list. The unlabeled data contains the last :data:`n_seq_data` interactions
+    of the users/item before the split point along with masked interactions after the split point. The number of
+    interactions per user/item is limited to :data:`top_K`.
+    The ground truth data is the interactions after the split point and spans :data:`window_size` seconds.
 
     Core attribute
     ====================
@@ -37,7 +39,7 @@ class SlidingWindowSetting(Setting):
         take this window.
     :type window_size: int, optional
     :param n_seq_data: Number of last sequential interactions to provide as
-        unlabeled data for model to make prediction.
+         data for model to make prediction.
     :type n_seq_data: int, optional
     :param top_K: Number of interaction per user that should be selected for evaluation purposes.
     :type top_K: int, optional
@@ -70,15 +72,15 @@ class SlidingWindowSetting(Setting):
         self.top_K = top_K
         self.t_upper = t_upper
         """Upper bound on the timestamp of interactions. Defaults to maximal integer value (acting as infinity)."""
-        
+
         if t_upper and t_upper < background_t:
             raise ValueError("t_upper must be greater than background_t")
-        
+
         if t_ground_truth_window is None:
             t_ground_truth_window = window_size
-        
+
         self.t_ground_truth_window = t_ground_truth_window
-        
+
         self._background_splitter = TimestampSplitter(background_t, None, None)
         self._window_splitter = NPastInteractionTimestampSplitter(
             background_t, t_ground_truth_window, n_seq_data
@@ -115,14 +117,21 @@ class SlidingWindowSetting(Setting):
             past_interaction, future_interaction = self._window_splitter.split(
                 data
             )
+
+            # if past_interaction, future_interaction is empty, log an info message
+            if len(past_interaction) == 0:
+                logger.info(f"Split at time {sub_time} resulted in empty unlabelled testing samples.")
+            if len(future_interaction) == 0:
+                logger.info(f"Split at time {sub_time} resulted in empty incremental data.")
+
             unlabeled_set, ground_truth = self.prediction_data_processor.process(past_interaction,
                                                                                  future_interaction,
                                                                                  self.top_K)
             self._unlabeled_data.append(unlabeled_set)
             self._ground_truth_data.append(ground_truth)
-            
+
             self._incremental_data.append(future_interaction)
-            
+
             sub_time += self.window_size
             pbar.update(1)
         pbar.close()
