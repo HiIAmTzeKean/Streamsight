@@ -184,9 +184,9 @@ class InteractionMatrix:
         logger.debug(f"(user x item) shape defined is {shape}")
         logger.debug(f"Shape of dataframe stored in matrix was {self._df.shape} before masking")
         if drop_unknown_user:
-            self._df = self._df[self._df[InteractionMatrix.USER_IX]<shape[0]]
+            self._df = pd.DataFrame(self._df[self._df[InteractionMatrix.USER_IX]<shape[0]])
         if drop_unknown_item:
-            self._df = self._df[self._df[InteractionMatrix.ITEM_IX]<shape[1]]
+            self._df = pd.DataFrame(self._df[self._df[InteractionMatrix.ITEM_IX]<shape[1]])
         logger.debug(f"Shape of dataframe stored in matrix is now {self._df.shape} after masking")
         
         if shape and inherit_max_id:
@@ -810,3 +810,34 @@ class InteractionMatrix:
         if np.isnan(max_val):
             return -1
         return max_val
+    
+    @property
+    def timestamps(self) -> pd.Series:
+        """The interaction timestamps indexed by user and item ID.
+        
+        :raises 
+        """
+        """Timestamps of interactions as a pandas Series, indexed by user ID and item ID.
+
+        :raises TimestampAttributeMissingError: If timestamp column is missing.
+        :return: Interactions with composite index on (user ID, item ID)
+        :rtype: pd.Series
+        """
+        if not self.has_timestamps:
+            raise TimestampAttributeMissingError()
+        index = pd.MultiIndex.from_frame(self._df[[InteractionMatrix.USER_IX, InteractionMatrix.ITEM_IX]])
+        return pd.DataFrame(self._df[[InteractionMatrix.TIMESTAMP_IX]]).set_index(index)[InteractionMatrix.TIMESTAMP_IX]
+
+    @property
+    def latest_interaction_timestamps_matrix(self) -> csr_matrix:
+        """A csr matrix containing the last interaction timestamp for each user, item pair.
+
+        We only account for the last interacted timestamp making the dataset non-deduplicated.
+        """
+        timestamps = self.timestamps.groupby(["uid", "iid"]).max().reset_index()
+        timestamp_mat = csr_matrix(
+            (timestamps.ts.values, (timestamps.uid.values, timestamps.iid.values)),
+            shape=self.shape,
+        )
+
+        return timestamp_mat
