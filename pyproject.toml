@@ -22,6 +22,7 @@ progressbar = "^2.5"
 typing-extensions = "^4.12.2"
 deprecation = "^2.1.0"
 pyfiglet = "^1.0.2"
+recpack = "^0.3.6"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

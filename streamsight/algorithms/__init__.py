@@ -49,6 +49,8 @@ yield the best performance.
     ItemKNNIncremental
     ItemKNNRolling
     ItemKNNStatic
+    ItemSimilarityBaseAlgorithm
+    TopKItemSimilarityMatrixAlgorithm
 """
 from streamsight.algorithms.base import Algorithm
 from streamsight.algorithms.random import Random
@@ -57,3 +59,5 @@ from streamsight.algorithms.itemknn import ItemKNN
 from streamsight.algorithms.itemknn_incremental import ItemKNNIncremental
 from streamsight.algorithms.itemknn_rolling import ItemKNNRolling
 from streamsight.algorithms.itemknn_static import ItemKNNStatic
+from streamsight.algorithms.item_similarity_base import ItemSimilarityBaseAlgorithm, TopKItemSimilarityMatrixAlgorithm
+from streamsight.algorithms.time_aware_item_knn import TARSItemKNN, TARSItemKNNIncremental, TARSItemKNNLiu

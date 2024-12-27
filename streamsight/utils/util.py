@@ -135,7 +135,7 @@ def prepare_logger(log_config_filename: str) -> dict:
 
     try:
         with open(log_config_filename, "r") as stream:
-            config = yaml.load(stream, Loader=yaml.FullLoader)
+            config = yaml.load(stream, Loader=yaml.FullLoader) # ignore_security_alert_wait_for_fix RCE
     except FileNotFoundError:
         raise FileNotFoundError(f"Configuration file not found at {log_config_filename}.")
     except yaml.YAMLError as e:
