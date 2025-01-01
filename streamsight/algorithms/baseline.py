@@ -1,6 +1,7 @@
 from warnings import warn
 
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix, lil_matrix
 
 from streamsight.algorithms import Algorithm
@@ -37,15 +38,41 @@ class RecentPopularity(Algorithm):
         a = np.zeros(X.shape[1])
         a[ind] = sorted_scores[ind]
         self.sorted_scores_ = a
+        print("Sorted scores recentpop: ", self.sorted_scores_)
         return self
 
-    def _predict(self, X: csr_matrix) -> csr_matrix:
+    def _predict(self, X: csr_matrix, predict_frame: pd.DataFrame) -> csr_matrix:
         """
         Predict the K most popular item for each user using only train data from the latest window.
         """
-        users = list(set(X.nonzero()[0]))
-        X_pred = lil_matrix(X.shape)
+        # print("Nonzero: ", list(set(X.nonzero()[0])))
+        # users = list(set(X.nonzero()[0]))
+        # X_pred = lil_matrix(X.shape)
+        # print("XPRED before: ", X_pred.toarray())
+        # X_pred[users] = self.sorted_scores_
+        # print("XPRED recentpop: ", X_pred.toarray())
+        # return X_pred.tocsr()
+
+        # NEW ALGO
+        if predict_frame is None:
+            raise AttributeError("Predict frame with requested ID is required for Popularity algorithm")
+
+        users = predict_frame["uid"].unique().tolist()
+        print("Users: ", users)
+        known_item_id = X.shape[1]
+        print("Known item id: ", known_item_id)
+        
+        # predict_frame contains (user_id, -1) pairs
+        max_user_id  = predict_frame["uid"].max() + 1 
+        print("Max user id: ", max_user_id)
+        intended_shape = (max(max_user_id, X.shape[0]), known_item_id)
+        print("Intended shape: ", intended_shape)
+
+        X_pred = lil_matrix(intended_shape)
+        # print("X_pred: ", X_pred.toarray())
         X_pred[users] = self.sorted_scores_
+        # print("X_pred after: ", X_pred.toarray())
+
         return X_pred.tocsr()
 
 
@@ -60,6 +87,34 @@ class DecayPopularity(Algorithm):
         super().__init__()
         self.K = K
         self.historical_data: list[csr_matrix] = []  # Store all historical training data
+        self.num_items = 0  # Track the maximum number of items seen so far
+    
+    def _pad_matrix(self, matrix: csr_matrix, new_num_items: int) -> csr_matrix:
+        """
+        Pad a sparse matrix with zero columns to match the new number of items.
+
+        :param matrix: The matrix to pad
+        :type matrix: csr_matrix
+        :param new_num_items: The target number of columns
+        :type new_num_items: int
+        :return: The padded matrix
+        :rtype: csr_matrix
+        """
+        if matrix.shape[1] >= new_num_items:
+            return matrix
+        padding = csr_matrix((matrix.shape[0], new_num_items - matrix.shape[1]))
+        return csr_matrix(np.hstack([matrix.toarray(), padding.toarray()]))
+
+    def _expand_historical_data(self, new_num_items: int):
+        """
+        Expand all matrices in historical_data to match the new number of items.
+
+        :param new_num_items: The updated number of items
+        :type new_num_items: int
+        """
+        for i in range(len(self.historical_data)):
+            if self.historical_data[i].shape[1] < new_num_items:
+                self.historical_data[i] = self._pad_matrix(self.historical_data[i], new_num_items)
 
     def _fit(self, X: csr_matrix) -> "DecayPopularity":
         """
@@ -68,6 +123,17 @@ class DecayPopularity(Algorithm):
         :param X: Interaction matrix (users x items) for the current window
         :type X: csr_matrix
         """
+        # Update the maximum number of items
+        new_num_items = X.shape[1]
+        if new_num_items > self.num_items:
+            self._expand_historical_data(new_num_items)
+            self.num_items = new_num_items
+
+        # Append the new matrix (ensure it has the correct number of items)
+        if X.shape[1] < self.num_items:
+            X = self._pad_matrix(X, self.num_items)
+        self.historical_data.append(X)
+
         # Append new data to historical data
         self.historical_data.append(X)
 
@@ -94,12 +160,33 @@ class DecayPopularity(Algorithm):
         self.decayed_scores_ = a
         return self
 
-    def _predict(self, X: csr_matrix) -> csr_matrix:
+    def _predict(self, X: csr_matrix,  predict_frame: pd.DataFrame) -> csr_matrix:
         """
         Predict the K most popular item for each user scaled by the decay factor.
         """
-        users = list(set(X.nonzero()[0]))
-        X_pred = lil_matrix(X.shape)
+        # users = list(set(X.nonzero()[0]))
+        # X_pred = lil_matrix(X.shape)
+        # X_pred[users] = self.decayed_scores_
+        # return X_pred.tocsr()
+    
+        if predict_frame is None:
+            raise AttributeError("Predict frame with requested ID is required for Popularity algorithm")
+
+        users = predict_frame["uid"].unique().tolist()
+        print("Users: ", users)
+        known_item_id = X.shape[1]
+        print("Known item id: ", known_item_id)
+        
+        # predict_frame contains (user_id, -1) pairs
+        max_user_id  = predict_frame["uid"].max() + 1 
+        print("Max user id: ", max_user_id)
+        intended_shape = (max(max_user_id, X.shape[0]), known_item_id)
+        print("Intended shape: ", intended_shape)
+
+        X_pred = lil_matrix(intended_shape)
+        print("X_pred: ", X_pred.toarray())
         X_pred[users] = self.decayed_scores_
+        print("X_pred after: ", X_pred.toarray())
+
         return X_pred.tocsr()
     
