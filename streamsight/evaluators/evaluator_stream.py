@@ -117,7 +117,7 @@ class EvaluatorStreamer(EvaluatorBase):
         self._acc = MetricAccumulator()
         background_data = self.setting.background_data
         self.user_item_base._update_known_user_item_base(background_data)
-        background_data.mask_shape(self.user_item_base.known_shape)
+        # background_data.mask_shape(self.user_item_base.known_shape)
         self._training_data_cache = background_data
 
         self._cache_evaluation_data()
@@ -253,7 +253,7 @@ class EvaluatorStreamer(EvaluatorBase):
             self.user_item_base._reset_unknown_user_item_base()
             incremental_data = self.setting.next_incremental_data()
             self.user_item_base._update_known_user_item_base(incremental_data)
-            incremental_data.mask_shape(self.user_item_base.known_shape)
+            # incremental_data.mask_shape(self.user_item_base.known_shape)
             self._training_data_cache = incremental_data
 
             self._cache_evaluation_data()
@@ -395,14 +395,14 @@ class EvaluatorStreamer(EvaluatorBase):
         """
         if isinstance(X_pred, InteractionMatrix):
             # check if shape is defined
-            if not hasattr(X_pred, "shape"):
-                # prediction may be done on unknown users as well
-                # we mask based on the larger shape
-                X_pred.mask_shape(self.user_item_base.global_shape)
-            # if there still exists ID outside the global shape, then the algorithm
-            # is giving us ID that is not known to us, raise exception
-            if X_pred.user_ids.difference(self.user_item_base.global_user_ids) or X_pred.item_ids.difference(self.user_item_base.global_item_ids):
-                raise ValueError("Prediction matrix contains unknown user/item ids")
+            # if not hasattr(X_pred, "shape"):
+            #     # prediction may be done on unknown users as well
+            #     # we mask based on the larger shape
+            #     X_pred.mask_shape(self.user_item_base.global_shape)
+            # # if there still exists ID outside the global shape, then the algorithm
+            # # is giving us ID that is not known to us, raise exception
+            # if X_pred.user_ids.difference(self.user_item_base.global_user_ids) or X_pred.item_ids.difference(self.user_item_base.global_item_ids):
+            #     raise ValueError("Prediction matrix contains unknown user/item ids")
             X_pred = X_pred.binary_values
         elif isinstance(X_pred, csr_matrix):
             pass
@@ -475,6 +475,8 @@ class EvaluatorStreamer(EvaluatorBase):
                 metric:Metric = metric_cls(K=metric_entry.K, timestamp_limit=self._current_timestamp)
             else:
                 metric:Metric = metric_cls(timestamp_limit=self._current_timestamp)
+            print("X_true: ", X_true)
+            print("X_pred: ", X_pred)
             metric.calculate(X_true, X_pred)
             self._acc.add(metric=metric, algorithm_name=algorithm_name)
 
