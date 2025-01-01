@@ -93,10 +93,12 @@ class EvaluatorBase(object):
         # the ground truth must follow the same shape as the unlabeled data
         # for evaluation purposes. This means that we drop the unknown user and item
         # from the ground truth data
+        # we don't drop unknown users because eventually we pad the predictions for new users randomly
+        # unknown items need to be dropped as it is impossible to recommend an unknown item
         with warnings.catch_warnings(action="ignore"):
             unlabeled_data.mask_shape(self.user_item_base.known_shape)
         ground_truth_data.mask_shape(self.user_item_base.known_shape,
-                                        drop_unknown_user=self.ignore_unknown_user,
+                                        # drop_unknown_user=self.ignore_unknown_user,
                                         drop_unknown_item=self.ignore_unknown_item,
                                         inherit_max_id=True)
         return unlabeled_data, ground_truth_data, current_timestamp

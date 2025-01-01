@@ -34,8 +34,13 @@ class Popularity(Algorithm):
         :param X: Interaction matrix
         :type X: csr_matrix
         """
+        # axis=0 means along the column wise sum (i.e. number of interactions for each item)
+        # .A converts the sparse matrix to a dense matrix and we extract the first index
+        # interaction_counts = [x,y,z] where x is the number of interactions for item 0, y is the number of interactions for item 1, and z is the number of interactions for item 2
         interaction_counts = X.sum(axis=0).A[0]
+        print("Interaction counts: ", interaction_counts)
         sorted_scores = interaction_counts / interaction_counts.max()
+        print("Sorted scores: ", sorted_scores)
 
         num_items = X.shape[1]
         if num_items < self.K:
@@ -43,10 +48,16 @@ class Popularity(Algorithm):
 
         K = min(self.K, num_items)
         
+        # argpartition: partition array into two parts, -K means find the indices of the top K elements
+        # ind contains the indices of the top K elements after indexing by [-K:]
         ind = np.argpartition(sorted_scores, -K)[-K:]
+        print("Indices: ", ind)
+        # create an array of zeros with the same length as the number of items
         a = np.zeros(X.shape[1])
-        # set columns of top K to the scores
+        print("a before: ", a)
+        # set columns of top K to the scores, the rest remain as 0
         a[ind] = sorted_scores[ind]
+        print("a after: ", a)
         self.sorted_scores_ = a
 
     def _predict(self, X: csr_matrix, predict_frame:Optional[pd.DataFrame]=None) -> csr_matrix:
@@ -68,14 +79,19 @@ class Popularity(Algorithm):
             raise AttributeError("Predict frame with requested ID is required for Popularity algorithm")
 
         users = predict_frame["uid"].unique().tolist()
-        
+        print("Users: ", users)
         known_item_id = X.shape[1]
+        print("Known item id: ", known_item_id)
         
         # predict_frame contains (user_id, -1) pairs
         max_user_id  = predict_frame["uid"].max() + 1 
+        print("Max user id: ", max_user_id)
         intended_shape = (max(max_user_id, X.shape[0]), known_item_id)
+        print("Intended shape: ", intended_shape)
 
         X_pred = lil_matrix(intended_shape)
+        print("X_pred: ", X_pred.toarray())
         X_pred[users] = self.sorted_scores_
+        print("X_pred after: ", X_pred.toarray())
 
         return X_pred.tocsr()
