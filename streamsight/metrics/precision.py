@@ -35,7 +35,9 @@ class PrecisionK(ListwiseMetricK):
 
     def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:
         scores = scipy.sparse.lil_matrix(y_pred_top_K.shape)
-
+        print("Empty Scores: ", scores.toarray())
+        print("Y true: ", y_true.toarray())
+        print("Y pred top K: ", y_pred_top_K.toarray())
         # log number of users and ground truth interactions
         logger.debug(f"Precision compute started - {self.name}")
         logger.debug(f"Number of users: {y_true.shape[0]}")
@@ -44,6 +46,7 @@ class PrecisionK(ListwiseMetricK):
         # obtain true positives
         scores[y_pred_top_K.multiply(y_true).astype(bool)] = 1
         scores = scores.tocsr()
+        print("Scores after: ", scores.toarray())
 
         # true positive/total predictions
         self._scores = csr_matrix(scores.sum(axis=1)) / self.K

@@ -53,6 +53,7 @@ yield the best performance.
     TopKItemSimilarityMatrixAlgorithm
 """
 from streamsight.algorithms.base import Algorithm
+from streamsight.algorithms.baseline import RecentPopularity, DecayPopularity
 from streamsight.algorithms.random import Random
 from streamsight.algorithms.popularity import Popularity
 from streamsight.algorithms.itemknn import ItemKNN
