@@ -105,7 +105,7 @@ class EvaluatorPipeline(EvaluatorBase):
         background_data = self.setting.background_data
         self.user_item_base._update_known_user_item_base(background_data)
         # TODO timeline is not respected, can use flag to indicate a override the known user and item
-        # background_data.mask_shape(self.user_item_base.known_shape)
+        background_data.mask_shape(self.user_item_base.known_shape)
 
         for algo in self.algorithm:
             algo.fit(background_data)
@@ -213,7 +213,7 @@ class EvaluatorPipeline(EvaluatorBase):
         incremental_data = self.setting.next_incremental_data()
         self.user_item_base._reset_unknown_user_item_base()
         self.user_item_base._update_known_user_item_base(incremental_data)
-        # incremental_data.mask_shape(self.user_item_base.known_shape)
+        incremental_data.mask_shape(self.user_item_base.known_shape)
 
         for algo in self.algorithm:
             algo.fit(incremental_data)

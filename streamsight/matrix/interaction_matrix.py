@@ -98,6 +98,9 @@ class InteractionMatrix:
             timestamp_ix: InteractionMatrix.TIMESTAMP_IX
         }
 
+        if shape:
+            self.shape = shape
+            
         if skip_df_processing:
             self._df = df
             return
@@ -110,26 +113,6 @@ class InteractionMatrix:
         df = df.reset_index(drop=True).reset_index().rename(columns={"index": InteractionMatrix.INTERACTION_IX})
 
         self._df = df
-
-        n_users_df = self._df[InteractionMatrix.USER_IX].max() + 1
-        n_items_df = self._df[InteractionMatrix.ITEM_IX].max() + 1
-    
-        num_users = n_users_df if shape is None else shape[0]
-        num_items = n_items_df if shape is None else shape[1]
-
-        if n_users_df > num_users:
-            raise ValueError(
-                "Provided shape does not match dataframe, can't have fewer rows than maximal user identifier."
-                f" {num_users} < {n_users_df}"
-            )
-
-        if n_items_df > num_items:
-            raise ValueError(
-                "Provided shape does not match dataframe, can't have fewer columns than maximal item identifier."
-                f" {num_items} < {n_items_df}"
-            )
-
-        self.shape = (int(num_users), int(num_items))
         
 
     def mask_shape(self, shape: Optional[Tuple[int, int]] = None,

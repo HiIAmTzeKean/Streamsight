@@ -40,14 +40,6 @@ class DataFramePreprocessor:
         self.filters: List[Filter] = []
 
     @property
-    def shape(self):
-        """Shape of the data processed, as `|U| x |I|`"""
-        return (
-            max(self._user_id_mapping.values()) + 1,
-            max(self._item_id_mapping.values()) + 1,
-        )
-    
-    @property
     def item_id_mapping(self) -> pd.DataFrame:
         """Map from original item IDs to internal item IDs.
 
@@ -150,7 +142,7 @@ class DataFramePreprocessor:
 
         # Convert input data into internal data objects
         interaction_m = InteractionMatrix(
-            df, self.item_ix, self.user_ix, self.timestamp_ix, shape=self.shape,
+            df, self.item_ix, self.user_ix, self.timestamp_ix
         )
 
         return interaction_m
