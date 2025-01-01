@@ -90,6 +90,7 @@ class EvaluatorStreamer(EvaluatorBase):
         self._training_data_cache: InteractionMatrix
 
         self.has_started = False
+        self.has_predicted = False
         self.rd = random.Random(self.seed)
 
     def start_stream(self):
@@ -362,6 +363,7 @@ class EvaluatorStreamer(EvaluatorBase):
                 return
             # TODO check if all requested prediction made #86 bug
             self._evaluate(algo_id, X_pred)
+            self.has_predicted = True
             self.status_registry.update(algo_id, AlgorithmStateEnum.PREDICTED)
 
         elif status == AlgorithmStateEnum.NEW:
