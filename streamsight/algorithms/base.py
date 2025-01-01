@@ -141,6 +141,7 @@ class Algorithm(BaseEstimator,ABC):
         """
         start = time.time()
         X_transformed = self._transform_fit_input(X)
+        print("X_transformed: ", X_transformed.toarray())
         self._fit(X_transformed)
 
         self._check_fit_complete()
@@ -188,7 +189,7 @@ class Algorithm(BaseEstimator,ABC):
         logger.debug(f"Padding by {self.name} completed")
         return X_pred
 
-    def predict(self, X: InteractionMatrix) -> csr_matrix:
+    def predict(self, X: InteractionMatrix, unlabeled_X: InteractionMatrix) -> csr_matrix:
         """Predicts scores, given the interactions in X
 
         The input data is transformed to the expected type using
@@ -203,25 +204,35 @@ class Algorithm(BaseEstimator,ABC):
         :rtype: csr_matrix
         """
         self._check_fit_complete()
+        # X are all the labeled data, to_predict_frame are the IDs to predict and labels are -1
+        X = self._transform_predict_input(X)
 
-        # X will contain past sequential interaction and IDs to predict
-        to_predict_frame = X.get_prediction_data()
-        prev_interaction = X.get_interaction_data()
-        prev_interaction = self._transform_predict_input(prev_interaction)
+        to_predict_frame = unlabeled_X.get_prediction_data()
 
-        if to_predict_frame._df.empty:
-            return csr_matrix(X.shape, dtype=int)
+        X_pred = self._predict(X, to_predict_frame._df)
 
-        X_pred = self._predict(prev_interaction, to_predict_frame._df)
-        # known_user_id, known_item_id = X_pred.shape
-        logger.debug(f"Predictions by {self.name} completed")
+        return X_pred
 
-        # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
-        max_user_id = to_predict_frame.max_user_id + 1
-        max_item_id = to_predict_frame.max_item_id + 1
-        intended_shape = (
-            max(max_user_id, X.shape[0]),
-            max(max_item_id, X.shape[1]),
-        )
+        # OLD PREDICT
+        # self._check_fit_complete()
 
-        return self._pad_predict(X_pred, intended_shape, to_predict_frame._df)
+        # # X will contain past sequential interaction and IDs to predict
+        # to_predict_frame = X.get_prediction_data()
+        # prev_interaction = X.get_interaction_data()
+        # prev_interaction = self._transform_predict_input(prev_interaction)
+        # if to_predict_frame._df.empty:
+        #     return csr_matrix(X.shape, dtype=int)
+
+        # X_pred = self._predict(prev_interaction, to_predict_frame._df)
+        # # known_user_id, known_item_id = X_pred.shape
+        # logger.debug(f"Predictions by {self.name} completed")
+
+        # # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
+        # max_user_id = to_predict_frame.max_user_id + 1
+        # max_item_id = to_predict_frame.max_item_id + 1
+        # intended_shape = (
+        #     max(max_user_id, X.shape[0]),
+        #     max(max_item_id, X.shape[1]),
+        # )
+
+        # return self._pad_predict(X_pred, intended_shape, to_predict_frame._df)
