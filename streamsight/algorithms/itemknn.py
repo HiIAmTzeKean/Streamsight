@@ -67,7 +67,9 @@ class ItemKNN(Algorithm):
         We assume that X is a binary matrix of shape (n_users, n_items)
         """
         item_similarities = compute_cosine_similarity(X)
+        print("Item similarities: ", item_similarities.toarray())
         item_similarities = get_top_K_values(item_similarities, K=self.K)
+        print("Item similarities after get_top_K_values: ", item_similarities.toarray())
 
         self.similarity_matrix_ = item_similarities
 
@@ -85,6 +87,10 @@ class ItemKNN(Algorithm):
         :rtype: csr_matrix
         """
         scores = X @ self.similarity_matrix_
+
+        if not isinstance(scores, csr_matrix):
+            scores = csr_matrix(scores)
+
         return scores
 
     def _pad_predict(self, X_pred: csr_matrix, intended_shape: tuple, to_predict_frame: pd.DataFrame) -> csr_matrix:
