@@ -5,6 +5,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix, lil_matrix
 
 from streamsight.algorithms import Algorithm
+from streamsight.matrix.interaction_matrix import InteractionMatrix
 
 class RecentPopularity(Algorithm):
     """A popularity-based algorithm which only considers popularity of the latest train data.
@@ -41,7 +42,7 @@ class RecentPopularity(Algorithm):
         print("Sorted scores recentpop: ", self.sorted_scores_)
         return self
 
-    def _predict(self, X: csr_matrix, predict_frame: pd.DataFrame) -> csr_matrix:
+    def _predict(self, X: csr_matrix, predict_im: InteractionMatrix) -> csr_matrix:
         """
         Predict the K most popular item for each user using only train data from the latest window.
         """
@@ -54,8 +55,10 @@ class RecentPopularity(Algorithm):
         # return X_pred.tocsr()
 
         # NEW ALGO
-        if predict_frame is None:
+        if predict_im is None:
             raise AttributeError("Predict frame with requested ID is required for Popularity algorithm")
+        
+        predict_frame = predict_im._df
 
         users = predict_frame["uid"].unique().tolist()
         print("Users: ", users)
@@ -132,7 +135,6 @@ class DecayPopularity(Algorithm):
         # Append the new matrix (ensure it has the correct number of items)
         if X.shape[1] < self.num_items:
             X = self._pad_matrix(X, self.num_items)
-        self.historical_data.append(X)
 
         # Append new data to historical data
         self.historical_data.append(X)
@@ -160,7 +162,7 @@ class DecayPopularity(Algorithm):
         self.decayed_scores_ = a
         return self
 
-    def _predict(self, X: csr_matrix,  predict_frame: pd.DataFrame) -> csr_matrix:
+    def _predict(self, X: csr_matrix,  predict_im: InteractionMatrix) -> csr_matrix:
         """
         Predict the K most popular item for each user scaled by the decay factor.
         """
@@ -169,8 +171,10 @@ class DecayPopularity(Algorithm):
         # X_pred[users] = self.decayed_scores_
         # return X_pred.tocsr()
     
-        if predict_frame is None:
+        if predict_im is None:
             raise AttributeError("Predict frame with requested ID is required for Popularity algorithm")
+
+        predict_frame = predict_im._df
 
         users = predict_frame["uid"].unique().tolist()
         print("Users: ", users)

@@ -1,5 +1,6 @@
 import logging
 import time
+from warnings import warn
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -207,9 +208,10 @@ class Algorithm(BaseEstimator,ABC):
         # X are all the labeled data, to_predict_frame are the IDs to predict and labels are -1
         X = self._transform_predict_input(X)
 
-        to_predict_frame = unlabeled_X.get_prediction_data()
+        to_predict_im = unlabeled_X.get_prediction_data()
 
-        X_pred = self._predict(X, to_predict_frame._df)
+        # X_pred = self._predict(X, to_predict_frame._df)
+        X_pred = self._predict(X, to_predict_im)
 
         return X_pred
 
@@ -236,3 +238,92 @@ class Algorithm(BaseEstimator,ABC):
         # )
 
         # return self._pad_predict(X_pred, intended_shape, to_predict_frame._df)
+
+class ItemSimilarityMatrixAlgorithm(Algorithm):
+    """Base algorithm for algorithms that fit an item to item similarity model
+
+    Model that encodes the similarity between items is expected
+    under the ``similarity_matrix_`` attribute.
+
+    This matrix should have shape ``(|items| x |items|)``.
+    This can be dense or sparse matrix depending on the algorithm used.
+
+    Predictions are made by computing the dot product of the history vector of a user
+    and the similarity matrix.
+
+    Usually a new algorithm will have to
+    implement just the :meth:`_fit` method,
+    to construct the `self.similarity_matrix_` attribute.
+
+    This code is adapted from RecPack :cite:`recpack`
+    """
+
+    def _predict(self, X: csr_matrix) -> csr_matrix:
+        """Predict scores for nonzero users in X
+
+        Scores are computed by matrix multiplication of X
+        with the stored similarity matrix.
+
+        :param X: csr_matrix with interactions
+        :type X: csr_matrix
+        :return: csr_matrix with scores
+        :rtype: csr_matrix
+        """
+        scores = X @ self.similarity_matrix_
+
+        # If self.similarity_matrix_ is not a csr matrix,
+        # scores will also not be a csr matrix
+        if not isinstance(scores, csr_matrix):
+            scores = csr_matrix(scores)
+
+        return scores
+
+    def _check_fit_complete(self):
+        """Helper function to check if model was correctly fitted
+
+        Checks implemented:
+
+        - Checks if the algorithm has been fitted, using sklearn's `check_is_fitted`
+        - Checks if the fitted similarity matrix contains similar items for each item
+
+        For failing checks a warning is printed.
+        """
+        # Use super to check is fitted
+        super()._check_fit_complete()
+
+        # Additional checks on the fitted matrix.
+        # Check if actually exists!
+        assert hasattr(self, "similarity_matrix_")
+
+        # Check row wise, since that will determine the recommendation options.
+        items_with_score = set(self.similarity_matrix_.nonzero()[0])
+
+        missing = self.similarity_matrix_.shape[0] - len(items_with_score)
+        if missing > 0:
+            warn(f"{self.name} missing similar items for {missing} items.")
+
+class TopKItemSimilarityMatrixAlgorithm(ItemSimilarityMatrixAlgorithm):
+    """Base algorithm for algorithms that fit an item to item similarity model with K similar items for every item
+
+    Model that encodes the similarity between items is expected
+    under the ``similarity_matrix_`` attribute.
+
+    This matrix should have shape ``(|items| x |items|)``.
+    This can be dense or sparse matrix depending on the algorithm used.
+
+    Predictions are made by computing the dot product of the history vector of a user
+    and the similarity matrix.
+
+    Usually a new algorithm will have to
+    implement just the :meth:`_fit` method,
+    to construct the `self.similarity_matrix_` attribute.
+
+    :param K: How many similar items will be kept per item.
+    :type K: int
+
+    This code is adapted from RecPack :cite:`recpack`
+    """
+
+    def __init__(self, K):
+        super().__init__()
+        self.K = K
