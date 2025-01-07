@@ -28,7 +28,7 @@ class RecallK(ListwiseMetricK):
         scores = scipy.sparse.lil_matrix(y_pred_top_K.shape)
 
         # log number of users and ground truth interactions
-        logger.debug(f"Precision compute started - {self.name}")
+        logger.debug(f"Recall compute started - {self.name}")
         logger.debug(f"Number of users: {y_true.shape[0]}")
         logger.debug(f"Number of ground truth interactions: {y_true.nnz}")
 
