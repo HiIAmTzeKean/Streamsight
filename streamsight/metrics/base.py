@@ -336,7 +336,7 @@ class MetricTopK(Metric):
 class ListwiseMetricK(MetricTopK):
     """Base class for all metrics that can be calculated for every Top-K recommendation list,
     i.e. one value for each user.
-    Examples are: PrecisionK, RecallK
+    Examples are: PrecisionK, RecallK, DCGK
 
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
