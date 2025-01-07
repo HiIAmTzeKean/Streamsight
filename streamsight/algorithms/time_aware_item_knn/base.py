@@ -6,11 +6,14 @@
 #   Robin Verachtert
 
 import logging
-import time
+from warnings import warn
+import numpy as np
 from scipy.sparse import csr_matrix
-from tqdm.auto import tqdm
 
-from streamsight.algorithms.item_similarity_base import TopKItemSimilarityMatrixAlgorithm
+from streamsight.algorithms.base import TopKItemSimilarityMatrixAlgorithm
+from streamsight.matrix import InteractionMatrix, Matrix
+from streamsight.utils.util import add_rows_to_csr_matrix
+
 from recpack.algorithms.nearest_neighbour import (
     compute_conditional_probability,
     compute_cosine_similarity,
@@ -25,7 +28,6 @@ from recpack.algorithms.time_aware_item_knn.decay_functions import (
     InverseDecay,
     NoDecay,
 )
-from streamsight.matrix import InteractionMatrix, Matrix
 from recpack.util import get_top_K_values
 
 EPSILON = 1e-13
@@ -93,6 +95,7 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
     def __init__(
         self,
         K: int = 200,
+        pad_with_popularity: bool = True,
         fit_decay: float = 1 / (24 * 3600),
         predict_decay: float = 1 / (24 * 3600),
         decay_interval: int = 1,
@@ -101,6 +104,8 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
     ):
         # Uses other default parameters for ItemKNN
         super().__init__(K=K)
+        self.training_data: InteractionMatrix = None
+        self.pad_with_popularity = pad_with_popularity
 
         if decay_interval <= 0 or type(decay_interval) == float:
             raise ValueError("Parameter decay_interval needs to be a positive integer.")
@@ -139,7 +144,7 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
         elif self.decay_function in ["log", "linear", "concave"]:
             return self.DECAY_FUNCTIONS[self.decay_function](decay, max_value)
 
-    def _predict(self, X: csr_matrix) -> csr_matrix:
+    def _predict(self, X: csr_matrix, predict_im: InteractionMatrix) -> csr_matrix:
         """Predict scores for nonzero users in X.
 
         Scores are computed by matrix multiplication of weighted X
@@ -150,8 +155,77 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
         :return: csr_matrix with scores
         :rtype: csr_matrix
         """
-        X = self._add_decay_to_predict_matrix(X)
-        return super()._predict(X)
+        X_decay = self._add_decay_to_predict_matrix(self.training_data)
+        X_pred = super()._predict(X_decay)
+
+        print("In ItemKNNIncremental _predict: ", X_pred.toarray())
+        # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
+        max_user_id = predict_im.max_user_id + 1
+        print("Max user ID: ", max_user_id)
+        max_item_id = predict_im.max_item_id + 1
+        print("Max item ID: ", max_item_id)
+        intended_shape = (
+            max(max_user_id, X.shape[0]),
+            max(max_item_id, X.shape[1]),
+        )
+        print("X.shape: ", X.shape)
+        print("Intended shape: ", intended_shape)
+
+        predict_frame = predict_im._df
+        print("Predict frame: ", predict_frame)
+
+        if X_pred.shape == intended_shape:
+            return X_pred
+
+        known_user_id, known_item_id = X_pred.shape
+        print("Known user ID: ", known_user_id)
+        print("Known item ID: ", known_item_id)
+        X_pred = add_rows_to_csr_matrix(
+            X_pred, intended_shape[0] - known_user_id
+        )
+        print("X_pred after adding rows: ", X_pred.toarray())
+        logger.debug(
+            f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with items"
+        )
+        to_predict = predict_frame.value_counts("uid")
+        print("To predict: ", to_predict)
+
+        if self.pad_with_popularity:
+            popular_items = self.get_popularity_scores(super()._transform_fit_input(X))
+            print("Popular items: ", popular_items)
+            for user_id in to_predict.index:
+                if user_id >= known_user_id:
+                    X_pred[user_id, :] = popular_items
+        else:
+            row = []
+            col = []
+            for user_id in to_predict.index:
+                if user_id >= known_user_id:
+                    row += [user_id] * to_predict[user_id]
+                    col += self.rand_gen.integers(0, known_item_id, to_predict[user_id]).tolist()
+            pad = csr_matrix((np.ones(len(row)), (row, col)), shape=intended_shape)
+            print("Pad: ", pad.toarray())
+            X_pred += pad
+
+        print("X_pred after padding: ", X_pred.toarray())
+        logger.debug(f"Padding by {self.name} completed")
+        return X_pred
+
+    def get_popularity_scores(self, X: csr_matrix):
+        """Pad the predictions with popular items for users that are not in the training data."""
+        interaction_counts = X.sum(axis=0).A[0]
+        sorted_scores = interaction_counts / interaction_counts.max()
+
+        num_items = X.shape[1]
+        if num_items < self.K:
+            warn("K is larger than the number of items.", UserWarning)
+
+        K = min(self.K, num_items)
+        ind = np.argpartition(sorted_scores, -K)[-K:]
+        a = np.zeros(X.shape[1])
+        a[ind] = sorted_scores[ind]
+        
+        return a
 
     def _transform_fit_input(self, X: Matrix) -> InteractionMatrix:
         """Weigh each of the interactions by the decay factor of its timestamp."""
@@ -165,10 +239,17 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
         self._assert_has_timestamps(X)
         return X
 
-    def _fit(self, X: csr_matrix) -> None:
+    def _fit(self, X: csr_matrix) -> "TARSItemKNN":
         """Fit a cosine similarity matrix from item to item."""
-        X = self._add_decay_to_fit_matrix(X)
 
+        if self.training_data is None:
+            self.training_data = X.copy()
+        else:
+            self.training_data = self.training_data.union(X)
+        X = self.training_data.copy()
+
+        X = self._add_decay_to_fit_matrix(X)
+        print("X after decay: ", X.toarray())
         if self.similarity == "cosine":
             item_similarities = compute_cosine_similarity(X)
         elif self.similarity == "conditional_probability":
@@ -179,6 +260,8 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
         item_similarities = get_top_K_values(item_similarities, K=self.K)
 
         self.similarity_matrix_ = item_similarities
+
+        return self
 
     def _add_decay_to_interaction_matrix(self, X: InteractionMatrix, decay: float) -> csr_matrix:
         """Weigh the interaction matrix based on age of the events.
@@ -204,31 +287,3 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
     def _add_decay_to_predict_matrix(self, X: InteractionMatrix) -> csr_matrix:
         return self._add_decay_to_interaction_matrix(X, self.predict_decay)
 
-class TARSItemKNNIncremental(TARSItemKNN):
-    def __init__(
-        self,
-        K: int = 200,
-        fit_decay: float = 1 / (24 * 3600),
-        predict_decay: float = 1 / (24 * 3600),
-        decay_interval: int = 1,
-        similarity: str = "cosine",
-        decay_function: str = "exponential",
-    ):
-        super().__init__(
-            K=K, fit_decay=fit_decay, predict_decay=predict_decay, similarity=similarity, decay_function=decay_function, decay_interval=decay_interval
-        )
-        self.historical_data: InteractionMatrix = None
-    
-    def fit(self, X: InteractionMatrix) -> "TARSItemKNNIncremental":
-        start = time.time()
-        if self.historical_data is None:
-            self.historical_data = X.copy()
-        else:
-            logger.debug(f"Updating historical data for {self.name}")
-            self.historical_data = self.historical_data + X
-        end = time.time()
-        logger.debug(
-            f"Updated historical data for {self.name} - Took {end - start :.3}s"
-        )
-        super().fit(self.historical_data)
-        return self

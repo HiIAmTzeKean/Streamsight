@@ -12,7 +12,7 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 
 from streamsight.matrix import (InteractionMatrix, ItemUserBasedEnum,
-                                to_csr_matrix)
+                                to_csr_matrix, Matrix)
 from streamsight.utils.util import add_rows_to_csr_matrix
 
 logger = logging.getLogger(__name__)
@@ -127,6 +127,18 @@ class Algorithm(BaseEstimator,ABC):
         """
         return to_csr_matrix(X, binary=True)
 
+    def _assert_is_interaction_matrix(self, *matrices: Matrix) -> None:
+        """Make sure that the passed matrices are all an InteractionMatrix."""
+        for X in matrices:
+            if type(X) != InteractionMatrix:
+                raise TypeError(f"{self.name} requires Interaction Matrix as input. Got {type(X)}.")
+
+    def _assert_has_timestamps(self, *matrices: InteractionMatrix):
+        """Make sure that the matrices all have timestamp information."""
+        for X in matrices:
+            if not X.has_timestamps:
+                raise ValueError(f"{self.name} requires timestamp information in the InteractionMatrix.")
+
     def fit(self, X: InteractionMatrix) -> "Algorithm":
         """Fit the model to the input interaction matrix.
 
@@ -142,7 +154,7 @@ class Algorithm(BaseEstimator,ABC):
         """
         start = time.time()
         X_transformed = self._transform_fit_input(X)
-        print("X_transformed: ", X_transformed.toarray())
+        # print("X_transformed: ", X_transformed.toarray())
         self._fit(X_transformed)
 
         self._check_fit_complete()

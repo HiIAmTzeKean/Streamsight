@@ -1,2 +1,2 @@
-from streamsight.algorithms.time_aware_item_knn.base import TARSItemKNN, TARSItemKNNIncremental
+from streamsight.algorithms.time_aware_item_knn.base import TARSItemKNN
 from streamsight.algorithms.time_aware_item_knn.liu_2010 import TARSItemKNNLiu

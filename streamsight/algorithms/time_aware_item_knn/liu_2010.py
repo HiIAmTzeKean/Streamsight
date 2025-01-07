@@ -7,10 +7,10 @@
 
 """Module with time-dependent ItemKNN implementations"""
 
-from streamsight.algorithms.time_aware_item_knn.base import TARSItemKNNIncremental
+from streamsight.algorithms.time_aware_item_knn.base import TARSItemKNN
 
 
-class TARSItemKNNLiu(TARSItemKNNIncremental):
+class TARSItemKNNLiu(TARSItemKNN):
     """Time aware variant of ItemKNN which uses an exponential decay function and cosine similarity.
 
     Algorithm as described in
@@ -51,9 +51,10 @@ class TARSItemKNNLiu(TARSItemKNNIncremental):
     def __init__(
         self,
         K: int = 200,
+        pad_with_popularity: bool = True,
         fit_decay: float = 1 / (24 * 3600),
         predict_decay: float = 1 / (24 * 3600),
     ):
         super().__init__(
-            K=K, fit_decay=fit_decay, predict_decay=predict_decay, similarity="cosine", decay_function="exponential"
+            K=K, pad_with_popularity=pad_with_popularity, fit_decay=fit_decay, predict_decay=predict_decay, similarity="cosine", decay_function="exponential"
         )

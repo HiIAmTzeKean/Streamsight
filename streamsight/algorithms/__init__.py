@@ -49,8 +49,6 @@ yield the best performance.
     ItemKNNIncremental
     ItemKNNRolling
     ItemKNNStatic
-    ItemSimilarityBaseAlgorithm
-    TopKItemSimilarityMatrixAlgorithm
 """
 from streamsight.algorithms.base import Algorithm
 from streamsight.algorithms.baseline import RecentPopularity, DecayPopularity
@@ -60,5 +58,4 @@ from streamsight.algorithms.itemknn import ItemKNN
 from streamsight.algorithms.itemknn_incremental import ItemKNNIncremental, ItemKNNIncrementalMovieLens100K
 from streamsight.algorithms.itemknn_rolling import ItemKNNRolling
 from streamsight.algorithms.itemknn_static import ItemKNNStatic
-from streamsight.algorithms.item_similarity_base import ItemSimilarityBaseAlgorithm, TopKItemSimilarityMatrixAlgorithm
-from streamsight.algorithms.time_aware_item_knn import TARSItemKNN, TARSItemKNNIncremental, TARSItemKNNLiu
+from streamsight.algorithms.time_aware_item_knn import TARSItemKNN, TARSItemKNNLiu

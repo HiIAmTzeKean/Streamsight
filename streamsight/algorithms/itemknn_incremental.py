@@ -23,7 +23,7 @@ class ItemKNNIncremental(ItemKNN):
     """
 
     def __init__(self, K=10, pad_with_popularity=True):
-        super().__init__(K)
+        super().__init__(K=K)
         self.pad_with_popularity = pad_with_popularity
         self.training_data: csr_matrix = None
 
