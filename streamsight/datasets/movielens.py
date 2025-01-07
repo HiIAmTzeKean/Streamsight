@@ -6,6 +6,8 @@ import numpy as np
 from streamsight.datasets.base import Dataset
 from tqdm import tqdm
 
+from streamsight.metadata.movielens import MovieLens100kItemMetadata, MovieLens100kUserMetadata
+
 logger = logging.getLogger(__name__)
 tqdm.pandas()
 
@@ -73,6 +75,8 @@ class MovieLens100K(MovieLensDataset):
     """
     REMOTE_FILENAME = "u.data"
     REMOTE_ZIPNAME = "ml-100k"
+    ITEM_METADATA = None
+    USER_METADATA = None
 
     def _load_dataframe(self) -> pd.DataFrame:
         self.fetch_dataset()
@@ -94,3 +98,7 @@ class MovieLens100K(MovieLensDataset):
         )
 
         return df
+
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+        self.USER_METADATA = MovieLens100kUserMetadata(user_id_mapping=user_id_mapping).load()
+        self.ITEM_METADATA = MovieLens100kItemMetadata(item_id_mapping=item_id_mapping).load()

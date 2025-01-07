@@ -56,7 +56,7 @@ class Dataset(ABC):
     """Default base path where the dataset will be stored."""
 
     def __init__(
-        self, filename: Optional[str] = None, base_path: Optional[str] = None, use_default_filters=False
+        self, filename: Optional[str] = None, base_path: Optional[str] = None, use_default_filters=False, fetch_metadata=False,
     ):
         if not self.USER_IX or not self.ITEM_IX or not self.TIMESTAMP_IX:
             raise AttributeError("USER_IX, ITEM_IX or TIMESTAMP_IX not set.")
@@ -69,6 +69,9 @@ class Dataset(ABC):
         self.filename = filename if filename else self.DEFAULT_FILENAME
         if not self.filename:
             raise ValueError("No filename specified, and no default known.")
+        
+        self.fetch_metadata = fetch_metadata
+
         self.preprocessor = DataFramePreprocessor(
             self.ITEM_IX, self.USER_IX, self.TIMESTAMP_IX
         )
@@ -160,11 +163,15 @@ class Dataset(ABC):
         else:
             im = self._dataframe_to_matrix(df)
             warn("No filters applied, user and item ids may not be incrementing in the order of time. Classes that use this dataset may not work as expected.")
+        
+        if self.fetch_metadata:
+            user_id_mapping, item_id_mapping = self.preprocessor.user_id_mapping, self.preprocessor.item_id_mapping
+            self._fetch_dataset_metadata(user_id_mapping=user_id_mapping, item_id_mapping=item_id_mapping)
 
         end = time.time()
         logger.info(f"{self.name} dataset loaded - Took {end - start:.3}s")
         return im
-
+    
     def _dataframe_to_matrix(self, df: pd.DataFrame) -> InteractionMatrix:
         """Converts a DataFrame to an InteractionMatrix.
 
@@ -196,6 +203,14 @@ class Dataset(ABC):
         urlretrieve(url, filename, ProgressBar())
         return filename
 
+    @abstractmethod
+    def _fetch_dataset_metadata(self):
+        """Fetch metadata for the dataset.
+
+        Fetch metadata for the dataset, if available.
+        """
+        raise NotImplementedError("Needs to be implemented")
+    
     @abstractmethod
     def _load_dataframe(self) -> pd.DataFrame:
         """Load the raw dataset from file, and return it as a pandas DataFrame.
