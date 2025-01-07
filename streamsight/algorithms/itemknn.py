@@ -7,7 +7,7 @@ import pandas as pd
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
-from streamsight.algorithms.base import Algorithm
+from streamsight.algorithms.base import TopKItemSimilarityMatrixAlgorithm
 from streamsight.algorithms.utils import get_top_K_values
 from streamsight.matrix import ItemUserBasedEnum
 from streamsight.utils.util import add_rows_to_csr_matrix
@@ -33,7 +33,7 @@ def compute_cosine_similarity(X: csr_matrix) -> csr_matrix:
     return item_cosine_similarities
 
 
-class ItemKNN(Algorithm):
+class ItemKNN(TopKItemSimilarityMatrixAlgorithm):
     """Item K Nearest Neighbours model.
 
     First described in 'Item-based top-n recommendation algorithms.' :cite:`10.1145/963770.963776`
@@ -59,8 +59,7 @@ class ItemKNN(Algorithm):
         self,
         K=10
     ):
-        super().__init__()
-        self.K = K
+        super().__init__(K=K)
 
     def _fit(self, X: csr_matrix) -> None:
         """Fit a cosine similarity matrix from item to item
