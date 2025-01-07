@@ -54,6 +54,9 @@ class AmazonDataset(Dataset):
             names=[self.ITEM_IX, self.USER_IX, self.RATING_IX, self.TIMESTAMP_IX],
         )
         return df
+    
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+        pass
 
 class AmazonMusicDataset(AmazonDataset):
     """Handles Amazon Music dataset."""

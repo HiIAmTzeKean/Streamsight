@@ -41,3 +41,6 @@ class TestDataset(Dataset):
 
         df = pd.DataFrame.from_dict(input_dict)
         return df
+    
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+        pass

@@ -94,3 +94,6 @@ class YelpDataset(Dataset):
         df[self.TIMESTAMP_IX] = df[self.TIMESTAMP_IX].astype(np.int64) // 10**9
         
         return df
+    
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+        pass
