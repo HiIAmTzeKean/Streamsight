@@ -396,3 +396,78 @@ class ListwiseMetricK(MetricTopK):
             warn(UserWarning(f"All predictions were off or the ground truth matrix was empty during compute of {self.identifier}."))
             return 0
         return self._scores.mean()
+
+class ElementwiseMetricK(MetricTopK):
+    """Base class for all metrics that can be calculated for
+    each user-item pair in the Top-K recommendations.
+
+    :attr:`results` contains an entry for each user-item pair.
+
+    Examples are: HitK
+    
+    This code is adapted from RecPack :cite:`recpack`
+
+    :param K: Size of the recommendation list consisting of the Top-K item predictions.
+    :type K: int
+    """
+
+    @property
+    def col_names(self):
+        """The names of the columns in the results DataFrame."""
+        return ["user_id", "item_id", "score"]
+
+    @property
+    def micro_result(self) -> dict[str, np.ndarray]:
+        """User level results for the metric.
+
+        Contains an entry for every user.
+
+        :return: The results DataFrame with columns: user_id, score
+        :rtype: pd.DataFrame
+        """
+        if not hasattr(self, "_scores"):
+            raise ValueError("Metric has not been calculated yet.")
+        elif self._scores is None:
+            warn(UserWarning("No scores were computed. Returning empty dict."))
+            return dict(zip(self.col_names, (np.array([]), np.array([]))))
+    
+        scores = self._scores.toarray()
+
+        all_users = set(range(self._scores.shape[0]))
+        int_users, items = self._indices
+        values = scores[int_users, items]
+
+        # For all users in all_users but not in int_users,
+        # add K items np.nan with value = 0
+        missing_users = all_users.difference(set(int_users))
+
+        # This should barely occur, so it's not too bad to append np arrays.
+        for u in list(missing_users):
+            for i in range(self.K):
+                int_users = np.append(int_users, u)
+                values = np.append(values, 0)
+                items = np.append(items, np.nan)
+
+        users = self._map_users(int_users)
+
+        return dict(zip(self.col_names, (users, items, values)))
+    
+
+    @property
+    def macro_result(self) -> Optional[float]:
+        """Global metric value obtained by taking the average over all users.
+
+        :raises ValueError: If the metric has not been calculated yet.
+        :return: The global metric value.
+        :rtype: float, optional
+        """
+        if not hasattr(self, "_scores"):
+            raise ValueError("Metric has not been calculated yet.")
+        elif self._scores is None:
+            warn(UserWarning("No scores were computed. Returning Null value."))
+            return None
+        elif self._scores.size == 0:
+            warn(UserWarning(f"All predictions were off or the ground truth matrix was empty during compute of {self.identifier}."))
+            return 0
+        return self._scores.sum(axis=1).mean()
+    

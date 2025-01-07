@@ -19,3 +19,4 @@ from streamsight.metrics.precision import PrecisionK
 from streamsight.metrics.recall import RecallK
 from streamsight.metrics.dcg import DCGK
 from streamsight.metrics.ndcg import NDCGK
+from streamsight.metrics.hit import HitK
