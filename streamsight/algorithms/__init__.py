@@ -57,7 +57,7 @@ from streamsight.algorithms.baseline import RecentPopularity, DecayPopularity
 from streamsight.algorithms.random import Random
 from streamsight.algorithms.popularity import Popularity
 from streamsight.algorithms.itemknn import ItemKNN
-from streamsight.algorithms.itemknn_incremental import ItemKNNIncremental
+from streamsight.algorithms.itemknn_incremental import ItemKNNIncremental, ItemKNNIncrementalMovieLens100K
 from streamsight.algorithms.itemknn_rolling import ItemKNNRolling
 from streamsight.algorithms.itemknn_static import ItemKNNStatic
 from streamsight.algorithms.item_similarity_base import ItemSimilarityBaseAlgorithm, TopKItemSimilarityMatrixAlgorithm
