@@ -40,7 +40,7 @@ class DCGK(ListwiseMetricK):
 
       dcg = sparse_divide_nonzero(numerator, denominator)
 
-      self.scores_ = csr_matrix(dcg.sum(axis=1))
+      self._scores = csr_matrix(dcg.sum(axis=1))
 
       logger.debug(f"DCGK compute complete - {self.name}")
 

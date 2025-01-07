@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 import numpy as np
 
 from scipy.sparse import csr_matrix
@@ -36,8 +37,8 @@ class NDCGK(ListwiseMetricK):
     :type K: int
     """
 
-    def __init__(self, K):
-        super().__init__(K)
+    def __init__(self, K:Optional[int] = 10, timestamp_limit: Optional[int] = None):
+        super().__init__(K=K, timestamp_limit=timestamp_limit)
 
         self.discount_template = 1.0 / np.log2(np.arange(2, K + 2))
         # Calculate IDCG values by creating a list of partial sums
@@ -63,7 +64,7 @@ class NDCGK(ListwiseMetricK):
         hist_len = y_true.sum(axis=1).astype(np.int32)
         hist_len[hist_len > self.K] = self.K
 
-        self.scores_ = sparse_divide_nonzero(
+        self._scores = sparse_divide_nonzero(
             csr_matrix(per_user_dcg),
             csr_matrix(self.IDCG_cache[hist_len]),
         )
