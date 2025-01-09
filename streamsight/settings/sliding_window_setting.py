@@ -57,7 +57,7 @@ class SlidingWindowSetting(Setting):
         self,
         background_t: int,
         window_size: int = np.iinfo(np.int32).max,  # in seconds
-        n_seq_data: int = 10,
+        n_seq_data: int = 0,
         top_K: int = 10,
         t_upper: int = np.iinfo(np.int32).max,
         t_ground_truth_window: Optional[int] = None,
