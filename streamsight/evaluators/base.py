@@ -223,3 +223,13 @@ class EvaluatorBase(object):
         """
         self.setting.destruct_generators()
         logger.debug("Generators destructed")
+
+    def current_step(self) -> int:
+        """Return the current step of the evaluator.
+        
+        :return: Current step of the evaluator
+        :rtype: int
+        """
+        return self._run_step
+    
+    
