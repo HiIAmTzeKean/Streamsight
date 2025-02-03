@@ -6,6 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from streamsight.datasets.base import Dataset
+from streamsight.metadata.lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
 
 logger = logging.getLogger(__name__)
 tqdm.pandas()
@@ -111,4 +112,7 @@ class LastFMDataset(Dataset):
         return df
     
     def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
-        pass
+        self.USER_METADATA = LastFMUserMetadata(user_id_mapping=user_id_mapping).load()
+        self.ITEM_METADATA = LastFMItemMetadata(item_id_mapping=item_id_mapping).load()
+        self.TAG_METADATA = LastFMTagMetadata().load()
+    
