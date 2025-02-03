@@ -38,6 +38,10 @@ class LastFMDataset(Dataset):
     DATASET_URL = "https://files.grouplens.org/datasets/hetrec2011"
     """URL to fetch the dataset from."""
 
+    ITEM_METADATA = None
+    USER_METADATA = None
+    TAG_METADATA = None
+
     @property
     def DEFAULT_FILENAME(self) -> str:
         """Default filename that will be used if it is not specified by the user."""

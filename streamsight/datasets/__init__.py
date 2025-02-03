@@ -25,7 +25,7 @@ could potentially cause a chuck of data to be lost.
     Dataset
     TestDataset
     AmazonBookDataset
-    AmazonComputerDataset
+    AmazonSubscriptionBoxesDataset
     AmazonMovieDataset
     AmazonMusicDataset
     YelpDataset
@@ -68,7 +68,7 @@ from streamsight.datasets.base import Dataset
 from streamsight.datasets.test import TestDataset
 from streamsight.datasets.amazon import (
     AmazonBookDataset,
-    AmazonComputerDataset,
+    AmazonSubscriptionBoxesDataset,
     AmazonMovieDataset,
     AmazonMusicDataset,
 )

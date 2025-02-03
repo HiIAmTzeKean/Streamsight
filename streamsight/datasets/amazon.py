@@ -6,22 +6,27 @@ import pandas as pd
 from tqdm import tqdm
 
 from streamsight.datasets.base import Dataset
+from streamsight.metadata.amazon import AmazonBookItemMetadata, AmazonMovieItemMetadata, AmazonMusicItemMetadata, AmazonSubscriptionBoxesItemMetadata
 
 logger = logging.getLogger(__name__)
 tqdm.pandas()
 
 class AmazonDataset(Dataset):
-    USER_IX = "userId"
-    """Name of the column in the DataFrame that contains user identifiers."""
-    ITEM_IX = "songId"
+    ITEM_IX = "parent_asin"
     """Name of the column in the DataFrame that contains item identifiers."""
+    USER_IX = "user_id"
+    """Name of the column in the DataFrame that contains user identifiers."""
     TIMESTAMP_IX = "timestamp"
     """Name of the column in the DataFrame that contains time of interaction in seconds since epoch."""
     RATING_IX = "rating"
     """Name of the column in the DataFrame that contains the rating a user gave to the item."""
+    HELPFUL_VOTE_IX = "helpful_vote"
+    """Name of the column in the DataFrame that contains the helpful vote of the item."""
     DATASET_URL=None
     """URL to fetch the dataset from."""
     
+    ITEM_METADATA = None
+
     def _download_dataset(self):
         """Downloads the dataset.
 
@@ -43,49 +48,68 @@ class AmazonDataset(Dataset):
         :rtype: pd.DataFrame
         """
         self.fetch_dataset()
-        df = pd.read_csv(
-            self.file_path,
+
+        df = pd.read_json(
+            self.file_path,  # Ensure file_path contains the JSONL file path
             dtype={
                 self.ITEM_IX: str,
                 self.USER_IX: str,
-                self.RATING_IX: np.float32,
                 self.TIMESTAMP_IX: np.int64,
+                self.RATING_IX: np.float32,
+                self.HELPFUL_VOTE_IX: np.int64
             },
-            names=[self.ITEM_IX, self.USER_IX, self.RATING_IX, self.TIMESTAMP_IX],
+            lines=True,  # Required for JSONL format
         )
+
+        # Select only the required columns
+        df = df[[self.ITEM_IX, self.USER_IX, self.TIMESTAMP_IX, self.RATING_IX, self.HELPFUL_VOTE_IX]]
+        df[self.TIMESTAMP_IX] = df[self.TIMESTAMP_IX] // 1_000_000_000  # Convert to seconds
+
         return df
     
-    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
-        pass
 
 class AmazonMusicDataset(AmazonDataset):
     """Handles Amazon Music dataset."""
-    DEFAULT_FILENAME = "amazon_digitalmusic_dataset.csv"
+    DEFAULT_FILENAME = "Digital_Music.jsonl.gz"
     """Default filename that will be used if it is not specified by the user."""
 
-    DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Digital_Music.csv"
+    DATASET_URL = "https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/review_categories/Digital_Music.jsonl.gz"
     """URL to fetch the dataset from."""
+
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+        self.ITEM_METADATA = AmazonMusicItemMetadata(item_id_mapping=item_id_mapping).load()
 
 class AmazonMovieDataset(AmazonDataset):
     """Handles Amazon Movie dataset."""
-    DEFAULT_FILENAME = "amazon_movie_dataset.csv"
+    DEFAULT_FILENAME = "Movies_and_TV.jsonl.gz"
     """Default filename that will be used if it is not specified by the user."""
 
-    DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Movies_and_TV.csv"
+    DATASET_URL = "https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/review_categories/Movies_and_TV.jsonl.gz"
     """URL to fetch the dataset from."""
+
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+        self.ITEM_METADATA = AmazonMovieItemMetadata(item_id_mapping=item_id_mapping).load()
     
-class AmazonComputerDataset(AmazonDataset):
+class AmazonSubscriptionBoxesDataset(AmazonDataset):
     """Handles Amazon Computer dataset."""
-    DEFAULT_FILENAME = "amazon_computer_dataset.csv"
+    DEFAULT_FILENAME = "Subscription_Boxes.jsonl.gz"
     """Default filename that will be used if it is not specified by the user."""
 
-    DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Computers.csv"
+    DATASET_URL = "https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/review_categories/Subscription_Boxes.jsonl.gz"
     """URL to fetch the dataset from."""
+
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+        self.ITEM_METADATA = AmazonSubscriptionBoxesItemMetadata(item_id_mapping=item_id_mapping).load()
     
 class AmazonBookDataset(AmazonDataset):
     """Handles Amazon Book dataset."""
-    DEFAULT_FILENAME = "amazon_book_dataset.csv"
+    DEFAULT_FILENAME = "Books.jsonl.gz"
     """Default filename that will be used if it is not specified by the user."""
 
-    DATASET_URL = "https://datarepo.eng.ucsd.edu/mcauley_group/data/amazon_v2/categoryFilesSmall/Books.csv"
+    DATASET_URL = "https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/review_categories/Books.jsonl.gz"
     """URL to fetch the dataset from."""
+
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+        self.ITEM_METADATA = AmazonBookItemMetadata(item_id_mapping=item_id_mapping).load()
+
+        
