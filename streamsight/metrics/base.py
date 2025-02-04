@@ -469,5 +469,8 @@ class ElementwiseMetricK(MetricTopK):
         elif self._scores.size == 0:
             warn(UserWarning(f"All predictions were off or the ground truth matrix was empty during compute of {self.identifier}."))
             return 0
-        return self._scores.sum(axis=1).mean()
+
+        hit_ratio = self._scores.sum(axis=1) / self.y_pred_top_K_.shape[1]
+        return hit_ratio.mean()
+        # return self._scores.sum(axis=1).mean()
     
