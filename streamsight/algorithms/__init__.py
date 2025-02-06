@@ -51,11 +51,13 @@ yield the best performance.
     ItemKNNStatic
 """
 from streamsight.algorithms.base import Algorithm
-from streamsight.algorithms.baseline import RecentPopularity, DecayPopularity
+from streamsight.algorithms.recent_popularity import RecentPopularity
+from streamsight.algorithms.decay_popularity import DecayPopularity
+from streamsight.algorithms.most_pop import MostPop
 from streamsight.algorithms.random import Random
-from streamsight.algorithms.popularity import Popularity
 from streamsight.algorithms.itemknn import ItemKNN
-from streamsight.algorithms.itemknn_incremental import ItemKNNIncremental, ItemKNNIncrementalMovieLens100K
+from streamsight.algorithms.itemknn_incremental import ItemKNNIncremental
+from streamsight.algorithms.itemknn_incremental_movielens import ItemKNNIncrementalMovieLens100K
 from streamsight.algorithms.itemknn_rolling import ItemKNNRolling
 from streamsight.algorithms.itemknn_static import ItemKNNStatic
-from streamsight.algorithms.time_aware_item_knn import TARSItemKNN, TARSItemKNNLiu
+from streamsight.algorithms.time_aware_item_knn import TARSItemKNN, TARSItemKNNLiu, TARSItemKNNVaz, TARSItemKNNDing
