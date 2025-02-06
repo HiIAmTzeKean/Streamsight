@@ -5,7 +5,7 @@
 #   Lien Michiels
 #   Robin Verachtert
 
-from recpack.algorithms.time_aware_item_knn.base import TARSItemKNN
+from streamsight.algorithms.time_aware_item_knn.base import TARSItemKNN
 
 
 class TARSItemKNNVaz(TARSItemKNN):
