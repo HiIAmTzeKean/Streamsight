@@ -113,6 +113,7 @@ class LastFMDataset(Dataset):
             ],
             header=0,
         )
+        df[self.TIMESTAMP_IX] = df[self.TIMESTAMP_IX] // 1_000  # Convert to seconds
         return df
     
     def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
