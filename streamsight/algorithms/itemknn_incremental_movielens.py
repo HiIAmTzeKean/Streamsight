@@ -1,8 +1,10 @@
 import logging
-from warnings import warn
 
 import numpy as np
+import pandas as pd
 from scipy.sparse import csr_matrix, vstack, hstack
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.metrics.pairwise import cosine_similarity
 
 from streamsight.algorithms.itemknn import ItemKNN
 from streamsight.matrix import InteractionMatrix
@@ -10,18 +12,19 @@ from streamsight.utils.util import add_rows_to_csr_matrix
 
 logger = logging.getLogger(__name__)
 
-
-class ItemKNNIncremental(ItemKNN):
-    """Incremental version of ItemKNN algorithm.
+class ItemKNNIncrementalMovieLens100K(ItemKNN):
+    """Incremental version of ItemKNN algorithm with MovieLens100k Metadata.
 
     This class extends the ItemKNN algorithm to allow for incremental updates
     to the model. The incremental updates are done by updating the historical
     data with the new data by appending the new data to the historical data.
     """
 
-    def __init__(self, K=10, pad_with_popularity=True):
-        super().__init__(K=K)
-        self.pad_with_popularity = pad_with_popularity
+    def __init__(self, K=10, metadata: pd.DataFrame=None):
+        super().__init__(K)
+        if metadata is None:
+            raise ValueError("Metadata is required for ItemKNNIncrementalMovieLens100K")
+        self.metadata = metadata.copy()
         self.training_data: csr_matrix = None
 
     def append_training_data(self, X: csr_matrix):
@@ -55,7 +58,7 @@ class ItemKNNIncremental(ItemKNN):
         self.training_data = X_prev + X
 
 
-    def _fit(self, X: csr_matrix) -> "ItemKNNIncremental":
+    def _fit(self, X: csr_matrix) -> "ItemKNNIncrementalMovieLens100K":
         """Fit a cosine similarity matrix from item to item."""
         if self.training_data is None:
             self.training_data = X.copy()
@@ -68,7 +71,7 @@ class ItemKNNIncremental(ItemKNN):
     def _predict(self, X: csr_matrix, predict_im: InteractionMatrix) -> csr_matrix:
         """Predict the K most similar items for each item using the latest data."""
         X_pred = super()._predict(self.training_data)
-        print("In ItemKNNIncremental _predict: ", X_pred.toarray())
+        print("In ItemKNNIncrementalMovieLens100K _predict: ", X_pred.toarray())
         # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
         max_user_id = predict_im.max_user_id + 1
         print("Max user ID: ", max_user_id)
@@ -100,52 +103,48 @@ class ItemKNNIncremental(ItemKNN):
         to_predict = predict_frame.value_counts("uid")
         print("To predict: ", to_predict)
 
-        if self.pad_with_popularity:
-            popular_items = self.get_popularity_scores(X)
-            print("Popular items: ", popular_items)
-            for user_id in to_predict.index:
-                if user_id >= known_user_id:
-                    X_pred[user_id, :] = popular_items
-        else:
-            row = []
-            col = []
-            for user_id in to_predict.index:
-                if user_id >= known_user_id:
-                    row += [user_id] * to_predict[user_id]
-                    col += self.rand_gen.integers(0, known_item_id, to_predict[user_id]).tolist()
-            pad = csr_matrix((np.ones(len(row)), (row, col)), shape=intended_shape)
-            print("Pad: ", pad.toarray())
-            X_pred += pad
+        # pad users with items from most similar user
+        user_similarity_matrix = self.get_user_similarity_matrix()
+        print("User similarity matrix: ", user_similarity_matrix)
+        for user_id in to_predict.index:
+            if user_id >= known_user_id:
+                most_similar_user_idx = np.argmax(user_similarity_matrix[user_id][:known_user_id])
+                X_pred[user_id, :] = X_pred[most_similar_user_idx, :]
+    
         print("X_pred after padding: ", X_pred.toarray())
         logger.debug(f"Padding by {self.name} completed")
         return X_pred
 
-    def get_popularity_scores(self, X: csr_matrix):
-        """Pad the predictions with popular items for users that are not in the training data."""
-        interaction_counts = X.sum(axis=0).A[0]
-        sorted_scores = interaction_counts / interaction_counts.max()
+    def get_user_similarity_matrix(self):
+        user_metadata = self.metadata.copy()
 
-        num_items = X.shape[1]
-        if num_items < self.K:
-            warn("K is larger than the number of items.", UserWarning)
+        # set userId as index
+        user_metadata.set_index('userId', inplace=True)
+        user_metadata.index.name = None
 
-        K = min(self.K, num_items)
-        ind = np.argpartition(sorted_scores, -K)[-K:]
-        a = np.zeros(X.shape[1])
-        a[ind] = sorted_scores[ind]
-        
-        return a
-    # def fit(self, X: InteractionMatrix) -> "Algorithm":
-    #     start = time.time()
-    #     if not self.historical_data:
-    #         self.historical_data = X.copy()
-    #     else:
-    #         logger.debug(f"Updating historical data for {self.name}")
-    #         self.historical_data = self.historical_data + X
-    #     end = time.time()
-    #     logger.debug(
-    #         f"Updated historical data for {self.name} - Took {end - start :.3}s"
-    #     )
-    #     super().fit(self.historical_data)
-    #     return self
+        # reorder the indices
+        user_metadata.reset_index(drop=True)
+        user_metadata.sort_index(inplace=True)
 
+        # zipcode is a column that does not provide any useful information so we drop it
+        user_metadata = user_metadata.drop(columns=['zipcode'])
+
+        # obtain categorical columns
+        categorical_columns = user_metadata.select_dtypes(include=['object']).columns.tolist()
+
+        # Use one-hot encoding to encode the categorical columns
+        encoder = OneHotEncoder(sparse_output=False)
+        one_hot_encoded = encoder.fit_transform(user_metadata[categorical_columns])
+
+        # obtain the column names for the encoded data
+        one_hot_df = pd.DataFrame(one_hot_encoded, columns=encoder.get_feature_names_out(categorical_columns))
+
+        # Concatenate the one-hot encoded dataframe with the original dataframe and drop the original categorical columns
+        df_encoded = pd.concat([user_metadata, one_hot_df], axis=1)
+        df_encoded = df_encoded.drop(categorical_columns, axis=1)
+
+        # compute cosine similarity but exclude self-similarity
+        user_similarity_matrix = cosine_similarity(df_encoded)
+        np.fill_diagonal(user_similarity_matrix, 0)
+
+        return user_similarity_matrix
