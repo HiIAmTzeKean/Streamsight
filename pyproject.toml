@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "streamsightv2"
-version = "0.1.1"
+version = "0.1.2"
 description = "A toolkit for offline evaluation of Recommender Systems."
-authors = ["Ng Tze Kean <ngtzekean@gmail.com>", "Joshua Khoo <joshuajr13@gmail.com>"]
+authors = ["Joshua Khoo <joshuajr13@gmail.com>", "Ng Tze Kean <ngtzekean@gmail.com>"]
 readme = "README.md"
 repository = "https://github.com/suenalaba/streamsightv2"
 documentation = "https://hiiamtzekean.github.io/Streamsight/"
