@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from streamsight.metrics import PrecisionK
+from streamsight2.metrics import PrecisionK
 
 
 @pytest.fixture()

@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from streamsight.metrics import RecallK
+from streamsight2.metrics import RecallK
 
 
 @pytest.fixture()

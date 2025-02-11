@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
 
-from streamsight.matrix import InteractionMatrix
-from streamsight.settings.base import Setting
-from streamsight.settings.single_time_point_setting import SingleTimePointSetting
+from streamsight2.matrix import InteractionMatrix
+from streamsight2.settings.base import Setting
+from streamsight2.settings.single_time_point_setting import SingleTimePointSetting
 
 BACKGROUND_T = 4
 SEED = 42

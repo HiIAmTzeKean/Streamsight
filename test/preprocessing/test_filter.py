@@ -1,6 +1,6 @@
 import numpy as np
-from streamsight.preprocessing import MinItemsPerUser
-from streamsight.matrix import InteractionMatrix
+from streamsight2.preprocessing import MinItemsPerUser
+from streamsight2.matrix import InteractionMatrix
 from test.conftest import TIMESTAMP_IX, ITEM_IX, USER_IX, MIN_ITEM_USER
 
 class TestMinItemsPerUser:

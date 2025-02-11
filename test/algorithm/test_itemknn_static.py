@@ -1,4 +1,4 @@
-from streamsight.algorithms import ItemKNNStatic
+from streamsight2.algorithms import ItemKNNStatic
 
 def test_ItemKNNStatic(setting):
     algo = ItemKNNStatic(K=10)

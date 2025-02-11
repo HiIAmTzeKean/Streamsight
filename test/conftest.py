@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from streamsight.datasets import Dataset, TestDataset
+from streamsight2.datasets import Dataset, TestDataset
 
 SEED = 42
 BACKGROUND_T = 4

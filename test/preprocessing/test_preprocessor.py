@@ -1,6 +1,6 @@
 import pytest
-from streamsight.matrix import InteractionMatrix
-from streamsight.preprocessing import DataFramePreprocessor, MinItemsPerUser
+from streamsight2.matrix import InteractionMatrix
+from streamsight2.preprocessing import DataFramePreprocessor, MinItemsPerUser
 from test.conftest import test_dataset, test_dataframe, MIN_ITEM_USER
 
 

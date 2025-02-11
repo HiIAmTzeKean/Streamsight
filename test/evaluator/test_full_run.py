@@ -1,7 +1,7 @@
 import pytest
-from streamsight.datasets import TestDataset
-from streamsight.settings import SlidingWindowSetting, SingleTimePointSetting
-from streamsight.evaluators import EvaluatorPipelineBuilder, EvaluatorStreamerBuilder
+from streamsight2.datasets import TestDataset
+from streamsight2.settings import SlidingWindowSetting, SingleTimePointSetting
+from streamsight2.evaluators import EvaluatorPipelineBuilder, EvaluatorStreamerBuilder
 
 @pytest.fixture()
 def sliding_window():
@@ -67,7 +67,7 @@ class TestFullRun:
         b.add_metric("PrecisionK")
         evaluator = b.build()
         
-        from streamsight.algorithms import ItemKNNIncremental
+        from streamsight2.algorithms import ItemKNNIncremental
 
         algo = ItemKNNIncremental(K=10)
         algo_id = evaluator.register_algorithm(algo)
