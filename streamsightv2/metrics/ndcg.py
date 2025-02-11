@@ -4,8 +4,8 @@ import numpy as np
 
 from scipy.sparse import csr_matrix
 
-from streamsight2.metrics.base import ListwiseMetricK
-from streamsight2.metrics.util import sparse_divide_nonzero
+from streamsightv2.metrics.base import ListwiseMetricK
+from streamsightv2.metrics.util import sparse_divide_nonzero
 
 logger = logging.getLogger(__name__)
 

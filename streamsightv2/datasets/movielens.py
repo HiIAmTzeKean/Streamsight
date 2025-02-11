@@ -3,10 +3,10 @@ import os
 import zipfile
 import pandas as pd
 import numpy as np
-from streamsight2.datasets.base import Dataset
+from streamsightv2.datasets.base import Dataset
 from tqdm import tqdm
 
-from streamsight2.metadata.movielens import MovieLens100kItemMetadata, MovieLens100kUserMetadata
+from streamsightv2.metadata.movielens import MovieLens100kItemMetadata, MovieLens100kUserMetadata
 
 logger = logging.getLogger(__name__)
 tqdm.pandas()

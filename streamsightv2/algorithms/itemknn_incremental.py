@@ -4,9 +4,9 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csr_matrix, vstack, hstack
 
-from streamsight2.algorithms.itemknn import ItemKNN
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.utils.util import add_rows_to_csr_matrix
+from streamsightv2.algorithms.itemknn import ItemKNN
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.utils.util import add_rows_to_csr_matrix
 
 logger = logging.getLogger(__name__)
 

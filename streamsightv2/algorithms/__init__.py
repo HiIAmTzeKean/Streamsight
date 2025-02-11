@@ -50,14 +50,14 @@ yield the best performance.
     ItemKNNRolling
     ItemKNNStatic
 """
-from streamsight2.algorithms.base import Algorithm
-from streamsight2.algorithms.recent_popularity import RecentPopularity
-from streamsight2.algorithms.decay_popularity import DecayPopularity
-from streamsight2.algorithms.most_pop import MostPop
-from streamsight2.algorithms.random import Random
-from streamsight2.algorithms.itemknn import ItemKNN
-from streamsight2.algorithms.itemknn_incremental import ItemKNNIncremental
-from streamsight2.algorithms.itemknn_incremental_movielens import ItemKNNIncrementalMovieLens100K
-from streamsight2.algorithms.itemknn_rolling import ItemKNNRolling
-from streamsight2.algorithms.itemknn_static import ItemKNNStatic
-from streamsight2.algorithms.time_aware_item_knn import TARSItemKNN, TARSItemKNNLiu, TARSItemKNNVaz, TARSItemKNNDing
+from streamsightv2.algorithms.base import Algorithm
+from streamsightv2.algorithms.recent_popularity import RecentPopularity
+from streamsightv2.algorithms.decay_popularity import DecayPopularity
+from streamsightv2.algorithms.most_pop import MostPop
+from streamsightv2.algorithms.random import Random
+from streamsightv2.algorithms.itemknn import ItemKNN
+from streamsightv2.algorithms.itemknn_incremental import ItemKNNIncremental
+from streamsightv2.algorithms.itemknn_incremental_movielens import ItemKNNIncrementalMovieLens100K
+from streamsightv2.algorithms.itemknn_rolling import ItemKNNRolling
+from streamsightv2.algorithms.itemknn_static import ItemKNNStatic
+from streamsightv2.algorithms.time_aware_item_knn import TARSItemKNN, TARSItemKNNLiu, TARSItemKNNVaz, TARSItemKNNDing

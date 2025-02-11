@@ -10,7 +10,7 @@ import progressbar
 import yaml
 from scipy.sparse import csr_matrix
 
-from streamsight2.utils.directory_tools import create_config_yaml, safe_dir
+from streamsightv2.utils.directory_tools import create_config_yaml, safe_dir
 
 logger = logging.getLogger(__name__)
 

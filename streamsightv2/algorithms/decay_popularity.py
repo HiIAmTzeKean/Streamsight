@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix, lil_matrix
 
-from streamsight2.algorithms import Algorithm
-from streamsight2.matrix.interaction_matrix import InteractionMatrix
+from streamsightv2.algorithms import Algorithm
+from streamsightv2.matrix.interaction_matrix import InteractionMatrix
 
 class DecayPopularity(Algorithm):
     """A popularity-based algorithm with exponential decay over data from earlier time windows.

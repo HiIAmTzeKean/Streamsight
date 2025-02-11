@@ -10,7 +10,7 @@ in a sliding window setting.
 import logging
 import logging.config
 
-from streamsight2.utils import (log_level, log_level_by_name, prepare_logger,
+from streamsightv2.utils import (log_level, log_level_by_name, prepare_logger,
                                suppress_specific_warnings, suppress_warnings)
 
 LOGGING_CONFIG_FILENAME = "LOGGING_CONFIG.yaml"

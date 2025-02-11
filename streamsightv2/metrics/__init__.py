@@ -14,9 +14,9 @@ This module provides the functionality to evaluate the performance of the recomm
     RecallK
 """
 
-from streamsight2.metrics.base import Metric
-from streamsight2.metrics.precision import PrecisionK
-from streamsight2.metrics.recall import RecallK
-from streamsight2.metrics.dcg import DCGK
-from streamsight2.metrics.ndcg import NDCGK
-from streamsight2.metrics.hit import HitK
+from streamsightv2.metrics.base import Metric
+from streamsightv2.metrics.precision import PrecisionK
+from streamsightv2.metrics.recall import RecallK
+from streamsightv2.metrics.dcg import DCGK
+from streamsightv2.metrics.ndcg import NDCGK
+from streamsightv2.metrics.hit import HitK

@@ -54,8 +54,8 @@ Example
     suppress_specific_warnings
 """
 
-from streamsight2.utils.directory_tools import create_config_yaml, safe_dir
-from streamsight2.utils.util import (
+from streamsightv2.utils.directory_tools import create_config_yaml, safe_dir
+from streamsightv2.utils.util import (
     add_columns_to_csr_matrix,
     add_rows_to_csr_matrix,
     arg_to_str,
@@ -65,4 +65,4 @@ from streamsight2.utils.util import (
     to_tuple,
     ProgressBar
 )
-from streamsight2.utils.logging_tools import log_level, log_level_by_name, suppress_warnings, suppress_specific_warnings
+from streamsightv2.utils.logging_tools import log_level, log_level_by_name, suppress_warnings, suppress_specific_warnings

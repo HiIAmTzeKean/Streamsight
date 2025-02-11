@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from streamsight2.datasets.base import Dataset
-from streamsight2.metadata.amazon import AmazonBookItemMetadata, AmazonMovieItemMetadata, AmazonMusicItemMetadata, AmazonSubscriptionBoxesItemMetadata
+from streamsightv2.datasets.base import Dataset
+from streamsightv2.metadata.amazon import AmazonBookItemMetadata, AmazonMovieItemMetadata, AmazonMusicItemMetadata, AmazonSubscriptionBoxesItemMetadata
 
 logger = logging.getLogger(__name__)
 tqdm.pandas()

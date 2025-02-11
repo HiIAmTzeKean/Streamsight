@@ -11,9 +11,9 @@ from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator
 from sklearn.utils.validation import check_is_fitted
 
-from streamsight2.matrix import (InteractionMatrix, ItemUserBasedEnum,
+from streamsightv2.matrix import (InteractionMatrix, ItemUserBasedEnum,
                                 to_csr_matrix, Matrix)
-from streamsight2.utils.util import add_rows_to_csr_matrix
+from streamsightv2.utils.util import add_rows_to_csr_matrix
 
 logger = logging.getLogger(__name__)
 

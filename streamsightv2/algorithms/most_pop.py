@@ -3,8 +3,8 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix
 
-from streamsight2.algorithms import Algorithm
-from streamsight2.matrix.interaction_matrix import InteractionMatrix
+from streamsightv2.algorithms import Algorithm
+from streamsightv2.matrix.interaction_matrix import InteractionMatrix
 
 class MostPop(Algorithm):
     """A popularity-based algorithm with based on MostPop by accumulating data from earlier time windows.

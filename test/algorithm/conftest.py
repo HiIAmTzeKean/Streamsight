@@ -1,5 +1,5 @@
 import pytest
-from streamsight2.settings.sliding_window_setting import SlidingWindowSetting
+from streamsightv2.settings.sliding_window_setting import SlidingWindowSetting
 from test.conftest import BACKGROUND_T, WINDOW_SIZE, SEED, N_SEQ_DATA, SEED
 
 @pytest.fixture()

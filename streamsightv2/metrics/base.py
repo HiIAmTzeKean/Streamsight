@@ -6,8 +6,8 @@ import numpy as np
 from scipy.sparse import csr_matrix, vstack
 from deprecation import deprecated
 
-from streamsight2.algorithms.utils import get_top_K_ranks
-from streamsight2.utils.util import add_columns_to_csr_matrix
+from streamsightv2.algorithms.utils import get_top_K_ranks
+from streamsightv2.utils.util import add_columns_to_csr_matrix
 
 
 logger = logging.getLogger(__name__)

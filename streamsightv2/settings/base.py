@@ -6,8 +6,8 @@ from warnings import warn
 
 import numpy as np
 
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.settings.processor import PredictionDataProcessor
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.settings.processor import PredictionDataProcessor
 
 logger = logging.getLogger(__name__)
 

@@ -2,9 +2,9 @@ from typing import Union
 
 from scipy.sparse import csr_matrix
 
-from streamsight2.utils.util import to_binary
+from streamsightv2.utils.util import to_binary
 
-from streamsight2.matrix.interaction_matrix import InteractionMatrix
+from streamsightv2.matrix.interaction_matrix import InteractionMatrix
 
 Matrix = Union[InteractionMatrix, csr_matrix]
 

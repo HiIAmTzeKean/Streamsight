@@ -64,14 +64,14 @@ ids are incrementing in the order of time.
 For an overview of available filters see :mod:`streamsight.preprocessing`
 """
 
-from streamsight2.datasets.base import Dataset
-from streamsight2.datasets.test import TestDataset
-from streamsight2.datasets.amazon import (
+from streamsightv2.datasets.base import Dataset
+from streamsightv2.datasets.test import TestDataset
+from streamsightv2.datasets.amazon import (
     AmazonBookDataset,
     AmazonSubscriptionBoxesDataset,
     AmazonMovieDataset,
     AmazonMusicDataset,
 )
-from streamsight2.datasets.yelp import YelpDataset
-from streamsight2.datasets.lastfm import LastFMDataset
-from streamsight2.datasets.movielens import MovieLens100K
+from streamsightv2.datasets.yelp import YelpDataset
+from streamsightv2.datasets.lastfm import LastFMDataset
+from streamsightv2.datasets.movielens import MovieLens100K

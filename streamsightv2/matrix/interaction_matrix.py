@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 
-from streamsight2.matrix.exception import TimestampAttributeMissingError
-from streamsight2.utils import to_binary
+from streamsightv2.matrix.exception import TimestampAttributeMissingError
+from streamsightv2.utils import to_binary
 
 logger = logging.getLogger(__name__)
         

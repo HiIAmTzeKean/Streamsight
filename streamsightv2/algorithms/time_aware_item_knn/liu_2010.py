@@ -7,7 +7,7 @@
 
 """Module with time-dependent ItemKNN implementations"""
 
-from streamsight2.algorithms.time_aware_item_knn.base import TARSItemKNN
+from streamsightv2.algorithms.time_aware_item_knn.base import TARSItemKNN
 
 
 class TARSItemKNNLiu(TARSItemKNN):

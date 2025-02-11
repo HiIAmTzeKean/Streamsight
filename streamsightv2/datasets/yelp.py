@@ -2,7 +2,7 @@ import logging
 import os
 import pandas as pd
 import numpy as np
-from streamsight2.datasets.base import Dataset
+from streamsightv2.datasets.base import Dataset
 
 logger = logging.getLogger(__name__)
 

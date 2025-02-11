@@ -3,9 +3,9 @@ from typing import Optional
 
 import pandas as pd
 from scipy.sparse import csr_matrix
-from streamsight2.algorithms.base import Algorithm
-from streamsight2.algorithms.itemknn import ItemKNN
-from streamsight2.matrix import InteractionMatrix
+from streamsightv2.algorithms.base import Algorithm
+from streamsightv2.algorithms.itemknn import ItemKNN
+from streamsightv2.matrix import InteractionMatrix
 
 logger = logging.getLogger(__name__)
 

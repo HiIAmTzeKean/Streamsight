@@ -1,2 +1,2 @@
-from streamsight2.metadata.base import Metadata
-from streamsight2.metadata.movielens import MovieLens100kUserMetadata, MovieLens100kItemMetadata
+from streamsightv2.metadata.base import Metadata
+from streamsightv2.metadata.movielens import MovieLens100kUserMetadata, MovieLens100kItemMetadata

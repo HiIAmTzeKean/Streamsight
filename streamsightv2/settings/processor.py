@@ -3,7 +3,7 @@ from typing import Tuple
 
 from deprecation import deprecated
 
-from streamsight2.matrix import InteractionMatrix
+from streamsightv2.matrix import InteractionMatrix
 
 
 class Processor(ABC):

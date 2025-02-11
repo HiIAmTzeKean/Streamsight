@@ -3,8 +3,8 @@ import pandas as pd
 
 import numpy as np
 from scipy.sparse import csr_matrix
-from streamsight2.algorithms.base import Algorithm
-from streamsight2.algorithms.utils import get_top_K_values
+from streamsightv2.algorithms.base import Algorithm
+from streamsightv2.algorithms.utils import get_top_K_values
 
 class Random(Algorithm):
     """Random recommendation for users.

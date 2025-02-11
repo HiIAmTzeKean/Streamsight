@@ -4,16 +4,16 @@ from typing import Dict, List, Optional, Union
 from warnings import warn
 
 import numpy as np
-from streamsight2.evaluators.evaluator_pipeline import EvaluatorPipeline
-from streamsight2.evaluators.evaluator_stream import EvaluatorStreamer
-from streamsight2.registries import (
+from streamsightv2.evaluators.evaluator_pipeline import EvaluatorPipeline
+from streamsightv2.evaluators.evaluator_stream import EvaluatorStreamer
+from streamsightv2.registries import (
     ALGORITHM_REGISTRY,
     METRIC_REGISTRY,
     AlgorithmEntry,
     MetricEntry,
 )
-from streamsight2.settings import Setting
-from streamsight2.utils import arg_to_str
+from streamsightv2.settings import Setting
+from streamsightv2.utils import arg_to_str
 
 logger = logging.getLogger(__name__)
 

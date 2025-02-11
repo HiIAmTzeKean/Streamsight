@@ -26,5 +26,5 @@ easy representation of the matrix.
 
     DataFramePreprocessor
 """
-from streamsight2.preprocessing.preprocessor import DataFramePreprocessor
-from streamsight2.preprocessing.filter import Filter, MinItemsPerUser, MinUsersPerItem
+from streamsightv2.preprocessing.preprocessor import DataFramePreprocessor
+from streamsightv2.preprocessing.filter import Filter, MinItemsPerUser, MinUsersPerItem

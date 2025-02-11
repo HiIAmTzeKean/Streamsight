@@ -6,12 +6,12 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
 
-from streamsight2.evaluators.accumulator import MetricAccumulator
-from streamsight2.evaluators.util import MetricLevelEnum, UserItemBaseStatus
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.registries import MetricEntry
-from streamsight2.settings import Setting
-from streamsight2.settings.base import EOWSetting
+from streamsightv2.evaluators.accumulator import MetricAccumulator
+from streamsightv2.evaluators.util import MetricLevelEnum, UserItemBaseStatus
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.registries import MetricEntry
+from streamsightv2.settings import Setting
+from streamsightv2.settings.base import EOWSetting
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
-from streamsight2.matrix import InteractionMatrix
+from streamsightv2.matrix import InteractionMatrix
 
 logger = logging.getLogger(__name__)
 

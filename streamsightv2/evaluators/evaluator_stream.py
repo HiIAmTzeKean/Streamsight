@@ -8,16 +8,16 @@ from warnings import warn
 
 from scipy.sparse import csr_matrix
 
-from streamsight2.algorithms import Algorithm
-from streamsight2.evaluators.accumulator import MetricAccumulator
-from streamsight2.evaluators.base import EvaluatorBase
-from streamsight2.evaluators.util import AlgorithmStatusWarning
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.metrics import Metric
-from streamsight2.registries import (METRIC_REGISTRY, AlgorithmStateEnum,
+from streamsightv2.algorithms import Algorithm
+from streamsightv2.evaluators.accumulator import MetricAccumulator
+from streamsightv2.evaluators.base import EvaluatorBase
+from streamsightv2.evaluators.util import AlgorithmStatusWarning
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.metrics import Metric
+from streamsightv2.registries import (METRIC_REGISTRY, AlgorithmStateEnum,
                                     AlgorithmStatusEntry,
                                     AlgorithmStatusRegistry, MetricEntry)
-from streamsight2.settings import EOWSetting, Setting
+from streamsightv2.settings import EOWSetting, Setting
 
 logger = logging.getLogger(__name__)
 

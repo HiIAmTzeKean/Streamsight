@@ -7,7 +7,7 @@ import pandas as pd
 from typing import Optional
 from abc import ABC, abstractmethod
 
-from streamsight2.utils.util import ProgressBar
+from streamsightv2.utils.util import ProgressBar
 
 
 logger = logging.getLogger(__name__)

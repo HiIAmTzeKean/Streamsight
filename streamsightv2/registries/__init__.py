@@ -60,7 +60,7 @@ state of the algorithms.
 
 """
 
-from streamsight2.registries.registry import (ALGORITHM_REGISTRY,
+from streamsightv2.registries.registry import (ALGORITHM_REGISTRY,
                                              DATASET_REGISTRY, METRIC_REGISTRY,
                                              AlgorithmRegistry,
                                              DatasetRegistry, MetricRegistry,

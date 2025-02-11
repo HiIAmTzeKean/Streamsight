@@ -1,4 +1,4 @@
-from streamsight2.algorithms import Random
+from streamsightv2.algorithms import Random
 
 def test_Random(setting):
     algo = Random(K=10)

@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
 
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.settings import LeaveNOutSetting
-from streamsight2.settings.base import Setting
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.settings import LeaveNOutSetting
+from streamsightv2.settings.base import Setting
 
 SEED = 42
 N_SEQ_DATA = 10

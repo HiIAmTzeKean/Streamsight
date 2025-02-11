@@ -3,10 +3,10 @@ from enum import StrEnum
 from typing import Any, Dict, NamedTuple, Optional
 from uuid import UUID
 
-import streamsight2.algorithms
-import streamsight2.datasets
-import streamsight2.metrics
-from streamsight2.algorithms import Algorithm
+import streamsightv2.algorithms
+import streamsightv2.datasets
+import streamsightv2.metrics
+from streamsightv2.algorithms import Algorithm
 
 
 class Registry:
@@ -77,7 +77,7 @@ class AlgorithmRegistry(Registry):
     """
 
     def __init__(self):
-        super().__init__(streamsight2.algorithms)
+        super().__init__(streamsightv2.algorithms)
 
 class MetricRegistry(Registry):
     """Registry for easy retrieval of metric types by name.
@@ -85,7 +85,7 @@ class MetricRegistry(Registry):
     The registry comes preregistered with all the streamsight metrics.
     """
     def __init__(self):
-        super().__init__(streamsight2.metrics)
+        super().__init__(streamsightv2.metrics)
 
 class DatasetRegistry(Registry):
     """Registry for easy retrieval of dataset types by name.
@@ -93,7 +93,7 @@ class DatasetRegistry(Registry):
     The registry comes preregistered with all the streamsight datasets.
     """
     def __init__(self):
-        super().__init__(streamsight2.datasets)
+        super().__init__(streamsightv2.datasets)
     
 
 ALGORITHM_REGISTRY = AlgorithmRegistry()

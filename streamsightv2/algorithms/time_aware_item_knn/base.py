@@ -10,9 +10,9 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from streamsight2.algorithms.base import TopKItemSimilarityMatrixAlgorithm
-from streamsight2.matrix import InteractionMatrix, Matrix
-from streamsight2.utils.util import add_rows_to_csr_matrix
+from streamsightv2.algorithms.base import TopKItemSimilarityMatrixAlgorithm
+from streamsightv2.matrix import InteractionMatrix, Matrix
+from streamsightv2.utils.util import add_rows_to_csr_matrix
 
 from recpack.algorithms.nearest_neighbour import (
     compute_conditional_probability,

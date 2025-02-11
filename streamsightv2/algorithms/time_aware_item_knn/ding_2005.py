@@ -5,7 +5,7 @@
 #   Lien Michiels
 #   Robin Verachtert
 
-from streamsight2.algorithms.time_aware_item_knn.base import TARSItemKNN
+from streamsightv2.algorithms.time_aware_item_knn.base import TARSItemKNN
 
 
 class TARSItemKNNDing(TARSItemKNN):

@@ -7,10 +7,10 @@ import pandas as pd
 from scipy.sparse import csr_matrix
 from sklearn.metrics.pairwise import cosine_similarity
 
-from streamsight2.algorithms.base import TopKItemSimilarityMatrixAlgorithm
-from streamsight2.algorithms.utils import get_top_K_values
-from streamsight2.matrix import ItemUserBasedEnum
-from streamsight2.utils.util import add_rows_to_csr_matrix
+from streamsightv2.algorithms.base import TopKItemSimilarityMatrixAlgorithm
+from streamsightv2.algorithms.utils import get_top_K_values
+from streamsightv2.matrix import ItemUserBasedEnum
+from streamsightv2.utils.util import add_rows_to_csr_matrix
 
 logger = logging.getLogger(__name__)
 

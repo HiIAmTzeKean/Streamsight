@@ -1,8 +1,8 @@
 import pytest
-from streamsight2.settings.sliding_window_setting import SlidingWindowSetting
+from streamsightv2.settings.sliding_window_setting import SlidingWindowSetting
 from test.conftest import BACKGROUND_T, WINDOW_SIZE, SEED, N_SEQ_DATA, SEED
-from streamsight2.evaluators import EvaluatorStreamerBuilder
-from streamsight2.algorithms import ItemKNNIncremental
+from streamsightv2.evaluators import EvaluatorStreamerBuilder
+from streamsightv2.algorithms import ItemKNNIncremental
 
 
 @pytest.fixture()
@@ -32,7 +32,7 @@ class TestStreamer():
         algo_id = evaluator.register_algorithm(algo)
         print(algo_id)
 
-        from streamsight2.algorithms import ItemKNNStatic
+        from streamsightv2.algorithms import ItemKNNStatic
         external_model = ItemKNNIncremental(K=10)
         external_model_id = evaluator.register_algorithm(external_model)
         print(external_model_id)

@@ -5,7 +5,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 
-from streamsight2.metadata.base import Metadata
+from streamsightv2.metadata.base import Metadata
 
 logger = logging.getLogger(__name__)
 

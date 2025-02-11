@@ -2,9 +2,9 @@ import logging
 from typing import Optional
 
 
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.settings import Setting
-from streamsight2.settings.splitters import (
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.settings import Setting
+from streamsightv2.settings.splitters import (
     NLastInteractionSplitter,
 )
 

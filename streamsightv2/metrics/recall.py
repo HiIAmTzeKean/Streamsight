@@ -3,7 +3,7 @@ import logging
 import scipy.sparse
 from scipy.sparse import csr_matrix
 
-from streamsight2.metrics.base import ListwiseMetricK
+from streamsightv2.metrics.base import ListwiseMetricK
 
 logger = logging.getLogger(__name__)
 

@@ -5,13 +5,13 @@ from warnings import warn
 
 from tqdm import tqdm
 
-from streamsight2.algorithms import Algorithm
-from streamsight2.evaluators.accumulator import MetricAccumulator
-from streamsight2.evaluators.base import EvaluatorBase
-from streamsight2.metrics import Metric
-from streamsight2.registries import (ALGORITHM_REGISTRY, METRIC_REGISTRY,
+from streamsightv2.algorithms import Algorithm
+from streamsightv2.evaluators.accumulator import MetricAccumulator
+from streamsightv2.evaluators.base import EvaluatorBase
+from streamsightv2.metrics import Metric
+from streamsightv2.registries import (ALGORITHM_REGISTRY, METRIC_REGISTRY,
                                     AlgorithmEntry, MetricEntry)
-from streamsight2.settings import EOWSetting, Setting
+from streamsightv2.settings import EOWSetting, Setting
 
 logger = logging.getLogger(__name__)
 

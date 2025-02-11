@@ -1,4 +1,4 @@
-from streamsight2.algorithms import ItemKNNRolling
+from streamsightv2.algorithms import ItemKNNRolling
 
 def test_ItemKNNRolling(setting):
     algo = ItemKNNRolling(K=10)

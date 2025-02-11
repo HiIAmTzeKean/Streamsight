@@ -4,10 +4,10 @@ from warnings import warn
 
 import numpy as np
 from tqdm import tqdm
-from streamsight2.matrix import (InteractionMatrix,
+from streamsightv2.matrix import (InteractionMatrix,
                                 TimestampAttributeMissingError)
-from streamsight2.settings import Setting
-from streamsight2.settings.splitters import (NPastInteractionTimestampSplitter,
+from streamsightv2.settings import Setting
+from streamsightv2.settings.splitters import (NPastInteractionTimestampSplitter,
                                            TimestampSplitter)
 
 logger = logging.getLogger(__name__)

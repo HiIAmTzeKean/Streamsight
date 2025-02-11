@@ -6,8 +6,8 @@ from typing import Optional
 import pandas as pd
 from deprecation import deprecated
 
-from streamsight2.evaluators.util import MetricLevelEnum
-from streamsight2.metrics import Metric
+from streamsightv2.evaluators.util import MetricLevelEnum
+from streamsightv2.metrics import Metric
 
 logger = logging.getLogger(__name__)
 

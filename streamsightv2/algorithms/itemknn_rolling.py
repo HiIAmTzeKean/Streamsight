@@ -1,5 +1,5 @@
 import logging
-from streamsight2.algorithms.itemknn import ItemKNN
+from streamsightv2.algorithms.itemknn import ItemKNN
 
 logger = logging.getLogger(__name__)
 

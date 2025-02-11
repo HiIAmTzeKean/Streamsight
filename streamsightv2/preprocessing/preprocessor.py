@@ -4,8 +4,8 @@ from typing import List, Literal
 import pandas as pd
 from tqdm.auto import tqdm
 
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.preprocessing.filter import Filter
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.preprocessing.filter import Filter
 
 tqdm.pandas()
 

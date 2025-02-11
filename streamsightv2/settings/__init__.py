@@ -130,14 +130,14 @@ end of window is reached. Note that this exception is declared the base file.
     EOWSetting
 """
 
-from streamsight2.settings.base import Setting, EOWSetting
-from streamsight2.settings.single_time_point_setting import (
+from streamsightv2.settings.base import Setting, EOWSetting
+from streamsightv2.settings.single_time_point_setting import (
     SingleTimePointSetting,
 )
-from streamsight2.settings.sliding_window_setting import SlidingWindowSetting
-from streamsight2.settings.leave_n_out_setting import LeaveNOutSetting
-from streamsight2.settings.processor import Processor, PredictionDataProcessor
-from streamsight2.settings.splitters import (
+from streamsightv2.settings.sliding_window_setting import SlidingWindowSetting
+from streamsightv2.settings.leave_n_out_setting import LeaveNOutSetting
+from streamsightv2.settings.processor import Processor, PredictionDataProcessor
+from streamsightv2.settings.splitters import (
     TimestampSplitter,
     NPastInteractionTimestampSplitter,
     NLastInteractionSplitter

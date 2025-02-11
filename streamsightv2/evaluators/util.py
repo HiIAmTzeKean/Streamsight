@@ -4,8 +4,8 @@ from enum import StrEnum
 from typing import Tuple
 from uuid import UUID
 
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.registries.registry import AlgorithmStateEnum
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.registries.registry import AlgorithmStateEnum
 
 logger = logging.getLogger(__name__)
 

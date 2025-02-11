@@ -1,4 +1,4 @@
-from streamsight2.algorithms import Popularity
+from streamsightv2.algorithms import Popularity
 
 def test_Popularity(setting):
     algo = Popularity(K=10)

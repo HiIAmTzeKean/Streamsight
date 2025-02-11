@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from streamsight2.datasets.base import Dataset
-from streamsight2.metadata.lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
+from streamsightv2.datasets.base import Dataset
+from streamsightv2.metadata.lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
 
 logger = logging.getLogger(__name__)
 tqdm.pandas()

@@ -9,11 +9,11 @@ from warnings import warn
 
 import pandas as pd
 
-from streamsight2.matrix import InteractionMatrix
-from streamsight2.preprocessing.filter import (Filter, MinItemsPerUser,
+from streamsightv2.matrix import InteractionMatrix
+from streamsightv2.preprocessing.filter import (Filter, MinItemsPerUser,
                                               MinUsersPerItem)
-from streamsight2.preprocessing.preprocessor import DataFramePreprocessor
-from streamsight2.utils import ProgressBar
+from streamsightv2.preprocessing.preprocessor import DataFramePreprocessor
+from streamsightv2.utils import ProgressBar
 
 logger = logging.getLogger(__name__)
 
