@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "streamsight"
-version = "1.0.0"
+name = "streamsightv2"
+version = "0.1.1"
 description = "A toolkit for offline evaluation of Recommender Systems."
-authors = ["Ng Tze Kean <ngtzekean@gmail.com>"]
+authors = ["Ng Tze Kean <ngtzekean@gmail.com>", "Joshua Khoo <joshuajr13@gmail.com>"]
 readme = "README.md"
-repository = "https://github.com/HiIAmTzeKean/Streamsight"
+repository = "https://github.com/suenalaba/streamsightv2"
 documentation = "https://hiiamtzekean.github.io/Streamsight/"
 keywords = ["recsys", "toolkit", "practical evaluation", "global timeline"]
 

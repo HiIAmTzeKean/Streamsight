@@ -32,8 +32,8 @@ has already been cloned else you can run the following code on terminal before
 continuing.
 
 ```shell
-git clone https://github.com/HiIAmTzeKean/Streamsight.git
-cd Streamsight
+git clone https://github.com/suenalaba/streamsightv2
+cd streamsightv2
 ```
 
 ### Installation through poetry
@@ -64,10 +64,10 @@ either of the commands below. The link to PyPI can be found
 
 ```shell
 # To install via pip
-pip install streamsight
+pip install streamsightv2
 
-# To install with streamsight as a dependency
-poetry add streamsight
+# To install with streamsightv2 as a dependency
+poetry add streamsightv2
 ```
 
 ## Documentation
