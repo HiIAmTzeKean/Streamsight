@@ -73,7 +73,7 @@ poetry add streamsightv2
 ## Documentation
 
 The documentation can be found [here](https://hiiamtzekean.github.io/Streamsight/)
-and [repository](https://github.com/HiIAmTzeKean/Streamsight) on Github.
+and [repository](https://github.com/suenalaba/streamsightv2) on Github.
 
 ## Report and Citation
 
