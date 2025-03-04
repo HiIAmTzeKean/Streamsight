@@ -29,7 +29,9 @@ baseline algorithms are implemented in the module.
     :toctree: generated/
 
     Random
-    Popularity
+    RecentPopularity
+    DecayPopularity
+    MostPop
 
 Item Similarity Algorithms
 ----------------------------
@@ -47,9 +49,26 @@ yield the best performance.
 
     ItemKNN
     ItemKNNIncremental
+    ItemKNNIncrementalMovieLens100K
     ItemKNNRolling
     ItemKNNStatic
+
+Time-Aware Item Similarity Algorithms
+-------------------------------------
+
+This is an extension of the item-based KNN algorithm. 
+The time-aware item-based KNN algorithms applies a decay factor to the timestamps of interactions. 
+This gives heavier weight to interactions that are more recent.
+
+.. autosummary::
+    :toctree: generated/
+
+    TARSItemKNN
+    TARSItemKNNLiu
+    TARSItemKNNVaz
+    TARSItemKNNDing
 """
+
 from streamsightv2.algorithms.base import Algorithm
 from streamsightv2.algorithms.recent_popularity import RecentPopularity
 from streamsightv2.algorithms.decay_popularity import DecayPopularity

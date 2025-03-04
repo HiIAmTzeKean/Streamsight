@@ -334,7 +334,7 @@ class MetricTopK(Metric):
 
 
 class ListwiseMetricK(MetricTopK):
-    """Base class for all metrics that can be calculated for every Top-K recommendation list,
+    """Base class for all listwise metrics that can be calculated for every Top-K recommendation list,
     i.e. one value for each user.
     Examples are: PrecisionK, RecallK, DCGK, NDCGK.
 
@@ -398,7 +398,7 @@ class ListwiseMetricK(MetricTopK):
         return self._scores.mean()
 
 class ElementwiseMetricK(MetricTopK):
-    """Base class for all metrics that can be calculated for
+    """Base class for all elementwise metrics that can be calculated for
     each user-item pair in the Top-K recommendations.
 
     :attr:`results` contains an entry for each user-item pair.

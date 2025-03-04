@@ -12,6 +12,9 @@ This module provides the functionality to evaluate the performance of the recomm
     Metric
     PrecisionK
     RecallK
+    DCGK
+    NDCGK
+    HitK
 """
 
 from streamsightv2.metrics.base import Metric

@@ -32,6 +32,9 @@ class TARSItemKNNDing(TARSItemKNN):
         make sure to pick a value below the number of columns of the matrix to fit on.
         Defaults to 200
     :type K: int, Optional
+    :param pad_with_popularity: Whether to pad the similarity matrix with RecentPop Algorithm.
+        Defaults to True.
+    :type pad_with_popularity: bool, optional
     :param predict_decay: Defines the decay scaling used for decay during prediction.
         Defaults to 1 / (24 * 3600).
         This means for every day since an interaction, the value of it will be divided by 'e'.
@@ -39,6 +42,8 @@ class TARSItemKNNDing(TARSItemKNN):
     :param similarity: Which similarity measure to use. Defaults to `"cosine"`.
         ``["cosine", "conditional_probability"]`` are supported.
     :type similarity: str, optional
+
+    This code is adapted from RecPack :cite:`recpack`
     """
 
     SUPPORTED_SIMILARITIES = ["cosine", "conditional_probability"]

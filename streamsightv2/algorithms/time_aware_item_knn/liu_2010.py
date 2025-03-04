@@ -38,6 +38,9 @@ class TARSItemKNNLiu(TARSItemKNN):
         make sure to pick a value below the number of columns of the matrix to fit on.
         Defaults to 200
     :type K: int, optional
+    :param pad_with_popularity: Whether to pad the similarity matrix with RecentPop Algorithm.
+        Defaults to True.
+    :type pad_with_popularity: bool, optional
     :param fit_decay: Defines the decay scaling used for decay during model fitting.
         Defaults to 1 / (24 * 3600).
         This means for every day since an interaction, the value of it will be divided by 'e'.
@@ -46,6 +49,8 @@ class TARSItemKNNLiu(TARSItemKNN):
         Defaults to 1 / (24 * 3600).
         This means for every day since an interaction, the value of it will be divided by 'e'.
     :type predict_decay: float, optional
+
+    This code is adapted from RecPack :cite:`recpack`
     """
 
     def __init__(

@@ -65,6 +65,9 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
         make sure to pick a value below the number of columns of the matrix to fit on.
         Defaults to 200
     :type K: int, Optional
+    :param pad_with_popularity: Whether to pad the similarity matrix with RecentPop Algorithm.
+        Defaults to True.
+    :type pad_with_popularity: bool, optional
     :param fit_decay: Defines the decay scaling used for decay during model fitting.
         Defaults to `` 1 / (24 * 3600)`` (one day).
     :type fit_decay: float, optional
@@ -80,6 +83,8 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
     :type similarity: str, Optional
     :param decay_function: The decay function to use, defaults to ``"exponential"``.
         Supported values are ``["exponential", "log", "linear", "concave", "convex", "inverse"]``
+
+    This code is adapted from RecPack :cite:`recpack`
     """
 
     SUPPORTED_SIMILARITIES = ["cosine", "conditional_probability", "pearson"]
