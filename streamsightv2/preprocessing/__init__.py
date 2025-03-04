@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.preprocessing
+.. currentmodule:: streamsightv2.preprocessing
 
 Filters
 -------

@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.registries
+.. currentmodule:: streamsightv2.registries
 
 Registry
 ----------------
@@ -13,8 +13,8 @@ new algorithms via the `register` function.
 
 Example::
     
-        from streamsight.pipelines import ALGORITHM_REGISTRY
-        from streamsight.algorithms import ItemKNNStatic
+        from streamsightv2.pipelines import ALGORITHM_REGISTRY
+        from streamsightv2.algorithms import ItemKNNStatic
     
         algo = ALGORITHM_REGISTRY.get('ItemKNNStatic')(K=10)
         ALGORITHM_REGISTRY.register('algo_1', ItemKNNStatic)

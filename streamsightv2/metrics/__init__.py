@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.metrics
+.. currentmodule:: streamsightv2.metrics
 
 Metrics
 ----------

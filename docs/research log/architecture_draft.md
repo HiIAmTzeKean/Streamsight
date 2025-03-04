@@ -162,7 +162,7 @@ the `load()` API is called. This will load the dataset into a `InteractionMatrix
 class.
 
 ```python
-from streamsight.datasets import AmazonMusicDataset
+from streamsightv2.datasets import AmazonMusicDataset
 
 dataset = AmazonMusicDataset()
 data = dataset.load()

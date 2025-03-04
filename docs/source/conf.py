@@ -10,9 +10,9 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'streamsight'
-copyright = '2024, Ng Tze Kean'
-author = "HiIAmTzeKean <ngtzekean@gmail.com>"
+project = 'streamsightv2'
+copyright = '2025, Joshua Khoo, Ng Tze Kean'
+author = "suenalaba <joshuajr13@gmail.com>, HiIAmTzeKean <ngtzekean@gmail.com>"
 release = '0.2.1'
 
 # -- General configuration ---------------------------------------------------

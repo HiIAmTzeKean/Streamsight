@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.utils 
+.. currentmodule:: streamsightv2.utils 
 
 Utility
 -------------
@@ -35,8 +35,8 @@ Example
     import streamsight
 
     # Set log level to INFO and suppress warnings
-    streamsight.log_level_by_name("INFO")
-    streamsight.suppress_warnings(suppress=True)
+    streamsightv2.log_level_by_name("INFO")
+    streamsightv2.suppress_warnings(suppress=True)
 
     # Log some information
     logger = logging.getLogger("streamsight")

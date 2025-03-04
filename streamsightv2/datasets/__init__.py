@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.datasets
+.. currentmodule:: streamsightv2.datasets
 
 Dataset
 -------------
@@ -41,7 +41,7 @@ and will be obtained from the file in the directory.
 
 .. code-block:: python
 
-    from streamsight.datasets import AmazonMusicDataset
+    from streamsightv2.datasets import AmazonMusicDataset
 
     dataset = AmazonMusicDataset()
     data = dataset.load()
@@ -56,12 +56,12 @@ ids are incrementing in the order of time.
 
 .. code-block:: python
 
-    from streamsight.datasets import AmazonMusicDataset
+    from streamsightv2.datasets import AmazonMusicDataset
 
     dataset = AmazonMusicDataset(use_default_filters=True)
     data = dataset.load(apply_filters=False)
 
-For an overview of available filters see :mod:`streamsight.preprocessing`
+For an overview of available filters see :mod:`streamsightv2.preprocessing`
 """
 
 from streamsightv2.datasets.base import Dataset

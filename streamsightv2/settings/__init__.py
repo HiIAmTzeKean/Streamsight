@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.settings
+.. currentmodule:: streamsightv2.settings
 
 Setting
 ------------
@@ -68,8 +68,8 @@ and will be obtained from the file in the directory.
 
 .. code-block:: python
 
-    from streamsight.datasets import AmazonMovieDataset
-    from streamsight.settings import SlidingWindowSetting
+    from streamsightv2.datasets import AmazonMovieDataset
+    from streamsightv2.settings import SlidingWindowSetting
 
     dataset = AmazonMovieDataset(use_default_filters=False)
     data = dataset.load()
