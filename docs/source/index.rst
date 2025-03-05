@@ -47,6 +47,7 @@ Contents
     streamsightv2.preprocessing
     streamsightv2.datasets
     streamsightv2.settings
+    streamsightv2.metadata
 
 .. toctree::
     :maxdepth: 1
