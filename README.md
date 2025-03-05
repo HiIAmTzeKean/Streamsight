@@ -1,6 +1,6 @@
 # Streamsight
 
-![streamsight-logo](assets/streamsight-logo.png)
+![streamsight-logo](https://suenalaba.github.io/Streamsightv2/_static/logo_removebg.png)
 
 Streamsight is an offline Reccomender Systems (RecSys) evaluation toolkit that respects a global timeline.
 The aim is to partition the data into different windows where data is incrementally released for the programmer
@@ -8,14 +8,14 @@ to fit, train and submit predictions. This aims to provide a close simulation of
 RecSys algorithms. This library is built on top of the original V1 [Streamsight](https://github.com/HiIAmTzeKean/Streamsight).
 
 ### Full Flow Structure
-![full-flow](assets/full-flow.png)
+![full-flow](https://suenalaba.github.io/Streamsightv2/_static/full-flow.png)
 
 [![PyPI Latest Release](https://img.shields.io/pypi/v/streamsightv2.svg)](https://pypi.org/project/streamsightv2/)&nbsp;&nbsp;
 [![Docs](https://github.com/HiIAmTzeKean/Streamsight/actions/workflows/pages/pages-build-deployment/badge.svg)](https://hiiamtzekean.github.io/Streamsight/)&nbsp;&nbsp;
 [![Python version](https://img.shields.io/badge/python-3.12.5-blue)](https://www.python.org/downloads/)
 
 ### Pipeline Structure
-![library-structure](assets/pipeline-structure.png)
+![library-structure](https://suenalaba.github.io/Streamsightv2/_static/pipeline-structure.png)
 
 
 ## Getting Started
@@ -46,6 +46,20 @@ or raising a [pull request](https://github.com/suenalaba/streamsightv2/pulls) to
 ## Documentation
 The documentation can be found [here](https://suenalaba.github.io/streamsightv2/)
 and [repository](https://github.com/suenalaba/streamsightv2) on Github.
+
+## Publishing
+1. Run the following command to build the library
+```bash
+poetry build
+```
+2. Ensure that your config has been set with
+```bash
+poetry config pypi-token.pypi <YOUR_PYPI_API_TOKEN_HERE>
+```
+3. Publish the package
+```bash
+poetry publish
+```
 
 ## Citation
 
