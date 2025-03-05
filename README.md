@@ -1,79 +1,50 @@
 # Streamsight
 
-![logo](assets/streamsight-logo.png)
+![streamsight-logo](assets/streamsight-logo.png)
 
 Streamsight is an offline Reccomender Systems (RecSys) evaluation toolkit that respects a global timeline.
 The aim is to partition the data into different windows where data is incrementally released for the programmer
 to fit, train and submit predictions. This aims to provide a close simulation of an online setting when evaluating
 RecSys algorithms.
 
+### Full Flow Structure
 ![full-flow](assets/full-flow.png)
 
 [![PyPI Latest Release](https://img.shields.io/pypi/v/streamsightv2.svg)](https://pypi.org/project/streamsightv2/)&nbsp;&nbsp;
 [![Docs](https://github.com/HiIAmTzeKean/Streamsight/actions/workflows/pages/pages-build-deployment/badge.svg)](https://hiiamtzekean.github.io/Streamsight/)&nbsp;&nbsp;
 [![Python version](https://img.shields.io/badge/python-3.12.5-blue)](https://www.python.org/downloads/)
 
-## Table of Contents
-- [Streamsight](#streamsight)
-  - [Table of Contents](#table-of-contents)
-  - [Installation with Github](#installation-with-github)
-    - [Installation through poetry](#installation-through-poetry)
-    - [Installation through pip](#installation-through-pip)
-  - [Installation with PyPI](#installation-with-pypi)
-  - [Documentation](#documentation)
-  - [Report and Citation](#report-and-citation)
+### Pipeline Structure
+![library-structure](assets/pipeline-structure.png)
 
 
-## Installation with Github
-
-The package can be installed quickly with python `poetry` or the traditional `pip`
-method. The recommended way of installation would be through `poetry` as it will
-help install the dependencies along with the package. We assume that the repository
-has already been cloned else you can run the following code on terminal before
-continuing.
-
-```shell
+## Getting Started
+1. Clone the repository
+```bash
 git clone https://github.com/suenalaba/streamsightv2
 cd streamsightv2
 ```
 
-### Installation through poetry
-
-The following code assumes that you do not have `poetry` installed yet. If you
-using MacOS, you might want to consider installing `poetry` with homebrew instead.
-
-```shell
+2. Install dependencies locally
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install .
+```
+Alternatively, dependencies can be installed with poetry
+```bash
 pip install poetry
-# MacOS can consider using brew install poetry
 poetry install
 ```
+The dependencies are listed in `pyproject.toml`.
 
-### Installation through pip
-
-The following code below assumes that you have `pip` installed and is in system
-PATH.
-
-```shell
-pip install -e .
-```
-
-## Installation with PyPI
-
-Alternatively `streamsight` is available on PyPi and can be installed through
-either of the commands below. The link to PyPI can be found
-[here](https://pypi.org/project/streamsight/).
-
-```shell
-# To install via pip
-pip install streamsightv2
-
-# To install with streamsightv2 as a dependency
-poetry add streamsightv2
-```
+## Contributing
+- We welcome all contributors, be it reporting an [issue](https://github.com/suenalaba/streamsightv2/issues),
+or raising a [pull request](https://github.com/suenalaba/streamsightv2/pulls) to fix an issue.
+- When you make changes, rerun `pip install .` to test your changes.
 
 ## Documentation
-
-The documentation can be found [here](https://hiiamtzekean.github.io/Streamsight/)
+The documentation can be found [here](https://suenalaba.github.io/streamsightv2/)
 and [repository](https://github.com/suenalaba/streamsightv2) on Github.
 
 ## Citation
