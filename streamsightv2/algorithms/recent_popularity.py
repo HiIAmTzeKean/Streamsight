@@ -38,42 +38,26 @@ class RecentPopularity(Algorithm):
         a = np.zeros(X.shape[1])
         a[ind] = sorted_scores[ind]
         self.sorted_scores_ = a
-        print("Sorted scores recentpop: ", self.sorted_scores_)
         return self
 
     def _predict(self, X: csr_matrix, predict_im: InteractionMatrix) -> csr_matrix:
         """
         Predict the K most popular item for each user using only train data from the latest window.
         """
-        # print("Nonzero: ", list(set(X.nonzero()[0])))
-        # users = list(set(X.nonzero()[0]))
-        # X_pred = lil_matrix(X.shape)
-        # print("XPRED before: ", X_pred.toarray())
-        # X_pred[users] = self.sorted_scores_
-        # print("XPRED recentpop: ", X_pred.toarray())
-        # return X_pred.tocsr()
-
-        # NEW ALGO
         if predict_im is None:
             raise AttributeError("Predict frame with requested ID is required for Popularity algorithm")
         
         predict_frame = predict_im._df
 
         users = predict_frame["uid"].unique().tolist()
-        print("Users: ", users)
         known_item_id = X.shape[1]
-        print("Known item id: ", known_item_id)
         
         # predict_frame contains (user_id, -1) pairs
         max_user_id  = predict_frame["uid"].max() + 1 
-        print("Max user id: ", max_user_id)
         intended_shape = (max(max_user_id, X.shape[0]), known_item_id)
-        print("Intended shape: ", intended_shape)
 
         X_pred = lil_matrix(intended_shape)
-        # print("X_pred: ", X_pred.toarray())
         X_pred[users] = self.sorted_scores_
-        # print("X_pred after: ", X_pred.toarray())
 
         return X_pred.tocsr()
 

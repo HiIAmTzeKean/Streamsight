@@ -94,30 +94,19 @@ class DecayPopularity(Algorithm):
         """
         Predict the K most popular item for each user scaled by the decay factor.
         """
-        # users = list(set(X.nonzero()[0]))
-        # X_pred = lil_matrix(X.shape)
-        # X_pred[users] = self.decayed_scores_
-        # return X_pred.tocsr()
-    
         if predict_im is None:
             raise AttributeError("Predict frame with requested ID is required for Popularity algorithm")
 
         predict_frame = predict_im._df
 
         users = predict_frame["uid"].unique().tolist()
-        print("Users: ", users)
         known_item_id = X.shape[1]
-        print("Known item id: ", known_item_id)
         
         # predict_frame contains (user_id, -1) pairs
         max_user_id  = predict_frame["uid"].max() + 1 
-        print("Max user id: ", max_user_id)
         intended_shape = (max(max_user_id, X.shape[0]), known_item_id)
-        print("Intended shape: ", intended_shape)
 
         X_pred = lil_matrix(intended_shape)
-        print("X_pred: ", X_pred.toarray())
         X_pred[users] = self.decayed_scores_
-        print("X_pred after: ", X_pred.toarray())
 
         return X_pred.tocsr()

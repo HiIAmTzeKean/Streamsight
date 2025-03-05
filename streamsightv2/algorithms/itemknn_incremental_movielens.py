@@ -64,54 +64,41 @@ class ItemKNNIncrementalMovieLens100K(ItemKNN):
             self.training_data = X.copy()
         else:
             self.append_training_data(X)
-        print("Training data: ", self.training_data.toarray())
         super()._fit(self.training_data)
         return self
     
     def _predict(self, X: csr_matrix, predict_im: InteractionMatrix) -> csr_matrix:
         """Predict the K most similar items for each item using the latest data."""
         X_pred = super()._predict(self.training_data)
-        print("In ItemKNNIncrementalMovieLens100K _predict: ", X_pred.toarray())
         # ID indexing starts at 0, so max_id + 1 is the number of unique IDs
         max_user_id = predict_im.max_user_id + 1
-        print("Max user ID: ", max_user_id)
         max_item_id = predict_im.max_item_id + 1
-        print("Max item ID: ", max_item_id)
         intended_shape = (
             max(max_user_id, X.shape[0]),
             max(max_item_id, X.shape[1]),
         )
-        print("X.shape: ", X.shape)
-        print("Intended shape: ", intended_shape)
 
         predict_frame = predict_im._df
-        print("Predict frame: ", predict_frame)
 
         if X_pred.shape == intended_shape:
             return X_pred
 
         known_user_id, known_item_id = X_pred.shape
-        print("Known user ID: ", known_user_id)
-        print("Known item ID: ", known_item_id)
         X_pred = add_rows_to_csr_matrix(
             X_pred, intended_shape[0] - known_user_id
         )
-        print("X_pred after adding rows: ", X_pred.toarray())
         logger.debug(
             f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with items"
         )
         to_predict = predict_frame.value_counts("uid")
-        print("To predict: ", to_predict)
 
         # pad users with items from most similar user
         user_similarity_matrix = self.get_user_similarity_matrix()
-        print("User similarity matrix: ", user_similarity_matrix)
         for user_id in to_predict.index:
             if user_id >= known_user_id:
                 most_similar_user_idx = np.argmax(user_similarity_matrix[user_id][:known_user_id])
                 X_pred[user_id, :] = X_pred[most_similar_user_idx, :]
     
-        print("X_pred after padding: ", X_pred.toarray())
         logger.debug(f"Padding by {self.name} completed")
         return X_pred
 

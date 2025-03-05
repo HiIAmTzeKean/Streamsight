@@ -5,7 +5,7 @@
 Streamsight is an offline Reccomender Systems (RecSys) evaluation toolkit that respects a global timeline.
 The aim is to partition the data into different windows where data is incrementally released for the programmer
 to fit, train and submit predictions. This aims to provide a close simulation of an online setting when evaluating
-RecSys algorithms.
+RecSys algorithms. This library is built on top of the original V1 [Streamsight](https://github.com/HiIAmTzeKean/Streamsight).
 
 ### Full Flow Structure
 ![full-flow](assets/full-flow.png)

@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "streamsightv2"
-version = "0.1.2"
+version = "0.1.3"
 description = "A toolkit for offline evaluation of Recommender Systems."
 authors = ["Joshua Khoo <joshuajr13@gmail.com>", "Ng Tze Kean <ngtzekean@gmail.com>"]
 readme = "README.md"
 repository = "https://github.com/suenalaba/streamsightv2"
-documentation = "https://hiiamtzekean.github.io/Streamsight/"
-keywords = ["recsys", "toolkit", "practical evaluation", "global timeline"]
+documentation = "https://suenalaba.github.io/streamsightv2"
+keywords = ["recsys", "recommendation", "practical evaluation", "global timeline", "reccomender systems", "data leakage"]
 
 [tool.poetry.dependencies]
 python = "3.12.5"

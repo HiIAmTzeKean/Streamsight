@@ -154,7 +154,6 @@ class Algorithm(BaseEstimator,ABC):
         """
         start = time.time()
         X_transformed = self._transform_fit_input(X)
-        # print("X_transformed: ", X_transformed.toarray())
         self._fit(X_transformed)
 
         self._check_fit_complete()

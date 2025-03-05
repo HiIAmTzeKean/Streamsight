@@ -1,3 +1,10 @@
+# Adopted from RecPack, An Experimentation Toolkit for Top-N Recommendation
+# Copyright (C) 2020  Froomle N.V.
+# License: GNU AGPLv3 - https://gitlab.com/recpack-maintainers/recpack/-/blob/master/LICENSE
+# Author:
+#   Lien Michiels
+#   Robin Verachtert
+
 import logging
 from typing import Optional
 import numpy as np
@@ -31,10 +38,10 @@ class NDCGK(ListwiseMetricK):
 
         \\text{IDCG}(u) = \\sum\\limits_{j=1}^{\\text{min}(K, |y^{true}_u|)} \\frac{1}{\\log_2 (j + 1)}
 
-    ref: RecPack
-        
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
+
+    This code is adapted from RecPack :cite:`recpack`
     """
 
     def __init__(self, K:Optional[int] = 10, timestamp_limit: Optional[int] = None):

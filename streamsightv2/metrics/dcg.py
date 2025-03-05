@@ -1,3 +1,10 @@
+# Adopted from RecPack, An Experimentation Toolkit for Top-N Recommendation
+# Copyright (C) 2020  Froomle N.V.
+# License: GNU AGPLv3 - https://gitlab.com/recpack-maintainers/recpack/-/blob/master/LICENSE
+# Author:
+#   Lien Michiels
+#   Robin Verachtert
+
 import logging
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -19,10 +26,11 @@ class DCGK(ListwiseMetricK):
 
         \\text{DiscountedCumulativeGain}(u) = \\sum\\limits_{i \\in Top-K(u)} \\frac{y^{true}_{u,i}}{\\log_2 (\\text{rank}(u,i) + 1)}
 
-    ref: RecPack
         
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
+    
+    This code is adapted from RecPack :cite:`recpack`
     """
 
     def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:

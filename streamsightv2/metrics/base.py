@@ -75,8 +75,6 @@ class Metric:
         :type y_pred: csr_matrix
         """
         y_true, y_pred = self._eliminate_empty_users(y_true, y_pred)
-        print("In metric calculate, y_true: ", y_true.toarray())
-        print("In metric calculate, y_pred: ", y_pred.toarray())
         self._verify_shape(y_true, y_pred)
         self._set_shape(y_true)
         self._calculate(y_true, y_pred)

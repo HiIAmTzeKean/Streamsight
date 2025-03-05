@@ -66,9 +66,7 @@ class ItemKNN(TopKItemSimilarityMatrixAlgorithm):
         We assume that X is a binary matrix of shape (n_users, n_items)
         """
         item_similarities = compute_cosine_similarity(X)
-        print("Item similarities: ", item_similarities.toarray())
         item_similarities = get_top_K_values(item_similarities, K=self.K)
-        print("Item similarities after get_top_K_values: ", item_similarities.toarray())
 
         self.similarity_matrix_ = item_similarities
 

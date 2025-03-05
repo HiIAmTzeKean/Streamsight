@@ -1,3 +1,10 @@
+# Adopted from RecPack, An Experimentation Toolkit for Top-N Recommendation
+# Copyright (C) 2020  Froomle N.V.
+# License: GNU AGPLv3 - https://gitlab.com/recpack-maintainers/recpack/-/blob/master/LICENSE
+# Author:
+#   Lien Michiels
+#   Robin Verachtert
+
 import logging
 
 from scipy.sparse import csr_matrix, lil_matrix
@@ -15,10 +22,11 @@ class HitK(ElementwiseMetricK):
   Detailed :attr:`results` show which of the items in the list of Top-K recommended items
   were hits and which were not.
 
-  This code is adapted from RecPack :cite:`recpack`
     
   :param K: Size of the recommendation list consisting of the Top-K item predictions.
   :type K: int
+
+  This code is adapted from RecPack :cite:`recpack`
   """
 
   def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix) -> None:
