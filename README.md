@@ -1,6 +1,6 @@
 # Streamsight
 
-![streamsight-logo](https://suenalaba.github.io/Streamsightv2/_static/logo_removebg.png)
+![streamsight-logo](assets/streamsight-logo.png)
 
 Streamsight is an offline Reccomender Systems (RecSys) evaluation toolkit that respects a global timeline.
 The aim is to partition the data into different windows where data is incrementally released for the programmer
@@ -8,14 +8,11 @@ to fit, train and submit predictions. This aims to provide a close simulation of
 RecSys algorithms. This library is built on top of the original V1 [Streamsight](https://github.com/HiIAmTzeKean/Streamsight).
 
 ### Full Flow Structure
-![full-flow](https://suenalaba.github.io/Streamsightv2/_static/full-flow.png)
+![full-flow](assets/full_flow.png)
 
 [![PyPI Latest Release](https://img.shields.io/pypi/v/streamsightv2.svg)](https://pypi.org/project/streamsightv2/)&nbsp;&nbsp;
-[![Docs](https://github.com/HiIAmTzeKean/Streamsight/actions/workflows/pages/pages-build-deployment/badge.svg)](https://hiiamtzekean.github.io/Streamsight/)&nbsp;&nbsp;
+[![Docs](https://github.com/suenalaba/Streamsightv2/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/suenalaba/Streamsightv2/)&nbsp;&nbsp;
 [![Python version](https://img.shields.io/badge/python-3.12.5-blue)](https://www.python.org/downloads/)
-
-### Pipeline Structure
-![library-structure](https://suenalaba.github.io/Streamsightv2/_static/pipeline-structure.png)
 
 
 ## Getting Started
