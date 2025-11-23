@@ -31,7 +31,7 @@ could potentially cause a chuck of data to be lost.
     YelpDataset
     LastFMDataset
     MovieLens100K
-    
+
 Example
 ~~~~~~~~~
 
@@ -64,14 +64,14 @@ ids are incrementing in the order of time.
 For an overview of available filters see :mod:`streamsightv2.preprocessing`
 """
 
-from streamsight.datasets.base import Dataset
-from streamsight.datasets.test import TestDataset
 from streamsight.datasets.amazon import (
     AmazonBookDataset,
-    AmazonSubscriptionBoxesDataset,
     AmazonMovieDataset,
     AmazonMusicDataset,
+    AmazonSubscriptionBoxesDataset,
 )
-from streamsight.datasets.yelp import YelpDataset
+from streamsight.datasets.base import Dataset
 from streamsight.datasets.lastfm import LastFMDataset
 from streamsight.datasets.movielens import MovieLens100K
+from streamsight.datasets.test import TestDataset
+from streamsight.datasets.yelp import YelpDataset

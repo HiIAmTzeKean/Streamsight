@@ -1,12 +1,15 @@
 import logging
 import os
 import zipfile
-import pandas as pd
+from typing import ClassVar
+
 import numpy as np
-from streamsight.datasets.base import Dataset
+import pandas as pd
 from tqdm import tqdm
 
+from streamsight.datasets.base import Dataset
 from streamsight.metadata.movielens import MovieLens100kItemMetadata, MovieLens100kUserMetadata
+
 
 logger = logging.getLogger(__name__)
 tqdm.pandas()
@@ -20,21 +23,18 @@ class MovieLensDataset(Dataset):
     This code is adapted from RecPack :cite:`recpack`
     """
 
-    USER_IX = "userId"
+    USER_IX: ClassVar[str]= "userId"
     """Name of the column in the DataFrame that contains user identifiers."""
-    ITEM_IX = "movieId"
+    ITEM_IX: ClassVar[str] = "movieId"
     """Name of the column in the DataFrame that contains item identifiers."""
-    TIMESTAMP_IX = "timestamp"
+    TIMESTAMP_IX: ClassVar[str] = "timestamp"
     """Name of the column in the DataFrame that contains time of interaction in seconds since epoch."""
-    RATING_IX = "rating"
+    RATING_IX: ClassVar[str] = "rating"
     """Name of the column in the DataFrame that contains the rating a user gave to the item."""
-
-    DATASET_URL = "http://files.grouplens.org/datasets/movielens"
-
-    REMOTE_ZIPNAME = ""
+    DATASET_URL: ClassVar[str] = "http://files.grouplens.org/datasets/movielens"
+    REMOTE_ZIPNAME: ClassVar[str] = "ml-100k"
     """Name of the zip-file on the MovieLens server."""
-
-    REMOTE_FILENAME = "ratings.csv"
+    REMOTE_FILENAME: ClassVar[str] = "ratings.csv"
     """Name of the file containing user ratings on the MovieLens server."""
 
     @property
@@ -42,7 +42,7 @@ class MovieLensDataset(Dataset):
         """Default filename that will be used if it is not specified by the user."""
         return f"{self.REMOTE_ZIPNAME}_{self.REMOTE_FILENAME}"
 
-    def _download_dataset(self):
+    def _download_dataset(self) -> None:
         """Downloads the dataset.
 
         Downloads the zipfile, and extracts the ratings file to `self.file_path`
@@ -54,25 +54,19 @@ class MovieLensDataset(Dataset):
         )
 
         # Extract the ratings file which we will use
-        with zipfile.ZipFile(
-            os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}.zip"), "r"
-        ) as zip_ref:
-            zip_ref.extract(
-                f"{self.REMOTE_ZIPNAME}/{self.REMOTE_FILENAME}", self.base_path
-            )
+        with zipfile.ZipFile(os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}.zip"), "r") as zip_ref:
+            zip_ref.extract(f"{self.REMOTE_ZIPNAME}/{self.REMOTE_FILENAME}", self.base_path)
 
         # Rename the ratings file to the specified filename
         os.rename(
-            os.path.join(
-                self.base_path, f"{self.REMOTE_ZIPNAME}/{self.REMOTE_FILENAME}"
-            ),
+            os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}/{self.REMOTE_FILENAME}"),
             self.file_path,
         )
 
 
 class MovieLens100K(MovieLensDataset):
-    """MovieLens 100K dataset.
-    """
+    """MovieLens 100K dataset."""
+
     REMOTE_FILENAME = "u.data"
     REMOTE_ZIPNAME = "ml-100k"
     ITEM_METADATA = None
@@ -99,6 +93,6 @@ class MovieLens100K(MovieLensDataset):
 
         return df
 
-    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame) -> None:
         self.USER_METADATA = MovieLens100kUserMetadata(user_id_mapping=user_id_mapping).load()
         self.ITEM_METADATA = MovieLens100kItemMetadata(item_id_mapping=item_id_mapping).load()

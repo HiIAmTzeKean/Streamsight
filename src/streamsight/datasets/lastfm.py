@@ -1,12 +1,14 @@
 import logging
 import os
 import zipfile
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
 from streamsight.datasets.base import Dataset
 from streamsight.metadata.lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
+
 
 logger = logging.getLogger(__name__)
 tqdm.pandas()
@@ -15,14 +17,15 @@ tqdm.pandas()
 class LastFMDataset(Dataset):
     """
     Last FM dataset.
-    
-    The Last FM dataset contains user interactions with artists. The tags in this 
+
+    The Last FM dataset contains user interactions with artists. The tags in this
     datasets are not used in this implementation. The dataset that will be used
     would the the user_taggedartists-timestamps.dat file. The dataset contains
-    the following columns: [user, artist, tags, timestamp]. 
-    
+    the following columns: [user, artist, tags, timestamp].
+
     The dataset is downloaded from the GroupLens website :cite:`Cantador_RecSys2011`.
     """
+
     USER_IX = "userID"
     """Name of the column in the DataFrame that contains user identifiers."""
     ITEM_IX = "artistID"
@@ -41,11 +44,6 @@ class LastFMDataset(Dataset):
     ITEM_METADATA = None
     USER_METADATA = None
     TAG_METADATA = None
-
-    @property
-    def DEFAULT_FILENAME(self) -> str:
-        """Default filename that will be used if it is not specified by the user."""
-        return self.REMOTE_FILENAME
 
     def fetch_dataset(self, force=False) -> None:
         """Check if dataset is present, if not download
@@ -67,9 +65,9 @@ class LastFMDataset(Dataset):
             with zipfile.ZipFile(path, "r") as zip_ref:
                 zip_ref.extract(file, self.base_path)
 
-        logger.debug(f"Data zipfile is in memory and in dir specified.")
+        logger.debug("Data zipfile is in memory and in dir specified.")
 
-    def _download_dataset(self):
+    def _download_dataset(self) -> None:
         """Downloads the dataset.
 
         Downloads the zipfile, and extracts the interaction file to `self.file_path`
@@ -81,9 +79,7 @@ class LastFMDataset(Dataset):
         )
 
         # Extract the interaction file which we will use
-        with zipfile.ZipFile(
-            os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}.zip"), "r"
-        ) as zip_ref:
+        with zipfile.ZipFile(os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}.zip"), "r") as zip_ref:
             zip_ref.extract(f"{self.REMOTE_FILENAME}", self.base_path)
 
     def _load_dataframe(self) -> pd.DataFrame:
@@ -115,9 +111,8 @@ class LastFMDataset(Dataset):
         )
         df[self.TIMESTAMP_IX] = df[self.TIMESTAMP_IX] // 1_000  # Convert to seconds
         return df
-    
-    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame):
+
+    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame) -> None:
         self.USER_METADATA = LastFMUserMetadata(user_id_mapping=user_id_mapping).load()
         self.ITEM_METADATA = LastFMItemMetadata(item_id_mapping=item_id_mapping).load()
         self.TAG_METADATA = LastFMTagMetadata().load()
-    
