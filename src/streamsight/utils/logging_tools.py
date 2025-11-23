@@ -1,7 +1,8 @@
 import logging
 import warnings
+from contextlib import contextmanager
 from enum import Enum
-from typing import Union
+from typing import Generator, Union
 
 
 class LogLevel(Enum):
@@ -12,65 +13,56 @@ class LogLevel(Enum):
     DEBUG = logging.DEBUG
     NOTSET = logging.NOTSET
 
+    @classmethod
+    def from_string(cls, level: str) -> "LogLevel":
+        """Case-insensitive lookup from string."""
+        return cls[level.upper()]
 
-def log_level(level: Union[int, LogLevel]) -> None:
+
+def log_level(level: Union[int, str, LogLevel]) -> None:
     """
     Change the logging level for root logger.
 
-    :param level: The new logging level (either a `LogLevel` enum member or an int like `logging.DEBUG`).
+    :param level: LogLevel enum, level name (case-insensitive), or int.
     """
-    if isinstance(level, LogLevel):
-        numeric_level = level.value
-    elif isinstance(level, int):
-        numeric_level = level
-    else:
-        raise TypeError("level must be an int or LogLevel enum member")
+    if isinstance(level, str):
+        level = LogLevel.from_string(level)
 
-    logger = logging.getLogger()  # Root logger
+    numeric_level = level.value if isinstance(level, LogLevel) else level
+
+    logger = logging.getLogger()
     logger.setLevel(numeric_level)
     for handler in logger.handlers:
         handler.setLevel(numeric_level)
 
 
-def log_level_by_name(level_name: Union[str, LogLevel]) -> None:
-    """
-    Change the logging level using a `LogLevel` enum member or a level name like 'DEBUG', 'INFO'.
-
-    :param level_name: The name of the logging level (e.g., 'DEBUG') or a `LogLevel` member.
-    """
-    if isinstance(level_name, LogLevel):
-        level = level_name.value
-    elif isinstance(level_name, str):
-        try:
-            level = LogLevel[level_name.upper()].value
-        except KeyError:
-            raise ValueError(f"Invalid logging level name: {level_name}")
-    else:
-        raise TypeError("level_name must be a str or LogLevel enum member")
-
-    log_level(level)
+log_level_by_name = log_level  # Alias for convenience
 
 
-def suppress_warnings(suppress: bool = True) -> None:
-    """
-    Enable or disable the suppression of warnings.
-
-    :param suppress: If True, suppress all warnings. If False, allow warnings.
-    :type suppress: bool
-    """
-    if suppress:
-        logging.captureWarnings(False)  # Stops capturing warnings into logs
-        warnings.filterwarnings("ignore")  # Suppresses all warnings
-    else:
-        logging.captureWarnings(True)  # Resumes capturing warnings into logs
-        warnings.resetwarnings()  # Resets the filter to default behavior
+def suppress_warnings() -> None:
+    """Suppress all warnings."""
+    logging.captureWarnings(False)
+    warnings.filterwarnings("ignore")
 
 
-def suppress_specific_warnings(category: type[Warning]):
-    """
-    Suppress specific warnings by category.
+def enable_warnings() -> None:
+    """Enable warnings (reset to default behavior)."""
+    logging.captureWarnings(True)
+    warnings.resetwarnings()
 
-    :param category: The warning category to suppress (e.g., DeprecationWarning).
-    :type category: type
-    """
+
+def suppress_specific_warnings(category: type[Warning]) -> None:
+    """Suppress specific warning category."""
     warnings.filterwarnings("ignore", category=category)
+
+
+@contextmanager
+def warnings_suppressed() -> Generator:
+    """Temporarily suppress warnings within a context."""
+    logging.captureWarnings(False)
+    warnings.filterwarnings("ignore")
+    try:
+        yield
+    finally:
+        logging.captureWarnings(True)
+        warnings.resetwarnings()
