@@ -4,9 +4,9 @@ import warnings
 import pandas as pd
 import pytest
 
-from streamsightv2.datasets import AmazonMusicDataset, Dataset
-from streamsightv2.matrix import InteractionMatrix
-from streamsightv2.preprocessing import MinItemsPerUser
+from streamsight.datasets import AmazonMusicDataset, Dataset
+from streamsight.matrix import InteractionMatrix
+from streamsight.preprocessing import MinItemsPerUser
 
 
 @pytest.fixture()

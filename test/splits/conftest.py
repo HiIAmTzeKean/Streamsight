@@ -1,6 +1,6 @@
 import pytest
 
-from streamsightv2.matrix import InteractionMatrix
+from streamsight.matrix import InteractionMatrix
 from test.conftest import test_dataframe, TIMESTAMP_IX, ITEM_IX, USER_IX
 
 @pytest.fixture()

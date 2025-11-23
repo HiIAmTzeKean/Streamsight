@@ -1,4 +1,4 @@
-from streamsightv2.algorithms import ItemKNNIncremental
+from streamsight.algorithms import ItemKNNIncremental
 
 def test_ItemKNNIncremental(setting):
     algo = ItemKNNIncremental(K=10)

@@ -1,8 +1,8 @@
 import pytest
 
-from streamsightv2.matrix import InteractionMatrix
-from streamsightv2.settings.base import Setting
-from streamsightv2.settings.sliding_window_setting import SlidingWindowSetting
+from streamsight.matrix import InteractionMatrix
+from streamsight.settings.base import Setting
+from streamsight.settings.sliding_window_setting import SlidingWindowSetting
 
 BACKGROUND_T = 4
 WINDOW_SIZE = 3
