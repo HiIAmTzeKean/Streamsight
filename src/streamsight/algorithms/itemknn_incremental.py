@@ -2,11 +2,12 @@ import logging
 from warnings import warn
 
 import numpy as np
-from scipy.sparse import csr_matrix, vstack, hstack
+from scipy.sparse import csr_matrix, hstack, vstack
 
 from streamsight.algorithms.itemknn import ItemKNN
 from streamsight.matrix import InteractionMatrix
 from streamsight.utils.util import add_rows_to_csr_matrix
+
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,6 @@ class ItemKNNIncremental(ItemKNN):
         # Merge data
         self.training_data = X_prev + X
 
-
     def _fit(self, X: csr_matrix) -> "ItemKNNIncremental":
         """Fit a cosine similarity matrix from item to item."""
         if self.training_data is None:
@@ -63,7 +63,7 @@ class ItemKNNIncremental(ItemKNN):
             self.append_training_data(X)
         super()._fit(self.training_data)
         return self
-    
+
     def _predict(self, X: csr_matrix, predict_im: InteractionMatrix) -> csr_matrix:
         """Predict the K most similar items for each item using the latest data."""
         X_pred = super()._predict(self.training_data)
@@ -81,12 +81,8 @@ class ItemKNNIncremental(ItemKNN):
             return X_pred
 
         known_user_id, known_item_id = X_pred.shape
-        X_pred = add_rows_to_csr_matrix(
-            X_pred, intended_shape[0] - known_user_id
-        )
-        logger.debug(
-            f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with items"
-        )
+        X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0] - known_user_id)
+        logger.debug(f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with items")
         to_predict = predict_frame.value_counts("uid")
 
         if self.pad_with_popularity:
@@ -119,5 +115,5 @@ class ItemKNNIncremental(ItemKNN):
         ind = np.argpartition(sorted_scores, -K)[-K:]
         a = np.zeros(X.shape[1])
         a[ind] = sorted_scores[ind]
-        
+
         return a
