@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsightv2.algorithms
+.. currentmodule:: streamsight.algorithms
 
 The algorithms module in streamsight contains a collection of baseline algorithms
 and various of the item-based KNN collaborative filtering algorithm. A total of
