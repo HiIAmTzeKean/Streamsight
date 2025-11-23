@@ -5,6 +5,7 @@ from scipy.sparse import csr_matrix
 
 from streamsight.metrics.base import ListwiseMetricK
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +20,7 @@ class RecallK(ListwiseMetricK):
         \\text{Recall}(u) = \\frac{\\sum\\limits_{i \\in \\text{Top-K}(u)} y^{true}_{u,i} }{\\sum\\limits_{j \\in I} y^{true}_{u,j}}
 
     ref: RecPack
-    
+
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
     """
@@ -38,5 +39,4 @@ class RecallK(ListwiseMetricK):
 
         # true positive/total actual interactions
         self._scores = csr_matrix(scores.sum(axis=1) / y_true.sum(axis=1))
-
         logger.debug(f"Recall compute complete - {self.name}")

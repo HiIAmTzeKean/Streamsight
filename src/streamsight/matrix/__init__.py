@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsightv2.matrix
+.. currentmodule:: streamsight.matrix
 
 Interaction Matrix
 -------------------

@@ -11,8 +11,8 @@ RecSys algorithms.
 
 ![full-flow](assets/full_flow.png)
 
-[![PyPI Latest Release](https://img.shields.io/pypi/v/streamsightv2.svg)](https://pypi.org/project/streamsightv2/)&nbsp;&nbsp;
-[![Docs](https://github.com/suenalaba/Streamsightv2/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/suenalaba/Streamsightv2/)&nbsp;&nbsp;
+[![PyPI Latest Release](https://img.shields.io/pypi/v/streamsight.svg)](https://pypi.org/project/streamsight/)&nbsp;&nbsp;
+[![Docs](https://github.com/suenalaba/streamsight/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/suenalaba/streamsight/)&nbsp;&nbsp;
 [![Python version](https://img.shields.io/badge/python-3.12.5-blue)](https://www.python.org/downloads/)
 
 ## Getting Started

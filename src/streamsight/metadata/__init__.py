@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsightv2.metadata
+.. currentmodule:: streamsight.metadata
 
 Dataset
 -------------
@@ -29,7 +29,7 @@ The following example demonstrates how to load the metadata from the MovieLens10
 
 .. code-block:: python
 
-    from streamsightv2.datasets.movielens import MovieLens100K
+    from streamsight.datasets.movielens import MovieLens100K
 
     dataset = MovieLens100K(fetch_metadata=True)
     data = dataset.load()

@@ -1,5 +1,6 @@
 from scipy.sparse import csr_matrix
 
+
 def sparse_inverse_nonzero(a: csr_matrix) -> csr_matrix:
     """Invert nonzero elements of a `scipy.sparse.csr_matrix`.
 

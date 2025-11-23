@@ -3,8 +3,8 @@ from typing import Dict, Optional, Tuple
 from warnings import warn
 
 import numpy as np
-from scipy.sparse import csr_matrix, vstack
 from deprecation import deprecated
+from scipy.sparse import csr_matrix, vstack
 
 from streamsight.algorithms.utils import get_top_K_ranks
 from streamsight.utils.util import add_columns_to_csr_matrix
@@ -22,9 +22,7 @@ class Metric:
       - Aggregated result value can be retrieved using :attr:`value`
     """
 
-    def __init__(self,
-                 timestamp_limit: Optional[int] = None,
-                 cache: bool = False):
+    def __init__(self, timestamp_limit: Optional[int] = None, cache: bool = False):
         self._num_users = 0
         self._num_items = 0
         self._timestamp_limit = timestamp_limit
@@ -42,7 +40,7 @@ class Metric:
         """Number of false positives computed. Used for caching to obtain macro results."""
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Name of the metric."""
         return self.__class__.__name__
 
@@ -56,7 +54,7 @@ class Metric:
         return self.params
 
     @property
-    def identifier(self):
+    def identifier(self) -> str:
         """Name of the metric."""
         # return f"{super().identifier[:-1]},K={self.K})"
         paramstring = ",".join((f"{k}={v}" for k, v in self.get_params().items() if v is not None))
@@ -82,20 +80,20 @@ class Metric:
     @deprecated(
         details="Caching values for metric is no longer needed for core functionalities due to change in compute method."
     )
-    def cache_values(self, y_true:csr_matrix, y_pred:csr_matrix) -> None:
+    def cache_values(self, y_true: csr_matrix, y_pred: csr_matrix) -> None:
         """Cache the values of y_true and y_pred for later use.
-        
+
         Basic method to cache the values of y_true and y_pred for later use.
         This is useful when the metric can be calculated with the cumulative
         values of y_true and y_pred.
-        
+
         .. note::
             This method should be over written in the child class if the metric
             cannot be calculated with the cumulative values of y_true and y_pred.
             For example, in the case of Precision@K, the metric default behavior
             is to obtain the top-K ranks of y_pred and and y_true, this will
             cause cumulative values to be possibly dropped.
-            
+
         :param y_true: True user-item interactions.
         :type y_true: csr_matrix
         :param y_pred: Predicted affinity of users for items.
@@ -112,8 +110,8 @@ class Metric:
 
         # reshape old y_true and y_pred to add the new columns
         if y_true.shape[1] > self._y_true.shape[1]:
-            self._y_true = add_columns_to_csr_matrix(self._y_true, y_true.shape[1]-self._y_true.shape[1])
-            self._y_pred = add_columns_to_csr_matrix(self._y_pred, y_pred.shape[1]-self._y_pred.shape[1])
+            self._y_true = add_columns_to_csr_matrix(self._y_true, y_true.shape[1] - self._y_true.shape[1])
+            self._y_pred = add_columns_to_csr_matrix(self._y_pred, y_pred.shape[1] - self._y_pred.shape[1])
 
         # ? np.vstack([self._y_true.toarray(), y_true.toarray()]) faster ?
         self._y_true = vstack([self._y_true, y_true])
@@ -124,10 +122,10 @@ class Metric:
     )
     def calculate_cached(self):
         """Calculate the metric using the cached values of y_true and y_pred.
-        
+
         This method calculates the metric using the cached values of y_true and y_pred.
         :meth:`calculate` will be called on the cached values.
-        
+
         .. note::
             This method should be overwritten in the child class if the metric
             cannot be calculated with the cumulative values of y_true and y_pred.
@@ -145,7 +143,7 @@ class Metric:
     @property
     def micro_result(self) -> Dict[str, np.ndarray]:
         """Micro results for the metric.
-        
+
         :return: Detailed results for the metric.
         :rtype: Dict[str, np.ndarray]
         """
@@ -200,7 +198,7 @@ class Metric:
 
     def _set_shape(self, y_true: csr_matrix) -> None:
         """Set the number of users and items in the metric.
-        
+
         The values of ``self._num_users`` and ``self._num_items`` are set
         to the number of users and items in ``y_true``. This allows for the
         computation of the metric to be done in the correct shape.
@@ -250,11 +248,10 @@ class MetricTopK(Metric):
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
     :type K: int
     """
+
     DEFAULT_K = 10
 
-    def __init__(self, K:Optional[int] = DEFAULT_K,
-                 timestamp_limit: Optional[int] = None,
-                 cache: bool = False):
+    def __init__(self, K: Optional[int] = DEFAULT_K, timestamp_limit: Optional[int] = None, cache: bool = False):
         super().__init__(timestamp_limit, cache)
         if K is None:
             warn(f"K not specified, using default value {self.DEFAULT_K}.")
@@ -265,7 +262,7 @@ class MetricTopK(Metric):
     def name(self):
         """Name of the metric."""
         return f"{super().name}_{self.K}"
-    
+
     @property
     def params(self):
         """Parameters of the metric."""
@@ -277,7 +274,7 @@ class MetricTopK(Metric):
         row, col = self.y_pred_top_K_.nonzero()
         return row, col
 
-    def _calculate(self, y_true:csr_matrix, y_pred_top_K:csr_matrix):
+    def _calculate(self, y_true: csr_matrix, y_pred_top_K: csr_matrix):
         """Computes metric given true labels ``y_true`` and predicted scores ``y_pred``. Only Top-K recommendations are considered.
 
         To be implemented in the child class.
@@ -288,7 +285,7 @@ class MetricTopK(Metric):
         :type y_pred_top_K: csr_matrix
         """
         raise NotImplementedError()
-    
+
     def prepare_matrix(self, y_true: csr_matrix, y_pred: csr_matrix) -> Tuple[csr_matrix, csr_matrix]:
         """Prepare the matrices for the metric calculation.
 
@@ -309,9 +306,9 @@ class MetricTopK(Metric):
 
         # Compute the topK for the predicted affinities
         y_pred_top_K = get_top_K_ranks(y_pred, self.K)
-        
+
         return y_true, y_pred_top_K
-    
+
     def calculate(self, y_true: csr_matrix, y_pred: csr_matrix) -> None:
         """Computes metric given true labels ``y_true`` and predicted scores ``y_pred``. Only Top-K recommendations are considered.
 
@@ -327,7 +324,7 @@ class MetricTopK(Metric):
         # TODO check if y_true is empty?
         y_true, y_pred_top_K = self.prepare_matrix(y_true, y_pred)
         self.y_pred_top_K_ = y_pred_top_K
-        
+
         self._calculate(y_true, y_pred_top_K)
 
 
@@ -366,7 +363,7 @@ class ListwiseMetricK(MetricTopK):
         elif self._scores is None:
             warn(UserWarning("No scores were computed. Returning empty dict."))
             return dict(zip(self.col_names, (np.array([]), np.array([]))))
-    
+
         scores = self._scores.toarray()
 
         int_users, items = self._indices
@@ -375,7 +372,6 @@ class ListwiseMetricK(MetricTopK):
         users = self._map_users(int_users)
 
         return dict(zip(self.col_names, (users, values)))
-    
 
     @property
     def macro_result(self) -> Optional[float]:
@@ -391,9 +387,14 @@ class ListwiseMetricK(MetricTopK):
             warn(UserWarning("No scores were computed. Returning Null value."))
             return None
         elif self._scores.size == 0:
-            warn(UserWarning(f"All predictions were off or the ground truth matrix was empty during compute of {self.identifier}."))
+            warn(
+                UserWarning(
+                    f"All predictions were off or the ground truth matrix was empty during compute of {self.identifier}."
+                )
+            )
             return 0
         return self._scores.mean()
+
 
 class ElementwiseMetricK(MetricTopK):
     """Base class for all elementwise metrics that can be calculated for
@@ -402,7 +403,7 @@ class ElementwiseMetricK(MetricTopK):
     :attr:`results` contains an entry for each user-item pair.
 
     Examples are: HitK
-    
+
     This code is adapted from RecPack :cite:`recpack`
 
     :param K: Size of the recommendation list consisting of the Top-K item predictions.
@@ -428,7 +429,7 @@ class ElementwiseMetricK(MetricTopK):
         elif self._scores is None:
             warn(UserWarning("No scores were computed. Returning empty dict."))
             return dict(zip(self.col_names, (np.array([]), np.array([]))))
-    
+
         scores = self._scores.toarray()
 
         all_users = set(range(self._scores.shape[0]))
@@ -449,7 +450,6 @@ class ElementwiseMetricK(MetricTopK):
         users = self._map_users(int_users)
 
         return dict(zip(self.col_names, (users, items, values)))
-    
 
     @property
     def macro_result(self) -> Optional[float]:
@@ -465,10 +465,13 @@ class ElementwiseMetricK(MetricTopK):
             warn(UserWarning("No scores were computed. Returning Null value."))
             return None
         elif self._scores.size == 0:
-            warn(UserWarning(f"All predictions were off or the ground truth matrix was empty during compute of {self.identifier}."))
+            warn(
+                UserWarning(
+                    f"All predictions were off or the ground truth matrix was empty during compute of {self.identifier}."
+                )
+            )
             return 0
 
         hit_ratio = self._scores.sum(axis=1) / self.y_pred_top_K_.shape[1]
         return hit_ratio.mean()
         # return self._scores.sum(axis=1).mean()
-    

@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsightv2.evaluators
+.. currentmodule:: streamsight.evaluators
 
 Evaluator Builder
 ----------------------------
@@ -42,7 +42,7 @@ python notebook.
 
 .. code-block:: python
 
-    from streamsightv2.evaluator import EvaluatorPipelineBuilder
+    from streamsight.evaluator import EvaluatorPipelineBuilder
     
     builder = EvaluatorPipelineBuilder(item_user_based="item",
                         ignore_unknown_user=True,
