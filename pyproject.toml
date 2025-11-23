@@ -1,7 +1,8 @@
 [project]
 name = "streamsight"
-version = "1.0.0"
+version = "1.0.1"
 description = "A toolkit for offline evaluation of Recommender Systems."
+requires-python = ">=3.12"
 readme = "README.md"
 keywords = ["recsys", "recommendation", "practical evaluation", "global timeline", "reccomender systems", "data leakage"]
 dependencies = [
@@ -12,6 +13,7 @@ dependencies = [
     "pandas>=2.3.3",
     "progressbar>=2.5",
     "pyfiglet>=1.0.4",
+    "recpack>=0.3.6",
     "scikit-learn>=1.7.2",
     "sphinxcontrib-bibtex>=2.6.5",
     "tqdm>=4.67.1",
@@ -27,4 +29,9 @@ dev = [
     "pytest>=9.0.1",
 ]
 
+[build-system]
+requires = ["uv_build>=0.9.11,<0.10.0"]
+build-backend = "uv_build"
 
+[tool.uv]
+package = true
