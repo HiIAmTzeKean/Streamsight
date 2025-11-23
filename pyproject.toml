@@ -9,6 +9,7 @@ dependencies = [
     "colorama>=0.4.6",
     "colorlog>=6.10.1",
     "deprecation>=2.1.0",
+    "httpx>=0.28.1",
     "numpy>=1.26.4",
     "pandas>=2.3.3",
     "progressbar>=2.5",
