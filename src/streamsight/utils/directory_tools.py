@@ -3,6 +3,7 @@ from typing import Final
 
 import yaml
 
+
 LOG_FILE: Final[str] = "streamsight.log"
 
 
@@ -35,14 +36,12 @@ def create_config_yaml(config_filename: str):
     # Define the default log file path in the current directory
     log_file_path = os.path.join(current_directory, "logs/streamsight.log")
     yaml_file_path = os.path.join(current_directory, config_filename)
-    
+
     default_config = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
-            "detailed": {
-                "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-            },
+            "detailed": {"format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"},
             "simple": {"format": "%(levelname)s - %(message)s"},
         },
         "handlers": {
