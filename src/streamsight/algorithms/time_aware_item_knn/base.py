@@ -7,32 +7,34 @@
 
 import logging
 from warnings import warn
+
 import numpy as np
-from scipy.sparse import csr_matrix
-
-from streamsight.algorithms.base import TopKItemSimilarityMatrixAlgorithm
-from streamsight.matrix import InteractionMatrix, Matrix
-from streamsight.utils.util import add_rows_to_csr_matrix
-
 from recpack.algorithms.nearest_neighbour import (
     compute_conditional_probability,
     compute_cosine_similarity,
     compute_pearson_similarity,
 )
 from recpack.algorithms.time_aware_item_knn.decay_functions import (
-    ExponentialDecay,
-    LogDecay,
-    LinearDecay,
     ConcaveDecay,
     ConvexDecay,
+    ExponentialDecay,
     InverseDecay,
+    LinearDecay,
+    LogDecay,
     NoDecay,
 )
 from recpack.util import get_top_K_values
+from scipy.sparse import csr_matrix
+
+from streamsight.algorithms.base import TopKItemSimilarityMatrixAlgorithm
+from streamsight.matrix import InteractionMatrix, Matrix
+from streamsight.utils.util import add_rows_to_csr_matrix
+
 
 EPSILON = 1e-13
 
 logger = logging.getLogger(__name__)
+
 
 class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
     """Framework for time aware variants of the ItemKNN algorithm.
@@ -177,12 +179,8 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
             return X_pred
 
         known_user_id, known_item_id = X_pred.shape
-        X_pred = add_rows_to_csr_matrix(
-            X_pred, intended_shape[0] - known_user_id
-        )
-        logger.debug(
-            f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with items"
-        )
+        X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0] - known_user_id)
+        logger.debug(f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with items")
         to_predict = predict_frame.value_counts("uid")
 
         if self.pad_with_popularity:
@@ -216,7 +214,7 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
         ind = np.argpartition(sorted_scores, -K)[-K:]
         a = np.zeros(X.shape[1])
         a[ind] = sorted_scores[ind]
-        
+
         return a
 
     def _transform_fit_input(self, X: Matrix) -> InteractionMatrix:
@@ -264,7 +262,7 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
         :rtype: csr_matrix
         """
         timestamp_mat = X.latest_interaction_timestamps_matrix
-        
+
         # To get 'now', we add 1 to the maximal timestamp. This makes sure there are no vanishing zeroes.
         now = timestamp_mat.data.max() + 1
         ages = (now - timestamp_mat.data) / self.decay_interval
@@ -277,4 +275,3 @@ class TARSItemKNN(TopKItemSimilarityMatrixAlgorithm):
 
     def _add_decay_to_predict_matrix(self, X: InteractionMatrix) -> csr_matrix:
         return self._add_decay_to_interaction_matrix(X, self.predict_decay)
-
