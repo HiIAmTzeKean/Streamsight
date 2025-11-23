@@ -1,45 +1,30 @@
-[tool.poetry]
-name = "streamsightv2"
+[project]
+name = "streamsight"
 version = "1.0.0"
 description = "A toolkit for offline evaluation of Recommender Systems."
-authors = ["Joshua Khoo <joshuajr13@gmail.com>", "Ng Tze Kean <ngtzekean@gmail.com>"]
 readme = "README.md"
-repository = "https://github.com/suenalaba/streamsightv2"
-documentation = "https://suenalaba.github.io/streamsightv2"
 keywords = ["recsys", "recommendation", "practical evaluation", "global timeline", "reccomender systems", "data leakage"]
+dependencies = [
+    "colorama>=0.4.6",
+    "colorlog>=6.10.1",
+    "deprecation>=2.1.0",
+    "numpy>=1.26.4",
+    "pandas>=2.3.3",
+    "progressbar>=2.5",
+    "pyfiglet>=1.0.4",
+    "scikit-learn>=1.7.2",
+    "sphinxcontrib-bibtex>=2.6.5",
+    "tqdm>=4.67.1",
+    "typing-extensions>=4.15.0",
+    "urllib3>=2.5.0",
+]
 
-[tool.poetry.dependencies]
-python = "3.12.5"
-colorama = "^0.4.6"
-colorlog = "^6.8.2"
-pyyaml = "^6.0.1"
-scikit-learn = "^1.4.1.post1"
-pandas = "^2.2.2"
-numpy = "^1.26.4"
-urllib3 = "^2.2.1"
-tqdm = "^4.66.4"
-progressbar = "^2.5"
-typing-extensions = "^4.12.2"
-deprecation = "^2.1.0"
-pyfiglet = "^1.0.2"
-recpack = "^0.3.6"
+[dependency-groups]
+dev = [
+    "ipykernel>=7.1.0",
+    "ipywidgets>=8.1.8",
+    "jupyter>=1.1.1",
+    "pytest>=9.0.1",
+]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.2"
-ipykernel = "^6.29.3"
-black = "^24.4.2"
-simplejson = "^3.19.3"
-sphinxcontrib-bibtex = "^2.6.2"
-setuptools = "^73.0.0"
-sphinx = "7.4.7"
-sphinx-rtd-theme = "^2.0.0"
-ipywidgets = "^8.1.5"
-pyfiglet = "^1.0.2"
-sphinxcontrib-pdfembed = {git = "https://github.com/SuperKogito/sphinxcontrib-pdfembed"}
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.urls]
-"Report" = "https://hdl.handle.net/10356/181114"
