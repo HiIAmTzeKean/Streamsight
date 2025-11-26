@@ -17,7 +17,7 @@ from streamsight.metrics import Metric
 from streamsight.registries import (METRIC_REGISTRY, AlgorithmStateEnum,
                                     AlgorithmStatusEntry,
                                     AlgorithmStatusRegistry, MetricEntry)
-from streamsight.settings import EOWSetting, Setting
+from streamsight.settings import EOWSettingError, Setting
 
 logger = logging.getLogger(__name__)
 
@@ -441,7 +441,7 @@ class EvaluatorStreamer(EvaluatorBase):
 
         try:
             unlabeled_data, ground_truth_data, _ = self._get_evaluation_data()
-        except EOWSetting as e:
+        except EOWSettingError as e:
             raise e
 
         self._unlabeled_data_cache = unlabeled_data

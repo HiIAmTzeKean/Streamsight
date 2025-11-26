@@ -11,7 +11,7 @@ from streamsight.evaluators.util import MetricLevelEnum, UserItemBaseStatus
 from streamsight.matrix import InteractionMatrix
 from streamsight.registries import MetricEntry
 from streamsight.settings import Setting
-from streamsight.settings.base import EOWSetting
+from streamsight.settings.base import EOWSettingError
 
 logger = logging.getLogger(__name__)
 
@@ -76,15 +76,15 @@ class EvaluatorBase(object):
         
         :return: Tuple of unlabeled data, ground truth data, and current timestamp
         :rtype: Tuple[csr_matrix, csr_matrix, int]
-        :raises EOWSetting: If there is no more data to be processed
+        :raises EOWSettingError: If there is no more data to be processed
         """
         try:
             unlabeled_data = self.setting.next_unlabeled_data()
             ground_truth_data = self.setting.next_ground_truth_data()
             current_timestamp = self.setting.next_t_window()
             self._current_timestamp = current_timestamp
-        except EOWSetting:
-            raise EOWSetting("There is no more data to be processed, EOW reached")
+        except EOWSettingError:
+            raise EOWSettingError("There is no more data to be processed, EOW reached")
         
         self.user_item_base._update_unknown_user_item_base(ground_truth_data)
 
