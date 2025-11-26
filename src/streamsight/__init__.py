@@ -12,7 +12,7 @@ import logging
 from streamsight.utils import prepare_logger
 
 
-LOGGING_CONFIG_FILENAME = "LOGGING_CONFIG.yaml"
+LOGGING_CONFIG_FILENAME = "logging_config.yaml"
 
 prepare_logger(LOGGING_CONFIG_FILENAME)
 
