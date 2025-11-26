@@ -1,15 +1,9 @@
 import logging
-import logging.config
-import os
 from typing import Union
 
 import numpy as np
 import progressbar
-import pyfiglet
-import yaml
 from scipy.sparse import csr_matrix
-
-from streamsight.utils.directory_tools import create_config_yaml, safe_dir
 
 
 logger = logging.getLogger(__name__)
@@ -117,48 +111,6 @@ class ProgressBar:
             self.pbar.update(downloaded)
         else:
             self.pbar.finish()
-
-
-def prepare_logger(log_config_filename: str) -> dict:
-    """Prepare the logger.
-
-    Prepare the logger by reading the configuration file and setting up the logger.
-    If the configuration file does not exist, it will be created.
-
-    :param log_config_filename: Name of configuration file.
-    :type log_config_filename: str
-    :return: Configuration dictionary.
-    :rtype: dict
-    """
-    if not os.path.exists(log_config_filename):
-        create_config_yaml(log_config_filename)
-
-    try:
-        with open(log_config_filename, "r") as stream:
-            config = yaml.load(
-                stream, Loader=yaml.FullLoader
-            )  # ignore_security_alert_wait_for_fix RCE
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Configuration file not found at {log_config_filename}.")
-    except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing YAML configuration: {e}")
-
-    # Get the log file path from the configuration
-    log_file = config["handlers"]["file"]["filename"]
-
-    # Ensure the log file directory exists
-    dir_name = os.path.dirname(log_file)
-    safe_dir(dir_name)
-
-    # Write ASCII art to the log file
-    with open(log_file, "w") as log:
-        ascii_art = pyfiglet.figlet_format("streamsight")
-        log.write(ascii_art)
-        log.write("\n")
-
-    logging.config.dictConfig(config)
-    logging.captureWarnings(True)
-    return config
 
 
 def add_rows_to_csr_matrix(matrix: csr_matrix, n: int = 1) -> csr_matrix:

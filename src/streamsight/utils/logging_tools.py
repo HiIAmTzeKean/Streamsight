@@ -1,8 +1,16 @@
 import logging
+import logging.config
+import os
 import warnings
+from collections.abc import Generator
 from contextlib import contextmanager
 from enum import Enum
-from collections.abc import Generator
+
+import pyfiglet
+import yaml
+
+from streamsight.utils.path import safe_dir
+from streamsight.utils.yaml_tool import create_config_yaml
 
 
 class LogLevel(Enum):
@@ -66,3 +74,43 @@ def warnings_suppressed() -> Generator:
     finally:
         logging.captureWarnings(True)
         warnings.resetwarnings()
+
+
+def prepare_logger(log_config_filename: str) -> dict:
+    """Prepare the logger.
+
+    Prepare the logger by reading the configuration file and setting up the logger.
+    If the configuration file does not exist, it will be created.
+
+    :param log_config_filename: Name of configuration file.
+    :type log_config_filename: str
+    :return: Configuration dictionary.
+    :rtype: dict
+    """
+    _, yaml_file_path = create_config_yaml(log_config_filename)
+    try:
+        with open(yaml_file_path, "r") as stream:
+            config = yaml.load(
+                stream, Loader=yaml.FullLoader
+            )
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Configuration file not found at {yaml_file_path}.")
+    except yaml.YAMLError as e:
+        raise ValueError(f"Error parsing YAML configuration: {e}")
+
+    # Get the log file path from the configuration
+    log_file = config["handlers"]["file"]["filename"]
+
+    # Ensure the log file directory exists
+    dir_name = os.path.dirname(log_file)
+    safe_dir(dir_name)
+
+    # Write ASCII art to the log file
+    with open(log_file, "w") as log:
+        ascii_art = pyfiglet.figlet_format("streamsight")
+        log.write(ascii_art)
+        log.write("\n")
+
+    logging.config.dictConfig(config)
+    logging.captureWarnings(True)
+    return config

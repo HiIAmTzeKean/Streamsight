@@ -54,12 +54,19 @@ Example
     suppress_specific_warnings
 """
 
-from streamsight.utils.directory_tools import create_config_yaml, safe_dir
 from streamsight.utils.logging_tools import (
     log_level,
     log_level_by_name,
+    prepare_logger,
     suppress_specific_warnings,
     suppress_warnings,
+)
+from streamsight.utils.path import (
+    get_cache_dir,
+    get_data_dir,
+    get_logs_dir,
+    get_repo_root,
+    safe_dir,
 )
 from streamsight.utils.util import (
     ProgressBar,
@@ -67,7 +74,7 @@ from streamsight.utils.util import (
     add_rows_to_csr_matrix,
     arg_to_str,
     df_to_sparse,
-    prepare_logger,
     to_binary,
     to_tuple,
 )
+from streamsight.utils.yaml_tool import create_config_yaml

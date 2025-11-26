@@ -110,7 +110,7 @@ def get_cache_dir(subdir: str = "") -> Path:
     return cache_dir
 
 
-def ensure_dir(path: Path | str) -> Path:
+def safe_dir(path: Path | str) -> Path:
     """Ensure directory exists, create if needed.
 
     :param path: Directory path
