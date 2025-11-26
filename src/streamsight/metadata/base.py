@@ -1,11 +1,11 @@
 import logging
 import os
+from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 from urllib.request import urlretrieve
 
 import pandas as pd
-from typing import Optional
-from abc import ABC, abstractmethod
 
 from streamsight.utils.util import ProgressBar
 
