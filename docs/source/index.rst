@@ -43,31 +43,31 @@ Contents
     :maxdepth: 1
     :caption: Data handling
 
-    streamsightv2.matrix
-    streamsightv2.preprocessing
-    streamsightv2.datasets
-    streamsightv2.settings
-    streamsightv2.metadata
+    streamsight.matrix
+    streamsight.preprocessing
+    streamsight.datasets
+    streamsight.settings
+    streamsight.metadata
 
 .. toctree::
     :maxdepth: 1
     :caption: RecSys
 
-    streamsightv2.algorithms
+    streamsight.algorithms
 
 .. toctree::
     :maxdepth: 1
     :caption: Evaluation
 
-    streamsightv2.evaluators
-    streamsightv2.metrics
+    streamsight.evaluators
+    streamsight.metrics
 
 .. toctree::
     :maxdepth: 1
     :caption: Other supporting modules
 
-    streamsightv2.registries
-    streamsightv2.utils
+    streamsight.registries
+    streamsight.utils
 
 .. toctree::
     :maxdepth: 2
