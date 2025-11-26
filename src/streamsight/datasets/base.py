@@ -1,12 +1,11 @@
 import logging
 import os
 import time
-import httpx
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import ClassVar
-from warnings import warn
 
+import httpx
 import pandas as pd
 
 from streamsight.matrix import InteractionMatrix
@@ -50,6 +49,8 @@ class Dataset(ABC):
     """Name of the column in the DataFrame that contains time of interaction in seconds since epoch."""
     DEFAULT_BASE_PATH: ClassVar[str] = "data"
     """Default base path where the dataset will be stored."""
+    DATASET_URL: ClassVar[str] = "http://example.com"
+    """URL to fetch the dataset from."""
 
     @property
     def DEFAULT_FILENAME(self) -> str:
@@ -60,8 +61,8 @@ class Dataset(ABC):
         self,
         filename: None | str = None,
         base_path: None | str = None,
-        use_default_filters: bool = False,
-        fetch_metadata: bool = False,
+        use_default_filters: bool = False,  # noqa: FBT001, FBT002
+        fetch_metadata: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         if not self.USER_IX or not self.ITEM_IX or not self.TIMESTAMP_IX:
             raise AttributeError("USER_IX, ITEM_IX or TIMESTAMP_IX not set.")
@@ -98,36 +99,41 @@ class Dataset(ABC):
         :return: List of filters to be applied to the dataset
         :rtype: List[Filter]
         """
-        if not __class__.USER_IX or not __class__.ITEM_IX:
+        if not self.__class__.USER_IX or not self.__class__.ITEM_IX:
             raise AttributeError("USER_IX or ITEM_IX not set.")
 
         filters: list[Filter] = []
-        filters.append(MinItemsPerUser(3, __class__.ITEM_IX, __class__.USER_IX))
-        filters.append(MinUsersPerItem(3, __class__.ITEM_IX, __class__.USER_IX))
+        filters.append(MinItemsPerUser(3, self.__class__.ITEM_IX, self.__class__.USER_IX))
+        filters.append(MinUsersPerItem(3, self.__class__.ITEM_IX, self.__class__.USER_IX))
         return filters
 
     @property
     def file_path(self) -> str:
         """File path of the dataset."""
-        return os.path.join(self.base_path, self.filename)  # type: ignore
+        return os.path.join(self.base_path, self.filename)
+
+    @property
+    def processed_cache_path(self) -> str:
+        """Path for cached processed data."""
+        return os.path.join(self.base_path, f"{self.filename}.processed.parquet")
 
     def _check_safe(self) -> None:
         """Check if the directory is safe. If directory does not exit, create it."""
         p = Path(self.base_path)
         p.mkdir(exist_ok=True)
 
-    def fetch_dataset(self, force: bool = False) -> None:
-        """Check if dataset is present, if not download
+    def fetch_dataset(self) -> None:
+        """Check if dataset is present, if not download"""
+        if os.path.exists(self.file_path):
+            logger.debug("Data file is in memory and in dir specified.")
+            return
+        logger.debug(f"{self.name} dataset not found in {self.file_path}.")
+        self._download_dataset()
 
-        :param force: If True, dataset will be downloaded,
-                even if the file already exists.
-                Defaults to False.
-        :type force: bool, optional
-        """
-        if not os.path.exists(self.file_path) or force:
-            logger.debug(f"{self.name} dataset not found in {self.file_path}.")
-            self._download_dataset()
-        logger.debug("Data file is in memory and in dir specified.")
+    def fetch_dataset_force(self) -> None:
+        """Force re-download of the dataset."""
+        logger.debug(f"{self.name} force re-download of dataset.")
+        self._download_dataset()
 
     def add_filter(self, filter: Filter) -> None:
         """Add a filter to be applied when loading the data.
@@ -142,7 +148,14 @@ class Dataset(ABC):
         """
         self.preprocessor.add_filter(filter)
 
-    def load(self, apply_filters: bool = True) -> InteractionMatrix:
+    def _load_dataframe_from_cache(self) -> pd.DataFrame:
+        if not os.path.exists(self.processed_cache_path):
+            raise FileNotFoundError("Processed cache file not found.")
+        logger.info(f"Loading from cache: {self.processed_cache_path}")
+        df = pd.read_parquet(self.processed_cache_path)
+        return df
+
+    def load(self, apply_filters: bool = True, use_cache: bool = True) -> InteractionMatrix:
         """Loads data into an InteractionMatrix object.
 
         Data is loaded into a DataFrame using the :func:`_load_dataframe` function.
@@ -160,14 +173,20 @@ class Dataset(ABC):
         """
         logger.info(f"{self.name} is loading dataset...")
         start = time.time()
-        df = self._load_dataframe()
+        try:
+            df = self._load_dataframe_from_cache() if use_cache else self._load_dataframe()
+        except FileNotFoundError:
+            logger.warning("Processed cache not found, loading raw dataframe.")
+            df = self._load_dataframe()
+            self._cache_processed_dataframe(df)
         if apply_filters:
             logger.debug(f"{self.name} applying filters set.")
             im = self.preprocessor.process(df)
         else:
             im = self._dataframe_to_matrix(df)
-            warn(
-                "No filters applied, user and item ids may not be incrementing in the order of time. Classes that use this dataset may not work as expected."
+            logger.warning(
+                "No filters applied, user and item ids may not be incrementing in the order of time. "
+                "Classes that use this dataset may not work as expected."
             )
 
         if self.fetch_metadata:
@@ -239,6 +258,15 @@ class Dataset(ABC):
                         fd.write(chunk)
 
         return filename
+
+    def _cache_processed_dataframe(self, df: pd.DataFrame) -> None:
+        """Cache the processed DataFrame to disk.
+
+        :param df: DataFrame to cache
+        :type df: pd.DataFrame
+        """
+        logger.info(f"Caching processed DataFrame to {self.processed_cache_path}")
+        df.to_parquet(self.processed_cache_path)
 
     @abstractmethod
     def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame) -> None:

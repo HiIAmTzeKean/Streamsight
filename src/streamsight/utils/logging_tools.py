@@ -2,7 +2,7 @@ import logging
 import warnings
 from contextlib import contextmanager
 from enum import Enum
-from typing import Generator, Union
+from collections.abc import Generator
 
 
 class LogLevel(Enum):
@@ -19,7 +19,7 @@ class LogLevel(Enum):
         return cls[level.upper()]
 
 
-def log_level(level: Union[int, str, LogLevel]) -> None:
+def log_level(level: int | str | LogLevel) -> None:
     """
     Change the logging level for root logger.
 

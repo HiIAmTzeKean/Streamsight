@@ -45,20 +45,13 @@ class LastFMDataset(Dataset):
     USER_METADATA = None
     TAG_METADATA = None
 
-    def fetch_dataset(self, force=False) -> None:
-        """Check if dataset is present, if not download
-
-        :param force: If True, dataset will be downloaded,
-                even if the file already exists.
-                Defaults to False.
-        :type force: bool, optional
-        """
+    def fetch_dataset(self) -> None:
         path = os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}.zip")
         file = self.REMOTE_FILENAME
-        if not os.path.exists(path) or force:
+        if not os.path.exists(path):
             logger.debug(f"{self.name} dataset zipfile not found in {path}.")
             self._download_dataset()
-        elif not os.path.exists(self.file_path) or force:
+        elif not os.path.exists(self.file_path):
             logger.debug(
                 f"{self.name} dataset file not found, but the zipfile has already been downloaded. Extracting file from zipfile."
             )

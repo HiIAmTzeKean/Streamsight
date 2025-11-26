@@ -1,25 +1,81 @@
+import logging
+import logging.config
 import os
-from typing import Final
-
+from pathlib import Path
 import yaml
+import pyfiglet
 
 
-LOG_FILE: Final[str] = "streamsight.log"
+def get_repo_root() -> Path:
+    """Get the repository root directory.
 
+    This assumes the library is installed as src/streamsight/
+    and navigates up to find the repo root.
 
-def safe_dir(path):
-    """Check if directory is safe
-
-    Check if the directory exists, if not create it.
-
-    :param path: The path to the directory.
-    :type path: str
+    :return: Path to repository root
+    :rtype: Path
     """
-    if not os.path.exists(path):
-        os.makedirs(path)
+    # Get the path to this module
+    current_file = Path(__file__).resolve()
+
+    # Navigate up from src/streamsight/utils/logger.py (or wherever this is)
+    # Adjust the number of .parent calls based on your file structure
+    # If this file is at src/streamsight/utils/logger.py:
+    # - .parent -> src/streamsight/utils
+    # - .parent.parent -> src/streamsight
+    # - .parent.parent.parent -> src
+    # - .parent.parent.parent.parent -> repo root
+
+    # Try to find repo root by looking for marker files
+    current = current_file.parent
+    max_depth = 10  # Prevent infinite loops
+
+    for _ in range(max_depth):
+        # Check for common repo root markers
+        if any(
+            (current / marker).exists()
+            for marker in [".git", "pyproject.toml", "setup.py", "setup.cfg", "README.md"]
+        ):
+            return current
+
+        if current.parent == current:  # Reached filesystem root
+            break
+        current = current.parent
+
+    # Fallback: assume library is in src/streamsight/
+    # Go up 3 levels from this file
+    return Path(__file__).resolve().parent.parent.parent.parent
 
 
-def create_config_yaml(config_filename: str):
+def get_data_dir() -> Path:
+    """Get the data directory at repo root.
+
+    :return: Path to data directory
+    :rtype: Path
+    """
+    return get_repo_root() / "data"
+
+
+def get_logs_dir() -> Path:
+    """Get the logs directory at repo root.
+
+    :return: Path to logs directory
+    :rtype: Path
+    """
+    return get_repo_root() / "logs"
+
+
+def safe_dir(dir_path: str | Path) -> None:
+    """Ensure directory exists, create if it doesn't.
+
+    :param dir_path: Directory path to check/create
+    :type dir_path: str | Path
+    """
+    path = Path(dir_path)
+    path.mkdir(parents=True, exist_ok=True)
+
+
+def create_config_yaml(config_filename: str) -> None:
     """
     Create a configuration file for the logger.
 

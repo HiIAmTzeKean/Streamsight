@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.utils 
+.. currentmodule:: streamsight.utils
 
 Utility
 -------------
@@ -31,7 +31,7 @@ Example
 ~~~~~~~~~
 
 .. code-block:: python
-    
+
     import streamsight
 
     # Set log level to INFO and suppress warnings
@@ -55,7 +55,14 @@ Example
 """
 
 from streamsight.utils.directory_tools import create_config_yaml, safe_dir
+from streamsight.utils.logging_tools import (
+    log_level,
+    log_level_by_name,
+    suppress_specific_warnings,
+    suppress_warnings,
+)
 from streamsight.utils.util import (
+    ProgressBar,
     add_columns_to_csr_matrix,
     add_rows_to_csr_matrix,
     arg_to_str,
@@ -63,6 +70,4 @@ from streamsight.utils.util import (
     prepare_logger,
     to_binary,
     to_tuple,
-    ProgressBar
 )
-from streamsight.utils.logging_tools import log_level, log_level_by_name, suppress_warnings, suppress_specific_warnings

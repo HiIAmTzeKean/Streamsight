@@ -3,27 +3,27 @@ import logging.config
 import os
 from typing import Union
 
-import pyfiglet
-
 import numpy as np
 import progressbar
+import pyfiglet
 import yaml
 from scipy.sparse import csr_matrix
 
 from streamsight.utils.directory_tools import create_config_yaml, safe_dir
 
+
 logger = logging.getLogger(__name__)
 
 
-def to_tuple(el):
+def to_tuple(element) -> tuple:
     """Whether single element or tuple, always returns as tuple."""
-    if type(el) == tuple:
-        return el
+    if isinstance(element, tuple):
+        return element
     else:
-        return (el,)
+        return (element,)
 
 
-def arg_to_str(arg: Union[type, str]) -> str:
+def arg_to_str(arg: type | str) -> str:
     """Converts a type to its name or returns the string.
 
     :param arg: Argument to convert to string.
@@ -32,16 +32,20 @@ def arg_to_str(arg: Union[type, str]) -> str:
     :rtype: str
     :raises TypeError: If the argument is not a string or a type.
     """
-    if type(arg) == type:
-        arg = arg.__name__
-
-    elif type(arg) != str:
+    if isinstance(arg, type):
+        return arg.__name__
+    elif not isinstance(arg, str):
         raise TypeError(f"Argument should be string or type, not {type(arg)}!")
-
     return arg
 
 
-def df_to_sparse(df, item_ix, user_ix, value_ix=None, shape=None):
+def df_to_sparse(
+    df,
+    item_ix,
+    user_ix,
+    value_ix=None,
+    shape=None,
+) -> csr_matrix:
     if value_ix is not None and value_ix in df:
         values = df[value_ix]
     else:
@@ -100,10 +104,10 @@ def invert(x: Union[np.ndarray, csr_matrix]) -> Union[np.ndarray, csr_matrix]:
 class ProgressBar:
     """Progress bar as visual."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.pbar = None
 
-    def __call__(self, block_num, block_size, total_size):
+    def __call__(self, block_num, block_size, total_size) -> None:
         if not self.pbar:
             self.pbar = progressbar.ProgressBar(maxval=total_size)
             self.pbar.start()
@@ -131,7 +135,9 @@ def prepare_logger(log_config_filename: str) -> dict:
 
     try:
         with open(log_config_filename, "r") as stream:
-            config = yaml.load(stream, Loader=yaml.FullLoader)  # ignore_security_alert_wait_for_fix RCE
+            config = yaml.load(
+                stream, Loader=yaml.FullLoader
+            )  # ignore_security_alert_wait_for_fix RCE
     except FileNotFoundError:
         raise FileNotFoundError(f"Configuration file not found at {log_config_filename}.")
     except yaml.YAMLError as e:
