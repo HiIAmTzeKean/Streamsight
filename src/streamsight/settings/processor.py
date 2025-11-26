@@ -61,7 +61,7 @@ class PredictionDataProcessor(Processor):
         past_interaction: InteractionMatrix,
         future_interaction: InteractionMatrix,
         top_K: int = 1,
-    ) -> Tuple[InteractionMatrix, InteractionMatrix]:
+    ) -> tuple[InteractionMatrix, InteractionMatrix]:
         """Injects the user ID to indicate ID for prediction.
 
         User ID to be predicted by the model will be indicated with item ID of

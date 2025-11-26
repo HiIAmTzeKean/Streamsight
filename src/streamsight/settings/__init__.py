@@ -26,7 +26,7 @@ which will be used for evaluation and then released to the algorithm.
     :align: center
     :scale: 100 %
     :alt: Setting 1 diagram
-    
+
 While the this setting allows us to test the algorithm in a real-world scenario,
 there are times when the algorithm might require some sequential data before
 a prediction can be made. While it is not the role of the evaluating platform
@@ -35,13 +35,13 @@ to provide this data, we have included the option to provide the last n interact
 
 - **background_data**: Data that is used to train the algorithm before the first
   split.
-    
+
 - **unlabeled_data**: Data that is released to the algorithm for prediction.
   Contains the ID to be predicted and is labeled with "-1". Timestamps of the
   interactions to be predicted are preserved. Can contain the last n interactions
   split if specified in the parameter. The purpose is to provide sequential
   data to the algorithm.
-    
+
 - **ground_truth_data**: Data that is used to evaluate the algorithm. This data
   will contain the actual interactions. The unlabeled data with the masked data
   is a subset of the ground truth to ensure that there is an actual corresponding
@@ -118,27 +118,27 @@ the data created in the setting.
 
     Processor
     PredictionDataProcessor
-    
+
 Exception
 ------------
-The exception class :class:`EOWSetting` is used to raise an exception when the
+The exception class :class:`EOWSettingError` is used to raise an exception when the
 end of window is reached. Note that this exception is declared the base file.
 
 .. autosummary::
     :toctree: generated/
 
-    EOWSetting
+    EOWSettingError
 """
 
-from streamsight.settings.base import Setting, EOWSetting
+from streamsight.settings.base import EOWSettingError, Setting
+from streamsight.settings.leave_n_out_setting import LeaveNOutSetting
+from streamsight.settings.processor import PredictionDataProcessor, Processor
 from streamsight.settings.single_time_point_setting import (
     SingleTimePointSetting,
 )
 from streamsight.settings.sliding_window_setting import SlidingWindowSetting
-from streamsight.settings.leave_n_out_setting import LeaveNOutSetting
-from streamsight.settings.processor import Processor, PredictionDataProcessor
 from streamsight.settings.splitters import (
-    TimestampSplitter,
+    NLastInteractionSplitter,
     NPastInteractionTimestampSplitter,
-    NLastInteractionSplitter
+    TimestampSplitter,
 )
