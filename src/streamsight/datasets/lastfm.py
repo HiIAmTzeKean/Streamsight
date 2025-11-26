@@ -46,7 +46,7 @@ class LastFMDataset(Dataset):
     TAG_METADATA = None
 
     def fetch_dataset(self) -> None:
-        path = os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}.zip")
+        path = os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.REMOTE_ZIPNAME}.zip")
         file = self.REMOTE_FILENAME
         if not os.path.exists(path):
             logger.debug(f"{self.name} dataset zipfile not found in {path}.")
@@ -56,7 +56,7 @@ class LastFMDataset(Dataset):
                 f"{self.name} dataset file not found, but the zipfile has already been downloaded. Extracting file from zipfile."
             )
             with zipfile.ZipFile(path, "r") as zip_ref:
-                zip_ref.extract(file, self.base_path)
+                zip_ref.extract(file, self.__class__.DEFAULT_BASE_PATH)
 
         logger.debug("Data zipfile is in memory and in dir specified.")
 
@@ -68,12 +68,12 @@ class LastFMDataset(Dataset):
         # Download the zip into the data directory
         self._fetch_remote(
             f"{self.DATASET_URL}/{self.REMOTE_ZIPNAME}.zip",
-            os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}.zip"),
+            os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.REMOTE_ZIPNAME}.zip"),
         )
 
         # Extract the interaction file which we will use
-        with zipfile.ZipFile(os.path.join(self.base_path, f"{self.REMOTE_ZIPNAME}.zip"), "r") as zip_ref:
-            zip_ref.extract(f"{self.REMOTE_FILENAME}", self.base_path)
+        with zipfile.ZipFile(os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.REMOTE_ZIPNAME}.zip"), "r") as zip_ref:
+            zip_ref.extract(f"{self.REMOTE_FILENAME}", self.__class__.DEFAULT_BASE_PATH)
 
     def _load_dataframe(self) -> pd.DataFrame:
         """Load the raw dataset from file, and return it as a pandas DataFrame.

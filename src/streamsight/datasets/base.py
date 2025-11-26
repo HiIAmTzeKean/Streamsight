@@ -11,6 +11,7 @@ import pandas as pd
 from streamsight.matrix import InteractionMatrix
 from streamsight.preprocessing.filter import Filter, MinItemsPerUser, MinUsersPerItem
 from streamsight.preprocessing.preprocessor import DataFramePreprocessor
+from streamsight.utils import get_data_dir
 
 
 logger = logging.getLogger(__name__)
@@ -47,37 +48,32 @@ class Dataset(ABC):
     """Name of the column in the DataFrame with item identifiers"""
     TIMESTAMP_IX: ClassVar[str] = "timestamp"
     """Name of the column in the DataFrame that contains time of interaction in seconds since epoch."""
-    DEFAULT_BASE_PATH: ClassVar[str] = "data"
+    DEFAULT_BASE_PATH: ClassVar[str] = get_data_dir()
     """Default base path where the dataset will be stored."""
     DATASET_URL: ClassVar[str] = "http://example.com"
     """URL to fetch the dataset from."""
 
-    @property
-    def DEFAULT_FILENAME(self) -> str:
+    @classmethod
+    def DEFAULT_FILENAME(cls) -> str:
         """Default filename that will be used if it is not specified by the user."""
         return "dataset.csv"
 
     def __init__(
         self,
-        filename: None | str = None,
-        base_path: None | str = None,
         use_default_filters: bool = False,  # noqa: FBT001, FBT002
         fetch_metadata: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
-        if not self.USER_IX or not self.ITEM_IX or not self.TIMESTAMP_IX:
+        if (
+            not self.__class__.USER_IX
+            or not self.__class__.ITEM_IX
+            or not self.__class__.TIMESTAMP_IX
+        ):
             raise AttributeError("USER_IX, ITEM_IX or TIMESTAMP_IX not set.")
-
-        self.base_path = base_path if base_path else self.DEFAULT_BASE_PATH
-        logger.debug(f"{self.name} being initialized with '{self.base_path}' as the base path.")
-
-        self.filename = filename if filename else self.DEFAULT_FILENAME
-        if not self.filename:
+        logger.debug(f"{self.name} being initialized with '{self.__class__.DEFAULT_BASE_PATH}' as the base path.")
+        if not self.__class__.DEFAULT_FILENAME():
             raise ValueError("No filename specified, and no default known.")
-
         self.fetch_metadata = fetch_metadata
-
         self.preprocessor = DataFramePreprocessor(self.ITEM_IX, self.USER_IX, self.TIMESTAMP_IX)
-
         if use_default_filters:
             for f in self._default_filters:
                 self.add_filter(f)
@@ -110,16 +106,16 @@ class Dataset(ABC):
     @property
     def file_path(self) -> str:
         """File path of the dataset."""
-        return os.path.join(self.base_path, self.filename)
+        return os.path.join(self.__class__.DEFAULT_BASE_PATH, self.__class__.DEFAULT_FILENAME())
 
     @property
     def processed_cache_path(self) -> str:
         """Path for cached processed data."""
-        return os.path.join(self.base_path, f"{self.filename}.processed.parquet")
+        return os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.__class__.DEFAULT_FILENAME()}.processed.parquet")
 
     def _check_safe(self) -> None:
         """Check if the directory is safe. If directory does not exit, create it."""
-        p = Path(self.base_path)
+        p = Path(self.__class__.DEFAULT_BASE_PATH)
         p.mkdir(exist_ok=True)
 
     def fetch_dataset(self) -> None:
@@ -190,8 +186,13 @@ class Dataset(ABC):
             )
 
         if self.fetch_metadata:
-            user_id_mapping, item_id_mapping = self.preprocessor.user_id_mapping, self.preprocessor.item_id_mapping
-            self._fetch_dataset_metadata(user_id_mapping=user_id_mapping, item_id_mapping=item_id_mapping)
+            user_id_mapping, item_id_mapping = (
+                self.preprocessor.user_id_mapping,
+                self.preprocessor.item_id_mapping,
+            )
+            self._fetch_dataset_metadata(
+                user_id_mapping=user_id_mapping, item_id_mapping=item_id_mapping
+            )
 
         end = time.time()
         logger.info(f"{self.name} dataset loaded - Took {end - start:.3}s")
@@ -249,7 +250,10 @@ class Dataset(ABC):
         """
         logger.debug(f"{self.name} will asynchronously fetch dataset from {url}.")
 
-        async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client, client.stream("GET", url) as resp:
+        async with (
+            httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client,
+            client.stream("GET", url) as resp,
+        ):
             resp.raise_for_status()
             # Write bytes as they arrive
             with open(filename, "wb") as fd:
@@ -269,7 +273,9 @@ class Dataset(ABC):
         df.to_parquet(self.processed_cache_path)
 
     @abstractmethod
-    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame) -> None:
+    def _fetch_dataset_metadata(
+        self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame
+    ) -> None:
         """Fetch metadata for the dataset.
 
         Fetch metadata for the dataset, if available.

@@ -40,7 +40,7 @@ class AmazonDataset(Dataset):
         if not self.DATASET_URL:
             raise ValueError(f"{self.name} does not have URL specified.")
 
-        self._fetch_remote(self.DATASET_URL, os.path.join(self.base_path, f"{self.DEFAULT_FILENAME}"))
+        self._fetch_remote(self.DATASET_URL, os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.DEFAULT_FILENAME}"))
 
     def _load_dataframe(self) -> pd.DataFrame:
         """Load the raw dataset from file, and return it as a pandas DataFrame.
