@@ -13,6 +13,7 @@ dependencies = [
     "numpy>=1.26.4",
     "pandas>=2.3.3",
     "progressbar>=2.5",
+    "pyarrow>=22.0.0",
     "pyfiglet>=1.0.4",
     "recpack>=0.3.6",
     "scikit-learn>=1.7.2",
@@ -36,12 +37,13 @@ docs = [
     "sphinxcontrib-pdfembed",
 ]
 
+[tool.uv]
+default-groups = "all"
+package = true
+
 [build-system]
 requires = ["uv_build>=0.9.11,<0.10.0"]
 build-backend = "uv_build"
-
-[tool.uv]
-package = true
 
 [tool.uv.sources]
 sphinxcontrib-pdfembed = { git = "https://github.com/SuperKogito/sphinxcontrib-pdfembed" }
