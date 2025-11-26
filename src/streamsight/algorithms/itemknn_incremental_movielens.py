@@ -2,15 +2,17 @@ import logging
 
 import numpy as np
 import pandas as pd
-from scipy.sparse import csr_matrix, vstack, hstack
-from sklearn.preprocessing import OneHotEncoder
+from scipy.sparse import csr_matrix, hstack, vstack
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import OneHotEncoder
 
 from streamsight.algorithms.itemknn import ItemKNN
 from streamsight.matrix import InteractionMatrix
 from streamsight.utils.util import add_rows_to_csr_matrix
 
+
 logger = logging.getLogger(__name__)
+
 
 class ItemKNNIncrementalMovieLens100K(ItemKNN):
     """Incremental version of ItemKNN algorithm with MovieLens100k Metadata.
@@ -20,7 +22,7 @@ class ItemKNNIncrementalMovieLens100K(ItemKNN):
     data with the new data by appending the new data to the historical data.
     """
 
-    def __init__(self, K=10, metadata: pd.DataFrame=None):
+    def __init__(self, K=10, metadata: pd.DataFrame = None):
         super().__init__(K)
         if metadata is None:
             raise ValueError("Metadata is required for ItemKNNIncrementalMovieLens100K")
@@ -57,7 +59,6 @@ class ItemKNNIncrementalMovieLens100K(ItemKNN):
         # Merge data
         self.training_data = X_prev + X
 
-
     def _fit(self, X: csr_matrix) -> "ItemKNNIncrementalMovieLens100K":
         """Fit a cosine similarity matrix from item to item."""
         if self.training_data is None:
@@ -66,7 +67,7 @@ class ItemKNNIncrementalMovieLens100K(ItemKNN):
             self.append_training_data(X)
         super()._fit(self.training_data)
         return self
-    
+
     def _predict(self, X: csr_matrix, predict_im: InteractionMatrix) -> csr_matrix:
         """Predict the K most similar items for each item using the latest data."""
         X_pred = super()._predict(self.training_data)
@@ -84,12 +85,8 @@ class ItemKNNIncrementalMovieLens100K(ItemKNN):
             return X_pred
 
         known_user_id, known_item_id = X_pred.shape
-        X_pred = add_rows_to_csr_matrix(
-            X_pred, intended_shape[0] - known_user_id
-        )
-        logger.debug(
-            f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with items"
-        )
+        X_pred = add_rows_to_csr_matrix(X_pred, intended_shape[0] - known_user_id)
+        logger.debug(f"Padding user ID in range({known_user_id}, {intended_shape[0]}) with items")
         to_predict = predict_frame.value_counts("uid")
 
         # pad users with items from most similar user
@@ -98,7 +95,7 @@ class ItemKNNIncrementalMovieLens100K(ItemKNN):
             if user_id >= known_user_id:
                 most_similar_user_idx = np.argmax(user_similarity_matrix[user_id][:known_user_id])
                 X_pred[user_id, :] = X_pred[most_similar_user_idx, :]
-    
+
         logger.debug(f"Padding by {self.name} completed")
         return X_pred
 
@@ -106,7 +103,7 @@ class ItemKNNIncrementalMovieLens100K(ItemKNN):
         user_metadata = self.metadata.copy()
 
         # set userId as index
-        user_metadata.set_index('userId', inplace=True)
+        user_metadata.set_index("userId", inplace=True)
         user_metadata.index.name = None
 
         # reorder the indices
@@ -114,10 +111,10 @@ class ItemKNNIncrementalMovieLens100K(ItemKNN):
         user_metadata.sort_index(inplace=True)
 
         # zipcode is a column that does not provide any useful information so we drop it
-        user_metadata = user_metadata.drop(columns=['zipcode'])
+        user_metadata = user_metadata.drop(columns=["zipcode"])
 
         # obtain categorical columns
-        categorical_columns = user_metadata.select_dtypes(include=['object']).columns.tolist()
+        categorical_columns = user_metadata.select_dtypes(include=["object"]).columns.tolist()
 
         # Use one-hot encoding to encode the categorical columns
         encoder = OneHotEncoder(sparse_output=False)
