@@ -1,10 +1,11 @@
 import logging
-from typing import NoReturn
+from typing import ClassVar, NoReturn
 
 import numpy as np
 import pandas as pd
 
 from streamsight.datasets.base import Dataset
+from streamsight.datasets.config.yelp import YelpConfig
 
 
 logger = logging.getLogger(__name__)
@@ -37,28 +38,15 @@ class YelpDataset(Dataset):
 
     """
 
-    USER_IX = "user_id"
-    """Name of the column in the DataFrame that contains user identifiers."""
-    ITEM_IX = "business_id"
-    """Name of the column in the DataFrame that contains item identifiers."""
-    RATING_IX = "stars"
-    """Name of the column in the DataFrame that contains the rating a user gave to the item."""
-    TIMESTAMP_IX = "date"
-    """Name of the column in the DataFrame that contains time of interaction in date format."""
-    DATASET_URL = "https://www.yelp.com/dataset/download"
-    """URL to fetch the dataset from."""
-
-    @property
-    def DEFAULT_FILENAME(self) -> str:
-        """Default filename that will be used if it is not specified by the user."""
-        return "yelp_academic_dataset_review.csv"
+    config: ClassVar[YelpConfig] = YelpConfig()
 
     def _download_dataset(self) -> NoReturn:
         raise ValueError(
-            f"Yelp dataset has not been downloaded. Please head over"
-            f"to {self.DATASET_URL} to download the dataset."
+            "Yelp dataset has not been downloaded. Please head over"
+            f"to {self.config.dataset_url} to download the dataset."
             "As there is a license agreement, we cannot download it for you."
             "Place the unzip dataset under the data directory when done."
+            f"Expected filename: {self.config.default_filename}"
         )
 
     def _load_dataframe(self) -> pd.DataFrame:
@@ -74,9 +62,19 @@ class YelpDataset(Dataset):
 
         df = pd.read_csv(
             self.file_path,
-            dtype={self.ITEM_IX: str, self.USER_IX: str, self.RATING_IX: np.float32, self.TIMESTAMP_IX: str},
-            usecols=[self.ITEM_IX, self.USER_IX, self.RATING_IX, self.TIMESTAMP_IX],
-            parse_dates=[self.TIMESTAMP_IX],
+            dtype={
+                self.config.item_ix: str,
+                self.config.user_ix: str,
+                self.config.rating_ix: np.float32,
+                self.config.timestamp_ix: str,
+            },
+            usecols=[
+                self.config.item_ix,
+                self.config.user_ix,
+                self.config.rating_ix,
+                self.config.timestamp_ix,
+            ],
+            parse_dates=[self.config.timestamp_ix],
             date_format="%Y-%m-%d %H:%M:%S",
             header=0,
             sep=",",
@@ -90,11 +88,15 @@ class YelpDataset(Dataset):
             df[col] = str_df[col]
 
         # convert the timestamp to epoch time
-        df[self.TIMESTAMP_IX] = pd.to_datetime(df[self.TIMESTAMP_IX], format="%Y-%m-%d %H:%M:%S", errors="coerce")
+        df[self.config.timestamp_ix] = pd.to_datetime(
+            df[self.config.timestamp_ix], format="%Y-%m-%d %H:%M:%S", errors="coerce"
+        )
         df.dropna(inplace=True)
-        df[self.TIMESTAMP_IX] = df[self.TIMESTAMP_IX].astype(np.int64) // 10**9
+        df[self.config.timestamp_ix] = df[self.config.timestamp_ix].astype(np.int64) // 10**9
 
         return df
 
-    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame) -> None:
+    def _fetch_dataset_metadata(
+        self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame
+    ) -> None:
         pass

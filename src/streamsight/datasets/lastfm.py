@@ -5,8 +5,10 @@ import zipfile
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from typing_extensions import ClassVar
 
 from streamsight.datasets.base import Dataset
+from streamsight.datasets.config import LastFMConfig
 from streamsight.metadata.lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
 
 
@@ -26,54 +28,56 @@ class LastFMDataset(Dataset):
     The dataset is downloaded from the GroupLens website :cite:`Cantador_RecSys2011`.
     """
 
-    USER_IX = "userID"
-    """Name of the column in the DataFrame that contains user identifiers."""
-    ITEM_IX = "artistID"
-    """Name of the column in the DataFrame that contains item identifiers."""
-    TIMESTAMP_IX = "timestamp"
-    """Name of the column in the DataFrame that contains time of interaction in seconds since epoch."""
-    TAG_IX = "tagID"
-    """Name of the column in the DataFrame that contains the tag a user gave to the item."""
-    REMOTE_FILENAME = "user_taggedartists-timestamps.dat"
-    """Name of the file containing user interaction on the MovieLens server."""
-    REMOTE_ZIPNAME = "hetrec2011-lastfm-2k"
-    """Name of the zip-file on the MovieLens server."""
-    DATASET_URL = "https://files.grouplens.org/datasets/hetrec2011"
-    """URL to fetch the dataset from."""
+    config: ClassVar[LastFMConfig] = LastFMConfig()
 
     ITEM_METADATA = None
     USER_METADATA = None
     TAG_METADATA = None
 
     def fetch_dataset(self) -> None:
-        path = os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.REMOTE_ZIPNAME}.zip")
-        file = self.REMOTE_FILENAME
-        if not os.path.exists(path):
-            logger.debug(f"{self.name} dataset zipfile not found in {path}.")
+        """Check if dataset is present, if not download.
+
+        This method overrides the base class to handle the special case where
+        the zipfile may exist but the extracted file doesn't.
+        """
+        zip_path = os.path.join(
+            self.config.default_base_path, f"{self.config.remote_zipname}.zip"
+        )
+
+        if not os.path.exists(zip_path):
+            logger.debug(f"{self.name} dataset zipfile not found in {zip_path}.")
             self._download_dataset()
         elif not os.path.exists(self.file_path):
             logger.debug(
-                f"{self.name} dataset file not found, but the zipfile has already been downloaded. Extracting file from zipfile."
+                f"{self.name} dataset file not found, but zipfile already downloaded. "
+                f"Extracting file from zipfile."
             )
-            with zipfile.ZipFile(path, "r") as zip_ref:
-                zip_ref.extract(file, self.__class__.DEFAULT_BASE_PATH)
-
-        logger.debug("Data zipfile is in memory and in dir specified.")
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extract(self.config.remote_filename, self.config.default_base_path)
+        else:
+            logger.debug("Data zipfile is in memory and in dir specified.")
 
     def _download_dataset(self) -> None:
         """Downloads the dataset.
 
         Downloads the zipfile, and extracts the interaction file to `self.file_path`
         """
+        zip_path = os.path.join(
+            self.config.default_base_path, f"{self.config.remote_zipname}.zip"
+        )
+
+        logger.debug(f"Downloading {self.name} dataset from {self.config.dataset_url}")
+
         # Download the zip into the data directory
         self._fetch_remote(
-            f"{self.DATASET_URL}/{self.REMOTE_ZIPNAME}.zip",
-            os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.REMOTE_ZIPNAME}.zip"),
+            f"{self.config.dataset_url}/{self.config.remote_zipname}.zip",
+            zip_path,
         )
 
         # Extract the interaction file which we will use
-        with zipfile.ZipFile(os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.REMOTE_ZIPNAME}.zip"), "r") as zip_ref:
-            zip_ref.extract(f"{self.REMOTE_FILENAME}", self.__class__.DEFAULT_BASE_PATH)
+        logger.debug(f"Extracting {self.config.remote_filename} from zip")
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extract(self.config.remote_filename, self.config.default_base_path)
 
     def _load_dataframe(self) -> pd.DataFrame:
         """Load the raw dataset from file, and return it as a pandas DataFrame.
@@ -88,24 +92,29 @@ class LastFMDataset(Dataset):
         df = pd.read_csv(
             self.file_path,
             dtype={
-                self.ITEM_IX: np.int32,
-                self.USER_IX: np.int32,
-                self.TAG_IX: np.int32,
-                self.TIMESTAMP_IX: np.int64,
+                self.config.item_ix: np.int32,
+                self.config.user_ix: np.int32,
+                self.config.tag_ix: np.int32,
+                self.config.timestamp_ix: np.int64,
             },
             sep="\t",
             names=[
-                self.USER_IX,
-                self.ITEM_IX,
-                self.TAG_IX,
-                self.TIMESTAMP_IX,
+                self.config.user_ix,
+                self.config.item_ix,
+                self.config.tag_ix,
+                self.config.timestamp_ix,
             ],
             header=0,
         )
-        df[self.TIMESTAMP_IX] = df[self.TIMESTAMP_IX] // 1_000  # Convert to seconds
+        # Convert from milliseconds to seconds
+        df[self.config.timestamp_ix] = df[self.config.timestamp_ix] // 1_000
+
+        logger.debug(f"Loaded {len(df)} interactions")
         return df
 
-    def _fetch_dataset_metadata(self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame) -> None:
+    def _fetch_dataset_metadata(
+        self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame
+    ) -> None:
         self.USER_METADATA = LastFMUserMetadata(user_id_mapping=user_id_mapping).load()
         self.ITEM_METADATA = LastFMItemMetadata(item_id_mapping=item_id_mapping).load()
         self.TAG_METADATA = LastFMTagMetadata().load()

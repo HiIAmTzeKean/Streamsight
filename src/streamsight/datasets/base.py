@@ -2,7 +2,6 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from pathlib import Path
 from typing import ClassVar
 
 import httpx
@@ -11,7 +10,8 @@ import pandas as pd
 from streamsight.matrix import InteractionMatrix
 from streamsight.preprocessing.filter import Filter, MinItemsPerUser, MinUsersPerItem
 from streamsight.preprocessing.preprocessor import DataFramePreprocessor
-from streamsight.utils import get_data_dir
+from streamsight.utils.path import safe_dir
+from .config import DatasetConfig
 
 
 logger = logging.getLogger(__name__)
@@ -42,43 +42,34 @@ class Dataset(ABC):
     :type use_default_filters: bool, optional
     """
 
-    USER_IX: ClassVar[str] = "user_id"
-    """Name of the column in the DataFrame with user identifiers"""
-    ITEM_IX: ClassVar[str] = "item_id"
-    """Name of the column in the DataFrame with item identifiers"""
-    TIMESTAMP_IX: ClassVar[str] = "timestamp"
-    """Name of the column in the DataFrame that contains time of interaction in seconds since epoch."""
-    DEFAULT_BASE_PATH: ClassVar[str] = get_data_dir()
-    """Default base path where the dataset will be stored."""
-    DATASET_URL: ClassVar[str] = "http://example.com"
-    """URL to fetch the dataset from."""
-
-    @classmethod
-    def DEFAULT_FILENAME(cls) -> str:
-        """Default filename that will be used if it is not specified by the user."""
-        return "dataset.csv"
+    config: ClassVar[DatasetConfig] = DatasetConfig()
+    """Configuration for the dataset."""
 
     def __init__(
         self,
         use_default_filters: bool = False,  # noqa: FBT001, FBT002
         fetch_metadata: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
-        if (
-            not self.__class__.USER_IX
-            or not self.__class__.ITEM_IX
-            or not self.__class__.TIMESTAMP_IX
-        ):
-            raise AttributeError("USER_IX, ITEM_IX or TIMESTAMP_IX not set.")
-        logger.debug(f"{self.name} being initialized with '{self.__class__.DEFAULT_BASE_PATH}' as the base path.")
-        if not self.__class__.DEFAULT_FILENAME():
+        if not self.config.user_ix or not self.config.item_ix or not self.config.timestamp_ix:
+            raise AttributeError("user_ix, item_ix or timestamp_ix not set in config.")
+
+        logger.debug(
+            f"{self.name} being initialized with '{self.config.default_base_path}' as the base path."
+        )
+
+        if not self.config.default_filename:
             raise ValueError("No filename specified, and no default known.")
+
         self.fetch_metadata = fetch_metadata
-        self.preprocessor = DataFramePreprocessor(self.ITEM_IX, self.USER_IX, self.TIMESTAMP_IX)
+        self.preprocessor = DataFramePreprocessor(
+            self.config.item_ix, self.config.user_ix, self.config.timestamp_ix
+        )
+
         if use_default_filters:
             for f in self._default_filters:
                 self.add_filter(f)
 
-        self._check_safe()
+        safe_dir(self.config.default_base_path)
         logger.debug(f"{self.name} is initialized.")
 
     @property
@@ -95,28 +86,37 @@ class Dataset(ABC):
         :return: List of filters to be applied to the dataset
         :rtype: List[Filter]
         """
-        if not self.__class__.USER_IX or not self.__class__.ITEM_IX:
-            raise AttributeError("USER_IX or ITEM_IX not set.")
+        if not self.config.user_ix or not self.config.item_ix:
+            raise AttributeError("config.user_ix or config.item_ix not set.")
 
         filters: list[Filter] = []
-        filters.append(MinItemsPerUser(3, self.__class__.ITEM_IX, self.__class__.USER_IX))
-        filters.append(MinUsersPerItem(3, self.__class__.ITEM_IX, self.__class__.USER_IX))
+        filters.append(
+            MinItemsPerUser(
+                min_items_per_user=3,
+                item_ix=self.config.item_ix,
+                user_ix=self.config.user_ix,
+            )
+        )
+        filters.append(
+            MinUsersPerItem(
+                min_users_per_item=3,
+                item_ix=self.config.item_ix,
+                user_ix=self.config.user_ix,
+            )
+        )
         return filters
 
     @property
     def file_path(self) -> str:
         """File path of the dataset."""
-        return os.path.join(self.__class__.DEFAULT_BASE_PATH, self.__class__.DEFAULT_FILENAME())
+        return os.path.join(self.config.default_base_path, self.config.default_filename)
 
     @property
     def processed_cache_path(self) -> str:
         """Path for cached processed data."""
-        return os.path.join(self.__class__.DEFAULT_BASE_PATH, f"{self.__class__.DEFAULT_FILENAME()}.processed.parquet")
-
-    def _check_safe(self) -> None:
-        """Check if the directory is safe. If directory does not exit, create it."""
-        p = Path(self.__class__.DEFAULT_BASE_PATH)
-        p.mkdir(exist_ok=True)
+        return os.path.join(
+            self.config.default_base_path, f"{self.config.default_filename}.processed.parquet"
+        )
 
     def fetch_dataset(self) -> None:
         """Check if dataset is present, if not download"""
@@ -206,13 +206,13 @@ class Dataset(ABC):
         :return: InteractionMatrix object
         :rtype: InteractionMatrix
         """
-        if not self.USER_IX or not self.ITEM_IX or not self.TIMESTAMP_IX:
-            raise AttributeError("USER_IX, ITEM_IX or TIMESTAMP_IX not set.")
+        if not self.config.user_ix or not self.config.item_ix or not self.config.timestamp_ix:
+            raise AttributeError("config.user_ix, config.item_ix or config.timestamp_ix not set.")
         return InteractionMatrix(
             df,
-            user_ix=self.USER_IX,
-            item_ix=self.ITEM_IX,
-            timestamp_ix=self.TIMESTAMP_IX,
+            user_ix=self.config.user_ix,
+            item_ix=self.config.item_ix,
+            timestamp_ix=self.config.timestamp_ix,
         )
 
     def _fetch_remote(self, url: str, filename: str) -> str:
@@ -269,8 +269,9 @@ class Dataset(ABC):
         :param df: DataFrame to cache
         :type df: pd.DataFrame
         """
-        logger.info(f"Caching processed DataFrame to {self.processed_cache_path}")
+        logger.debug(f"Caching processed DataFrame to {self.processed_cache_path}")
         df.to_parquet(self.processed_cache_path)
+        logger.debug("Processed DataFrame cached successfully.")
 
     @abstractmethod
     def _fetch_dataset_metadata(
