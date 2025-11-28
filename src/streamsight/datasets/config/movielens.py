@@ -25,4 +25,3 @@ class MovieLens100KConfig(MovieLensConfig):
     """MovieLens 100K specific configuration."""
 
     remote_filename: str = "u.data"
-
