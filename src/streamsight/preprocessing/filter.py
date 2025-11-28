@@ -26,14 +26,14 @@ class Filter(ABC):
 
 class MinItemsPerUser(Filter):
     """Require that a user has interacted with a minimum number of items.
-    
+
     This code is adapted from RecPack :cite:`recpack`
-    
+
     Example
     ~~~~~~~~~
-    
+
     .. code-block::
-    
+
         Original interactions
         1 - a
         1 - b
@@ -63,7 +63,7 @@ class MinItemsPerUser(Filter):
     :param count_duplicates: Count multiple interactions with the same item, defaults to True
     :type count_duplicates: bool
     """
-    
+
     def __init__(
         self,
         min_items_per_user: int,
@@ -88,17 +88,17 @@ class MinItemsPerUser(Filter):
 
         return df[df[self.user_ix].isin(users_of_interest)].copy()
 
-    
+
 class MinUsersPerItem(Filter):
     """Require that a minimum number of users has interacted with an item.
-    
+
     This code is adapted from RecPack :cite:`recpack`
-    
+
     Example
     ~~~~~~~~~
-    
+
     .. code-block::
-    
+
         Original interactions
         1 - a
         1 - b
@@ -138,7 +138,6 @@ class MinUsersPerItem(Filter):
         user_ix: str,
         count_duplicates: bool = True,
     ):
-
         self.item_ix = item_ix
         self.user_ix = user_ix
 

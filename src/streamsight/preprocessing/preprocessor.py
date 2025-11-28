@@ -1,11 +1,12 @@
 import logging
-from typing import List, Literal
+from typing import Literal
 
 import pandas as pd
 from tqdm.auto import tqdm
 
 from streamsight.matrix import InteractionMatrix
 from streamsight.preprocessing.filter import Filter
+
 
 tqdm.pandas()
 
@@ -37,7 +38,7 @@ class DataFramePreprocessor:
         self.user_ix = user_ix
         self.timestamp_ix = timestamp_ix
 
-        self.filters: List[Filter] = []
+        self.filters: list[Filter] = []
 
     @property
     def item_id_mapping(self) -> pd.DataFrame:
@@ -71,7 +72,7 @@ class DataFramePreprocessor:
 
     def add_filter(self, filter: Filter):
         """Add a preprocessing filter to be applied
-        
+
         This filter will be applied before transforming to a
         :class:`InteractionMatrix` object.
 
@@ -116,15 +117,11 @@ class DataFramePreprocessor:
         """
         # sort by timestamp to incrementally assign user and item ids by timestamp
         df.sort_values(by=[self.timestamp_ix], inplace=True, ignore_index=True)
-        user_index = pd.CategoricalIndex(
-            df[self.user_ix], categories=df[self.user_ix].unique()
-        )
+        user_index = pd.CategoricalIndex(df[self.user_ix], categories=df[self.user_ix].unique())
         self._user_id_mapping = dict(enumerate(user_index.drop_duplicates()))
         df[self.user_ix] = user_index.codes
 
-        item_index = pd.CategoricalIndex(
-            df[self.item_ix], categories=df[self.item_ix].unique()
-        )
+        item_index = pd.CategoricalIndex(df[self.item_ix], categories=df[self.item_ix].unique())
         self._item_id_mapping = dict(enumerate(item_index.drop_duplicates()))
         df[self.item_ix] = item_index.codes
 
@@ -141,8 +138,6 @@ class DataFramePreprocessor:
         self._print_log_message("after", "preprocess", df)
 
         # Convert input data into internal data objects
-        interaction_m = InteractionMatrix(
-            df, self.item_ix, self.user_ix, self.timestamp_ix
-        )
+        interaction_m = InteractionMatrix(df, self.item_ix, self.user_ix, self.timestamp_ix)
 
         return interaction_m
