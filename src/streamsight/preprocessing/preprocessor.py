@@ -2,13 +2,10 @@ import logging
 from typing import Literal
 
 import pandas as pd
-from tqdm.auto import tqdm
 
 from streamsight.matrix import InteractionMatrix
 from streamsight.preprocessing.filter import Filter
 
-
-tqdm.pandas()
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +27,7 @@ class DataFramePreprocessor:
     :type timestamp_ix: str
     """
 
-    def __init__(self, item_ix: str, user_ix: str, timestamp_ix: str):
+    def __init__(self, item_ix: str, user_ix: str, timestamp_ix: str) -> None:
         self._item_id_mapping = dict()
         self._user_id_mapping = dict()
 
@@ -70,7 +67,7 @@ class DataFramePreprocessor:
             columns=[InteractionMatrix.USER_IX, self.user_ix],
         )
 
-    def add_filter(self, filter: Filter):
+    def add_filter(self, filter: Filter) -> None:
         """Add a preprocessing filter to be applied
 
         This filter will be applied before transforming to a
@@ -89,7 +86,7 @@ class DataFramePreprocessor:
         step: Literal["before", "after"],
         stage: Literal["preprocess", "filter"],
         df: pd.DataFrame,
-    ):
+    ) -> None:
         """Logging for change tracking.
 
         Prints a log message with the number of interactions, items and users
@@ -128,9 +125,9 @@ class DataFramePreprocessor:
     def process(self, df: pd.DataFrame) -> InteractionMatrix:
         self._print_log_message("before", "preprocess", df)
 
-        for filter in self.filters:
-            logger.debug(f"applying filter: {filter}")
-            df = filter.apply(df)
+        for filter_obj in self.filters:
+            logger.debug(f"applying filter: {filter_obj}")
+            df = filter_obj.apply(df)
             self._print_log_message("after", "filter", df)
 
         self._update_id_mappings(df)

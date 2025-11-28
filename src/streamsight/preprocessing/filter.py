@@ -19,7 +19,7 @@ class Filter(ABC):
         """
         raise NotImplementedError
 
-    def __str__(self):
+    def __str__(self) -> str:
         attrs = self.__dict__
         return f"{self.__class__.__name__}({', '.join((f'{k}={v}' for k, v in attrs.items()))})"
 
@@ -70,14 +70,14 @@ class MinItemsPerUser(Filter):
         item_ix: str,
         user_ix: str,
         count_duplicates: bool = True,
-    ):
+    ) -> None:
         self.min_iu = min_items_per_user
         self.count_duplicates = count_duplicates
 
         self.item_ix = item_ix
         self.user_ix = user_ix
 
-    def apply(self, df) -> pd.DataFrame:
+    def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         uids = (
             df[self.user_ix]
             if self.count_duplicates
@@ -137,14 +137,14 @@ class MinUsersPerItem(Filter):
         item_ix: str,
         user_ix: str,
         count_duplicates: bool = True,
-    ):
+    ) -> None:
         self.item_ix = item_ix
         self.user_ix = user_ix
 
         self.min_ui = min_users_per_item
         self.count_duplicates = count_duplicates
 
-    def apply(self, df) -> pd.DataFrame:
+    def apply(self, df: pd.DataFrame) -> pd.DataFrame:
         iids = (
             df[self.item_ix]
             if self.count_duplicates
