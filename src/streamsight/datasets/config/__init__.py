@@ -9,15 +9,15 @@ re-exported from `streamsight.datasets.config`:
 .. autosummary::
     :toctree: generated/
 
-    MovieLensConfig
-    MovieLens100KConfig
-    AmazonConfig
-    AmazonMusicConfig
-    AmazonMovieConfig
-    AmazonBookConfig
-    AmazonSubscriptionBoxesConfig
-    LastFMConfig
-    YelpConfig
+    MovieLensDatasetConfig
+    MovieLens100KDatasetConfig
+    AmazonDatasetConfig
+    AmazonMusicDatasetConfig
+    AmazonMovieDatasetConfig
+    AmazonBookDatasetConfig
+    AmazonSubscriptionBoxesDatasetConfig
+    LastFMDatasetConfig
+    YelpDatasetConfig
     DatasetConfig
 
 Usage
@@ -28,10 +28,10 @@ wrappers:
 
 .. code-block:: python
 
-    from streamsight.datasets.config import AmazonMusicConfig
+    from streamsight.datasets.config import AmazonMusicDatasetConfig
 
     # Create config instance using defaults
-    cfg = AmazonMusicConfig()
+    cfg = AmazonMusicDatasetConfig()
 
     # Inspect config values (example fields, actual attributes depend on class)
     print(cfg.name)
@@ -39,34 +39,34 @@ wrappers:
     print(cfg.source_url)
 
     # Optionally override defaults at runtime
-    custom_cfg = AmazonMusicConfig(min_user_interactions=5, min_item_interactions=10)
+    custom_cfg = AmazonMusicDatasetConfig(min_user_interactions=5, min_item_interactions=10)
 
 """
 
 from .amazon import (
-    AmazonBookConfig,
-    AmazonConfig,
-    AmazonMovieConfig,
-    AmazonMusicConfig,
-    AmazonSubscriptionBoxesConfig,
+    AmazonBookDatasetConfig,
+    AmazonDatasetConfig,
+    AmazonMovieDatasetConfig,
+    AmazonMusicDatasetConfig,
+    AmazonSubscriptionBoxesDatasetConfig,
 )
 from .base import DatasetConfig
-from .lastfm import LastFMConfig
+from .lastfm import LastFMDatasetConfig
 from .movielens import (
-    MovieLens100KConfig,
-    MovieLensConfig,
+    MovieLens100KDatasetConfig,
+    MovieLensDatasetConfig,
 )
-from .yelp import YelpConfig
+from .yelp import YelpDatasetConfig
 
 
 __all__ = [
-    "MovieLensConfig",
-    "MovieLens100KConfig",
-    "AmazonConfig",
-    "AmazonMusicConfig",
-    "AmazonMovieConfig",
-    "AmazonBookConfig",
-    "AmazonSubscriptionBoxesConfig",
-    "LastFMConfig",
-    "YelpConfig", "DatasetConfig",
+    "MovieLensDatasetConfig",
+    "MovieLens100KDatasetConfig",
+    "AmazonDatasetConfig",
+    "AmazonMusicDatasetConfig",
+    "AmazonMovieDatasetConfig",
+    "AmazonBookDatasetConfig",
+    "AmazonSubscriptionBoxesDatasetConfig",
+    "LastFMDatasetConfig",
+    "YelpDatasetConfig", "DatasetConfig",
 ]

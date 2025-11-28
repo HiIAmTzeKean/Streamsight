@@ -4,7 +4,7 @@ from .base import DatasetConfig
 
 
 @dataclass
-class AmazonConfig(DatasetConfig):
+class AmazonDatasetConfig(DatasetConfig):
     """Amazon dataset base configuration."""
 
     user_ix: str = "user_id"
@@ -23,7 +23,7 @@ class AmazonConfig(DatasetConfig):
 
 
 @dataclass
-class AmazonMusicConfig(AmazonConfig):
+class AmazonMusicDatasetConfig(AmazonDatasetConfig):
     """Amazon Music dataset configuration."""
 
     remote_filename: str = "Digital_Music.jsonl.gz"
@@ -31,7 +31,7 @@ class AmazonMusicConfig(AmazonConfig):
 
 
 @dataclass
-class AmazonMovieConfig(AmazonConfig):
+class AmazonMovieDatasetConfig(AmazonDatasetConfig):
     """Amazon Movie dataset configuration."""
 
     remote_filename: str = "Movies_and_TV.jsonl.gz"
@@ -39,7 +39,7 @@ class AmazonMovieConfig(AmazonConfig):
 
 
 @dataclass
-class AmazonSubscriptionBoxesConfig(AmazonConfig):
+class AmazonSubscriptionBoxesDatasetConfig(AmazonDatasetConfig):
     """Amazon Subscription Boxes dataset configuration."""
 
     remote_filename: str = "Subscription_Boxes.jsonl.gz"
@@ -47,7 +47,7 @@ class AmazonSubscriptionBoxesConfig(AmazonConfig):
 
 
 @dataclass
-class AmazonBookConfig(AmazonConfig):
+class AmazonBookDatasetConfig(AmazonDatasetConfig):
     """Amazon Books dataset configuration."""
 
     remote_filename: str = "Books.jsonl.gz"

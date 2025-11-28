@@ -6,11 +6,11 @@ import pandas as pd
 
 from streamsight.datasets.base import Dataset
 from streamsight.datasets.config import (
-    AmazonBookConfig,
-    AmazonConfig,
-    AmazonMovieConfig,
-    AmazonMusicConfig,
-    AmazonSubscriptionBoxesConfig,
+    AmazonBookDatasetConfig,
+    AmazonDatasetConfig,
+    AmazonMovieDatasetConfig,
+    AmazonMusicDatasetConfig,
+    AmazonSubscriptionBoxesDatasetConfig,
 )
 from .metadata.amazon import (
     AmazonBookItemMetadata,
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class AmazonDataset(Dataset):
     ITEM_METADATA = None
 
-    config: ClassVar[AmazonConfig] = AmazonConfig()
+    config: ClassVar[AmazonDatasetConfig] = AmazonDatasetConfig()
 
     def _download_dataset(self) -> None:
         """Downloads the dataset.
@@ -94,7 +94,7 @@ class AmazonDataset(Dataset):
 class AmazonMusicDataset(AmazonDataset):
     """Handles Amazon Music dataset."""
 
-    config: ClassVar[AmazonMusicConfig] = AmazonMusicConfig()
+    config: ClassVar[AmazonMusicDatasetConfig] = AmazonMusicDatasetConfig()
 
     def _fetch_dataset_metadata(
         self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame
@@ -105,7 +105,7 @@ class AmazonMusicDataset(AmazonDataset):
 class AmazonMovieDataset(AmazonDataset):
     """Handles Amazon Movie dataset."""
 
-    config: ClassVar[AmazonMovieConfig] = AmazonMovieConfig()
+    config: ClassVar[AmazonMovieDatasetConfig] = AmazonMovieDatasetConfig()
 
     def _fetch_dataset_metadata(
         self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame
@@ -116,7 +116,7 @@ class AmazonMovieDataset(AmazonDataset):
 class AmazonSubscriptionBoxesDataset(AmazonDataset):
     """Handles Amazon Computer dataset."""
 
-    config: ClassVar[AmazonSubscriptionBoxesConfig] = AmazonSubscriptionBoxesConfig()
+    config: ClassVar[AmazonSubscriptionBoxesDatasetConfig] = AmazonSubscriptionBoxesDatasetConfig()
 
     def _fetch_dataset_metadata(
         self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame
@@ -129,7 +129,7 @@ class AmazonSubscriptionBoxesDataset(AmazonDataset):
 class AmazonBookDataset(AmazonDataset):
     """Handles Amazon Book dataset."""
 
-    config: ClassVar[AmazonBookConfig] = AmazonBookConfig()
+    config: ClassVar[AmazonBookDatasetConfig] = AmazonBookDatasetConfig()
 
     def _fetch_dataset_metadata(
         self, user_id_mapping: pd.DataFrame, item_id_mapping: pd.DataFrame

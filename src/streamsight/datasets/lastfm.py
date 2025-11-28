@@ -8,8 +8,8 @@ from tqdm import tqdm
 from typing_extensions import ClassVar
 
 from streamsight.datasets.base import Dataset
-from streamsight.datasets.config import LastFMConfig
-from streamsight.metadata.lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
+from streamsight.datasets.config import LastFMDatasetConfig
+from .metadata.lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class LastFMDataset(Dataset):
     The dataset is downloaded from the GroupLens website :cite:`Cantador_RecSys2011`.
     """
 
-    config: ClassVar[LastFMConfig] = LastFMConfig()
+    config: ClassVar[LastFMDatasetConfig] = LastFMDatasetConfig()
 
     ITEM_METADATA = None
     USER_METADATA = None

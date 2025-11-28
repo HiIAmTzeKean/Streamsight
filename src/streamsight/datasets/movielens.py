@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from streamsight.metadata.movielens import MovieLens100kItemMetadata, MovieLens100kUserMetadata
 from .base import Dataset
-from .config import MovieLens100KConfig, MovieLensConfig
+from .config import MovieLens100KDatasetConfig, MovieLensDatasetConfig
+from .metadata.movielens import MovieLens100kItemMetadata, MovieLens100kUserMetadata
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ class MovieLensDataset(Dataset):
 
     This code is adapted from RecPack :cite:`recpack`
     """
-    config: ClassVar[MovieLensConfig] = MovieLensConfig()
+    config: ClassVar[MovieLensDatasetConfig] = MovieLensDatasetConfig()
 
     def _download_dataset(self) -> None:
         # Download the zip into the data directory
@@ -48,7 +48,7 @@ class MovieLens100K(MovieLensDataset):
     ITEM_METADATA = None
     USER_METADATA = None
 
-    config: ClassVar[MovieLens100KConfig] = MovieLens100KConfig()
+    config: ClassVar[MovieLens100KDatasetConfig] = MovieLens100KDatasetConfig()
 
     def _load_dataframe(self) -> pd.DataFrame:
         self.fetch_dataset()

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from streamsight.datasets.base import Dataset
-from streamsight.datasets.config.yelp import YelpConfig
+from streamsight.datasets.config.yelp import YelpDatasetConfig
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class YelpDataset(Dataset):
 
     """
 
-    config: ClassVar[YelpConfig] = YelpConfig()
+    config: ClassVar[YelpDatasetConfig] = YelpDatasetConfig()
 
     def _download_dataset(self) -> NoReturn:
         raise ValueError(

@@ -4,7 +4,7 @@ from .base import DatasetConfig
 
 
 @dataclass
-class LastFMConfig(DatasetConfig):
+class LastFMDatasetConfig(DatasetConfig):
     """LastFM dataset configuration."""
 
     user_ix: str = "userID"

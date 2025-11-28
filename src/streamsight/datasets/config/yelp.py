@@ -4,7 +4,7 @@ from .base import DatasetConfig
 
 
 @dataclass
-class YelpConfig(DatasetConfig):
+class YelpDatasetConfig(DatasetConfig):
     """Yelp dataset configuration.
 
     Note: Yelp dataset must be manually downloaded from https://www.yelp.com/dataset/download

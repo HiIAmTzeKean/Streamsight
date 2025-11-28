@@ -4,7 +4,7 @@ from .base import DatasetConfig
 
 
 @dataclass
-class MovieLensConfig(DatasetConfig):
+class MovieLensDatasetConfig(DatasetConfig):
     """MovieLens base configuration."""
 
     user_ix: str = "userId"
@@ -21,7 +21,7 @@ class MovieLensConfig(DatasetConfig):
 
 
 @dataclass
-class MovieLens100KConfig(MovieLensConfig):
+class MovieLens100KDatasetConfig(MovieLensDatasetConfig):
     """MovieLens 100K specific configuration."""
 
     remote_filename: str = "u.data"
