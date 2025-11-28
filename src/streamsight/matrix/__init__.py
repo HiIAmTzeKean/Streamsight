@@ -25,6 +25,6 @@ These provides functionality for the matrix module and for use cases in other mo
     ItemUserBasedEnum
     TimestampAttributeMissingError
 """
+from streamsight.matrix.exception import TimestampAttributeMissingError
 from streamsight.matrix.interaction_matrix import InteractionMatrix, ItemUserBasedEnum
 from streamsight.matrix.util import Matrix, to_csr_matrix
-from streamsight.matrix.exception import TimestampAttributeMissingError

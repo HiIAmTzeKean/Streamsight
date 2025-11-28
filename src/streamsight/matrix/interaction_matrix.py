@@ -2,7 +2,7 @@ import logging
 import operator
 from copy import deepcopy
 from enum import StrEnum
-from typing import Callable, Iterator, List, Literal, Optional, Set, Tuple, Union, overload
+from typing import Callable, Literal, Optional, Union, overload
 from warnings import warn
 
 import numpy as np
@@ -11,6 +11,7 @@ from scipy.sparse import csr_matrix
 
 from streamsight.matrix.exception import TimestampAttributeMissingError
 from streamsight.utils import to_binary
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,15 +28,13 @@ class ItemUserBasedEnum(StrEnum):
     """Property based on user"""
 
     @classmethod
-    def has_value(cls, value: str):
+    def has_value(cls, value: str) -> bool:
         """Check valid value for ItemUserBasedEnum
 
         :param value: String value input
         :type value: str
         """
-        if value not in ItemUserBasedEnum:
-            return False
-        return True
+        return value in ItemUserBasedEnum
 
 
 class InteractionMatrix:
@@ -68,7 +67,7 @@ class InteractionMatrix:
         If no shape is specified, the number of users will be equal to the
         maximum user id plus one, the number of items to the maximum item
         id plus one.
-    :type shape: Tuple[int, int], optional
+    :type shape: tuple[int, int], optional
     :param skip_df_processing: Skip processing of the dataframe. This is useful
         when the dataframe is already processed and the columns are already
         renamed.
@@ -87,10 +86,10 @@ class InteractionMatrix:
         item_ix: str,
         user_ix: str,
         timestamp_ix: str,
-        shape: Optional[Tuple[int, int]] = None,
+        shape: Optional[tuple[int, int]] = None,
         skip_df_processing: bool = False,
-    ):
-        self.shape: Tuple[int, int]
+    ) -> None:
+        self.shape: tuple[int, int]
         """The shape of the interaction matrix, i.e. `|user| x |item|`."""
 
         col_mapper = {
@@ -125,7 +124,7 @@ class InteractionMatrix:
 
     def mask_shape(
         self,
-        shape: Optional[Tuple[int, int]] = None,
+        shape: Optional[tuple[int, int]] = None,
         #    drop_unknown: bool = False,
         drop_unknown_user: bool = False,
         drop_unknown_item: bool = False,
@@ -171,7 +170,7 @@ class InteractionMatrix:
             usually set by the evaluator during the evaluation run. This value
             can also be set manually but the programmer if there is a need to
             alter the known user/item base. Defaults to None
-        :type shape: Optional[Tuple[int, int]], optional
+        :type shape: Optional[tuple[int, int]], optional
         :param drop_unknown_user: To drop unknown users in the dataset,
             defaults to False
         :type drop_unknown_user: bool, optional
@@ -209,7 +208,7 @@ class InteractionMatrix:
         logger.debug(f"Final (user x item) shape defined is {self.shape}")
         self._check_shape()
 
-    def _check_shape(self):
+    def _check_shape(self) -> None:
         if not hasattr(self, "shape"):
             raise AttributeError(
                 "InteractionMatrix has no shape attribute. Please call mask_shape() first."
@@ -309,26 +308,26 @@ class InteractionMatrix:
         return matrix
 
     @property
-    def indices(self) -> Tuple[List[int], List[int]]:
+    def indices(self) -> tuple[list[int], list[int]]:
         """Returns a tuple of lists of user IDs and item IDs corresponding to interactions.
 
-        :return: Tuple of lists of user IDs and item IDs that correspond to at least one interaction.
-        :rtype: Tuple[List[int], List[int]]
+        :return: tuple of lists of user IDs and item IDs that correspond to at least one interaction.
+        :rtype: tuple[list[int], list[int]]
         """
         return self.values.nonzero()
 
-    def nonzero(self) -> Tuple[List[int], List[int]]:
+    def nonzero(self) -> tuple[list[int], list[int]]:
         return self.values.nonzero()
 
     @overload
-    def users_in(self, U: Set[int], inplace=False) -> "InteractionMatrix": ...
+    def users_in(self, U: set[int], inplace=False) -> "InteractionMatrix": ...
     @overload
-    def users_in(self, U: Set[int], inplace=True) -> None: ...
-    def users_in(self, U: Set[int], inplace=False) -> Optional["InteractionMatrix"]:
+    def users_in(self, U: set[int], inplace=True) -> None: ...
+    def users_in(self, U: set[int], inplace=False) -> Optional["InteractionMatrix"]:
         """Keep only interactions by one of the specified users.
 
-        :param U: A Set or List of users to select the interactions from.
-        :type U: Union[Set[int]
+        :param U: A set or list of users to select the interactions from.
+        :type U: Union[set[int]
         :param inplace: Apply the selection in place or not, defaults to False
         :type inplace: bool, optional
         :return: None if `inplace`, otherwise returns a new InteractionMatrix object
@@ -511,14 +510,14 @@ class InteractionMatrix:
         return len(self._df)
 
     @overload
-    def items_in(self, I: Set[int], inplace=False) -> "InteractionMatrix": ...
+    def items_in(self, I: set[int], inplace=False) -> "InteractionMatrix": ...
     @overload
-    def items_in(self, I: Set[int], inplace=True) -> None: ...
-    def items_in(self, I: Set[int], inplace=False) -> Optional["InteractionMatrix"]:
+    def items_in(self, I: set[int], inplace=True) -> None: ...
+    def items_in(self, I: set[int], inplace=False) -> Optional["InteractionMatrix"]:
         """Keep only interactions with the specified items.
 
-        :param I: A Set or List of items to select the interactions.
-        :type I: Set[int]
+        :param I: A set or list of items to select the interactions.
+        :type I: set[int]
         :param inplace: Apply the selection in place or not, defaults to False
         :type inplace: bool, optional
         :return: None if `inplace`, otherwise returns a new InteractionMatrix object
@@ -530,11 +529,11 @@ class InteractionMatrix:
 
         return self._apply_mask(mask, inplace=inplace)
 
-    def items_not_in(self, I: Set[int], inplace=False) -> Optional["InteractionMatrix"]:
+    def items_not_in(self, I: set[int], inplace=False) -> Optional["InteractionMatrix"]:
         """Keep only interactions not with the specified items.
 
-        :param I: A Set or List of items to exclude from the interactions.
-        :type I: Set[int]
+        :param I: A set or list of items to exclude from the interactions.
+        :type I: set[int]
         :param inplace: Apply the selection in place or not, defaults to False
         :type inplace: bool, optional
         :return: None if `inplace`, otherwise returns a new InteractionMatrix object
@@ -546,11 +545,11 @@ class InteractionMatrix:
 
         return self._apply_mask(mask, inplace=inplace)
 
-    def users_not_in(self, U: Set[int], inplace=False) -> Optional["InteractionMatrix"]:
+    def users_not_in(self, U: set[int], inplace=False) -> Optional["InteractionMatrix"]:
         """Keep only interactions not by the specified users.
 
-        :param U: A Set or List of users to exclude from the interactions.
-        :type U: Set[int]
+        :param U: A set or list of users to exclude from the interactions.
+        :type U: set[int]
         :param inplace: Apply the selection in place or not, defaults to False
         :type inplace: bool, optional
         :return: None if `inplace`, otherwise returns a new InteractionMatrix object
@@ -563,12 +562,12 @@ class InteractionMatrix:
         return self._apply_mask(mask, inplace=inplace)
 
     def interactions_in(
-        self, interaction_ids: List[int], inplace: bool = False
+        self, interaction_ids: list[int], inplace: bool = False
     ) -> Optional["InteractionMatrix"]:
         """Select the interactions by their interaction ids
 
         :param interaction_ids: A list of interaction ids
-        :type interaction_ids: List[int]
+        :type interaction_ids: list[int]
         :param inplace: Apply the selection in place,
             or return a new InteractionMatrix object, defaults to False
         :type inplace: bool, optional
@@ -596,7 +595,7 @@ class InteractionMatrix:
         by: ItemUserBasedEnum,
         n_seq_data: int,
         t_upper: Optional[int] = None,
-        id_in: Optional[Set[int]] = None,
+        id_in: Optional[set[int]] = None,
         inplace=False,
     ) -> "InteractionMatrix":
         if not self.has_timestamps:
@@ -642,7 +641,7 @@ class InteractionMatrix:
         self,
         n_seq_data: int = 1,
         t_upper: Optional[int] = None,
-        user_in: Optional[Set[int]] = None,
+        user_in: Optional[set[int]] = None,
         inplace: bool = False,
     ) -> "InteractionMatrix":
         """Select the last n interactions for each user.
@@ -652,9 +651,9 @@ class InteractionMatrix:
         :param t_upper: Seconds past t. Upper limit for the timestamp
             of the interactions to select, defaults to None
         :type t_upper: Optional[int], optional
-        :param user_in: Set of user IDs to select the interactions from,
+        :param user_in: set of user IDs to select the interactions from,
             defaults to None
-        :type user_in: Optional[Set[int]], optional
+        :type user_in: Optional[set[int]], optional
         :param inplace: If operation is inplace, defaults to False
         :type inplace: bool, optional
         :return: Resulting interaction matrix
@@ -669,7 +668,7 @@ class InteractionMatrix:
         self,
         n_seq_data: int = 1,
         t_upper: Optional[int] = None,
-        item_in: Optional[Set[int]] = None,
+        item_in: Optional[set[int]] = None,
         inplace: bool = False,
     ) -> "InteractionMatrix":
         """Select the last n interactions for each item.
@@ -679,9 +678,9 @@ class InteractionMatrix:
         :param t_upper: Seconds past t. Upper limit for the timestamp
             of the interactions to select, defaults to None
         :type t_upper: Optional[int], optional
-        :param item_in: Set of item IDs to select the interactions from,
+        :param item_in: set of item IDs to select the interactions from,
             defaults to None
-        :type item_in: Optional[Set[int]], optional
+        :type item_in: Optional[set[int]], optional
         :param inplace: If operation is inplace, defaults to False
         :type inplace: bool, optional
         :return: Resulting interaction matrix
@@ -761,20 +760,20 @@ class InteractionMatrix:
         return self._apply_mask(mask)
 
     @property
-    def user_ids(self) -> Set[int]:
+    def user_ids(self) -> set[int]:
         """The set of all user IDs.
 
-        :return: Set of all user IDs.
-        :rtype: Set[int]
+        :return: set of all user IDs.
+        :rtype: set[int]
         """
         return set(self._df[self._df != -1][InteractionMatrix.USER_IX].dropna().unique())
 
     @property
-    def item_ids(self) -> Set[int]:
+    def item_ids(self) -> set[int]:
         """The set of all item IDs.
 
-        :return: Set of all item IDs.
-        :rtype: Set[int]
+        :return: set of all item IDs.
+        :rtype: set[int]
         """
         return set(self._df[self._df != -1][InteractionMatrix.ITEM_IX].dropna().unique())
 
