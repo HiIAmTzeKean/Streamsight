@@ -26,15 +26,14 @@ class MovieLensDataset(Dataset):
 
     def _download_dataset(self) -> None:
         # Download the zip into the data directory
+        zip_file_path = os.path.join(self.config.default_base_path, f"{self.config.remote_zipname}.zip")
         self._fetch_remote(
             url=f"{self.config.dataset_url}/{self.config.remote_zipname}.zip",
-            filename=os.path.join(self.config.default_base_path, f"{self.config.remote_zipname}.zip"),
+            filename=zip_file_path,
         )
 
         # Extract the ratings file which we will use
-        with zipfile.ZipFile(
-            os.path.join(self.config.default_base_path, f"{self.config.remote_zipname}.zip"), "r"
-        ) as zip_ref:
+        with zipfile.ZipFile(zip_file_path, "r") as zip_ref:
             zip_ref.extract(f"{self.config.remote_zipname}/{self.config.remote_filename}", self.config.default_base_path)
 
         # Rename the ratings file to the specified filename
