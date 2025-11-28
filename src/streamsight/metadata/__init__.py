@@ -4,7 +4,7 @@
 Dataset
 -------------
 
-The metadata module allows users to include metadata information corresponding to the dataset. 
+The metadata module allows users to include metadata information corresponding to the dataset.
 The metadata classes are built on top of the :class:`Metadata`
 allowing for easy extension and customization. In this module, we provide
 the a few metadata that is available from public sources. The programmer is free to add more
@@ -21,7 +21,7 @@ and load the metadata while loading the dataset.
     Metadata
     MovieLens100KUserMetadata
     MovieLens100KItemMetadata
-    
+
 Example
 ~~~~~~~~~
 
