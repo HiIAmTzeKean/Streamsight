@@ -37,7 +37,7 @@ class MovieLens100kMetadata(Metadata):
 
 
 class MovieLens100kUserMetadata(MovieLens100kMetadata):
-    config: ClassVar[MovieLens100kUserMetadataConfig] = MovieLens100kUserMetadataConfig()
+    config: ClassVar[MovieLens100kUserMetadataConfig] = MovieLens100kUserMetadataConfig()  # type: ignore
 
     def __init__(self, user_id_mapping: pd.DataFrame) -> None:
         super().__init__()
@@ -62,7 +62,7 @@ class MovieLens100kUserMetadata(MovieLens100kMetadata):
 
 
 class MovieLens100kItemMetadata(MovieLens100kMetadata):
-    config: ClassVar[MovieLens100kItemMetadataConfig] = MovieLens100kItemMetadataConfig()
+    config: ClassVar[MovieLens100kItemMetadataConfig] = MovieLens100kItemMetadataConfig()  # type: ignore
 
     def __init__(self, item_id_mapping: pd.DataFrame) -> None:
         super().__init__()

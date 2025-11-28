@@ -56,7 +56,12 @@ from .amazon import (
     AmazonSubscriptionBoxesItemMetadataConfig,
 )
 from .base import DatasetConfig, MetadataConfig
-from .lastfm import LastFMDatasetConfig
+from .lastfm import (
+    LastFMDatasetConfig,
+    LastFMItemMetadataConfig,
+    LastFMTagMetadataConfig,
+    LastFMUserMetadataConfig,
+)
 from .movielens import (
     MovieLens100KDatasetConfig,
     MovieLens100kItemMetadataConfig,
@@ -80,4 +85,12 @@ __all__ = [
     "MovieLens100KDatasetConfig",
     "MovieLens100kItemMetadataConfig",
     "MovieLens100kUserMetadataConfig",
+    "AmazonBooksItemMetadataConfig",
+    "AmazonDigitalMusicItemMetadataConfig",
+    "AmazonItemMetadataConfig",
+    "AmazonMoviesAndTVItemMetadataConfig",
+    "AmazonSubscriptionBoxesItemMetadataConfig",
+    "LastFMItemMetadataConfig",
+    "LastFMTagMetadataConfig",
+    "LastFMUserMetadataConfig",
 ]

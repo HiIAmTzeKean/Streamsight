@@ -133,7 +133,6 @@ class DataFetcher(ABC):
         raise NotImplementedError("Needs to be implemented")
 
 
-
 class Dataset(DataFetcher):
     """Represents a collaborative filtering dataset.
 
