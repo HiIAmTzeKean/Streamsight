@@ -5,35 +5,37 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+
+
+sys.path.insert(0, os.path.abspath(os.path.join('..', '..', 'src')))
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'streamsight'
-copyright = '2024, Ng Tze Kean'
-author = "HiIAmTzeKean <ngtzekean@gmail.com>"
-release = '0.2.1'
+project = "streamsight"
+copyright = "2025, Joshua Khoo, Ng Tze Kean"
+author = "suenalaba <joshuajr13@gmail.com>, HiIAmTzeKean <ngtzekean@gmail.com>"
+release = "0.2.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.mathjax',
-    'sphinxcontrib.bibtex',
-    'sphinxcontrib.pdfembed' # for embedding pdf
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.mathjax",
+    "sphinxcontrib.bibtex",
+    "sphinxcontrib.pdfembed",  # for embedding pdf
 ]
 autosummary_generate = True
-bibtex_bibfiles = ['refs.bib']
+bibtex_bibfiles = ["refs.bib"]
 
-templates_path = ['_templates']
+templates_path = ["_templates"]
 exclude_patterns = []
 
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_theme = "sphinx_rtd_theme"
+html_static_path = ["_static"]
