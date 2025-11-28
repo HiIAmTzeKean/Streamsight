@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: 3.13      
       - name: Set up Python
-        run: uv python install 3.12.5
+        run: uv python install 3.13
       - name: Install dependencies
         run: uv sync --frozen
         shell: bash
