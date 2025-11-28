@@ -45,8 +45,8 @@ class AmazonItemMetadata(Metadata):
         super().__init__()
         self.item_id_mapping = item_id_mapping
 
-    def _load_metadata_dataframe(self) -> pd.DataFrame:
-        self.fetch_metadata()
+    def _load_dataframe(self) -> pd.DataFrame:
+        self.fetch_dataset()
         df = pd.read_json(
             self.file_path,  # Ensure file_path contains the JSONL file path
             dtype={
@@ -85,7 +85,7 @@ class AmazonMusicItemMetadata(AmazonItemMetadata):
         """Default filename that will be used if it is not specified by the user."""
         return self.REMOTE_FILENAME
 
-    def _download_metadata(self):
+    def _download_dataset(self):
         """Downloads the metadata for the dataset.
 
         Downloads the zipfile, and extracts the ratings file to `self.file_path`
@@ -107,7 +107,7 @@ class AmazonMovieItemMetadata(AmazonItemMetadata):
         """Default filename that will be used if it is not specified by the user."""
         return self.REMOTE_FILENAME
 
-    def _download_metadata(self):
+    def _download_dataset(self):
         """Downloads the metadata for the dataset.
 
         Downloads the zipfile, and extracts the ratings file to `self.file_path`
@@ -129,7 +129,7 @@ class AmazonSubscriptionBoxesItemMetadata(AmazonItemMetadata):
         """Default filename that will be used if it is not specified by the user."""
         return self.REMOTE_FILENAME
 
-    def _download_metadata(self):
+    def _download_dataset(self):
         """Downloads the metadata for the dataset.
 
         Downloads the zipfile, and extracts the ratings file to `self.file_path`
@@ -151,7 +151,7 @@ class AmazonBookItemMetadata(AmazonItemMetadata):
         """Default filename that will be used if it is not specified by the user."""
         return self.REMOTE_FILENAME
 
-    def _download_metadata(self):
+    def _download_dataset(self):
         """Downloads the metadata for the dataset.
 
         Downloads the zipfile, and extracts the ratings file to `self.file_path`

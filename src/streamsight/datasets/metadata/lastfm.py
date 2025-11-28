@@ -30,7 +30,7 @@ class LastFMUserMetadata(Metadata):
         """Default filename that will be used if it is not specified by the user."""
         return self.REMOTE_FILENAME
 
-    def fetch_metadata(self, force=False) -> None:
+    def fetch_dataset(self, force=False) -> None:
         """Check if dataset is present, if not download
 
         :param force: If True, dataset will be downloaded,
@@ -42,7 +42,7 @@ class LastFMUserMetadata(Metadata):
         file = self.REMOTE_FILENAME
         if not os.path.exists(path) or force:
             logger.debug(f"{self.name} dataset zipfile not found in {path}.")
-            self._download_metadata()
+            self._download_dataset()
         elif not os.path.exists(self.file_path) or force:
             logger.debug(
                 f"{self.name} dataset file not found, but the zipfile has already been downloaded. Extracting file from zipfile."
@@ -52,7 +52,7 @@ class LastFMUserMetadata(Metadata):
 
         logger.debug(f"Data zipfile is in memory and in dir specified.")
 
-    def _download_metadata(self):
+    def _download_dataset(self):
         """Downloads the metadata for the dataset.
 
         Downloads the zipfile, and extracts the ratings file to `self.file_path`
@@ -69,8 +69,8 @@ class LastFMUserMetadata(Metadata):
         ) as zip_ref:
             zip_ref.extract(f"{self.REMOTE_FILENAME}", self.base_path)
 
-    def _load_metadata_dataframe(self) -> pd.DataFrame:
-        self.fetch_metadata()
+    def _load_dataframe(self) -> pd.DataFrame:
+        self.fetch_dataset()
         df = pd.read_csv(
             self.file_path,
             sep="\t",
@@ -109,7 +109,7 @@ class LastFMItemMetadata(Metadata):
         """Default filename that will be used if it is not specified by the user."""
         return self.REMOTE_FILENAME
 
-    def fetch_metadata(self, force=False) -> None:
+    def fetch_dataset(self, force=False) -> None:
         """Check if dataset is present, if not download
 
         :param force: If True, dataset will be downloaded,
@@ -121,7 +121,7 @@ class LastFMItemMetadata(Metadata):
         file = self.REMOTE_FILENAME
         if not os.path.exists(path) or force:
             logger.debug(f"{self.name} dataset zipfile not found in {path}.")
-            self._download_metadata()
+            self._download_dataset()
         elif not os.path.exists(self.file_path) or force:
             logger.debug(
                 f"{self.name} dataset file not found, but the zipfile has already been downloaded. Extracting file from zipfile."
@@ -131,7 +131,7 @@ class LastFMItemMetadata(Metadata):
 
         logger.debug(f"Data zipfile is in memory and in dir specified.")
 
-    def _download_metadata(self):
+    def _download_dataset(self):
         """Downloads the metadata for the dataset.
 
         Downloads the zipfile, and extracts the ratings file to `self.file_path`
@@ -148,8 +148,8 @@ class LastFMItemMetadata(Metadata):
         ) as zip_ref:
             zip_ref.extract(f"{self.REMOTE_FILENAME}", self.base_path)
 
-    def _load_metadata_dataframe(self) -> pd.DataFrame:
-        self.fetch_metadata()
+    def _load_dataframe(self) -> pd.DataFrame:
+        self.fetch_dataset()
         df = pd.read_csv(
             self.file_path,
             dtype={
@@ -194,7 +194,7 @@ class LastFMTagMetadata(Metadata):
         """Default filename that will be used if it is not specified by the user."""
         return self.REMOTE_FILENAME
 
-    def fetch_metadata(self, force=False) -> None:
+    def fetch_dataset(self, force=False) -> None:
         """Check if dataset is present, if not download
 
         :param force: If True, dataset will be downloaded,
@@ -206,7 +206,7 @@ class LastFMTagMetadata(Metadata):
         file = self.REMOTE_FILENAME
         if not os.path.exists(path) or force:
             logger.debug(f"{self.name} dataset zipfile not found in {path}.")
-            self._download_metadata()
+            self._download_dataset()
         elif not os.path.exists(self.file_path) or force:
             logger.debug(
                 f"{self.name} dataset file not found, but the zipfile has already been downloaded. Extracting file from zipfile."
@@ -216,7 +216,7 @@ class LastFMTagMetadata(Metadata):
 
         logger.debug(f"Data zipfile is in memory and in dir specified.")
 
-    def _download_metadata(self):
+    def _download_dataset(self):
         """Downloads the metadata for the dataset.
 
         Downloads the zipfile, and extracts the ratings file to `self.file_path`
@@ -233,8 +233,8 @@ class LastFMTagMetadata(Metadata):
         ) as zip_ref:
             zip_ref.extract(f"{self.REMOTE_FILENAME}", self.base_path)
 
-    def _load_metadata_dataframe(self) -> pd.DataFrame:
-        self.fetch_metadata()
+    def _load_dataframe(self) -> pd.DataFrame:
+        self.fetch_dataset()
         df = pd.read_csv(
             self.file_path,
             dtype={

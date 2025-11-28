@@ -50,23 +50,29 @@ from .amazon import (
     AmazonMusicDatasetConfig,
     AmazonSubscriptionBoxesDatasetConfig,
 )
-from .base import DatasetConfig
+from .base import DatasetConfig, MetadataConfig
 from .lastfm import LastFMDatasetConfig
 from .movielens import (
     MovieLens100KDatasetConfig,
+    MovieLens100kItemMetadataConfig,
+    MovieLens100kUserMetadataConfig,
     MovieLensDatasetConfig,
 )
 from .yelp import YelpDatasetConfig
 
 
 __all__ = [
-    "MovieLensDatasetConfig",
-    "MovieLens100KDatasetConfig",
     "AmazonDatasetConfig",
     "AmazonMusicDatasetConfig",
     "AmazonMovieDatasetConfig",
     "AmazonBookDatasetConfig",
     "AmazonSubscriptionBoxesDatasetConfig",
     "LastFMDatasetConfig",
-    "YelpDatasetConfig", "DatasetConfig",
+    "YelpDatasetConfig",
+    "DatasetConfig",
+    "MetadataConfig",
+    "MovieLensDatasetConfig",
+    "MovieLens100KDatasetConfig",
+    "MovieLens100kItemMetadataConfig",
+    "MovieLens100kUserMetadataConfig",
 ]

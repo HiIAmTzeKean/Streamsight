@@ -31,7 +31,7 @@ The following example demonstrates how to load the metadata from the MovieLens10
 
     from streamsight.datasets.movielens import MovieLens100K
 
-    dataset = MovieLens100K(fetch_metadata=True)
+    dataset = MovieLens100K(fetch_dataset=True)
     data = dataset.load()
 
 """

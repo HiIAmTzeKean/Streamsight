@@ -27,3 +27,46 @@ class DatasetConfig:
         if not self.remote_zipname or not self.remote_filename:
             return "dataset.csv"
         return f"{self.remote_zipname}_{self.remote_filename}"
+
+
+@dataclass
+class MetadataConfig(DatasetConfig):
+    sep: str = "|"
+    """Column separator in the data file."""
+
+    def __post_init__(self) -> None:
+        self.default_base_path = super().default_base_path + "/metadata"
+
+    @property
+    def column_names(self) -> list[str]:
+        """
+        Ordered list of column names for pd.read_table.
+
+        Returns:
+            list[str]: Column names in file order [user_id, age, gender, ...]
+
+        Example:
+            ["userId", "age", "gender", "occupation", "zipcode"]
+        """
+        return []
+
+    @property
+    def dtype_dict(self) -> dict:
+        """
+        Data type mapping for all columns.
+
+        Used in pd.read_table() dtype parameter to ensure correct
+        column types are loaded from file.
+
+        Returns:
+            dict: Mapping of column names to numpy dtypes
+
+        Example:
+            {
+                "age": "int64",
+                "gender": "<U1",  # string
+                "occupation": "object",
+                "zipcode": "object"
+            }
+        """
+        return {}
