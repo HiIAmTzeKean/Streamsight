@@ -51,25 +51,6 @@ or raising a [pull request](https://github.com/hiiamtzekean/streamsight/pulls) t
 The documentation can be found [here](https://hiiamtzekean.github.io/streamsight/)
 and [repository](https://github.com/hiiamtzekean/streamsight) on Github.
 
-## Publishing
-
-1. Run the following command to build the library
-
-```bash
-uv build
-```
-
-2. Ensure that your config has been set with
-
-```bash
-poetry config pypi-token.pypi <YOUR_PYPI_API_TOKEN_HERE>
-```
-
-1. Publish the package
-
-```bash
-poetry publish
-```
 
 ## Citation
 
