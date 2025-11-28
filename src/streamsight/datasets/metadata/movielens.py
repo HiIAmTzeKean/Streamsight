@@ -4,14 +4,14 @@ import zipfile
 import numpy as np
 import pandas as pd
 
-from streamsight.metadata.base import Metadata
+from .base import Metadata
 
 
 class MovieLens100kUserMetadata(Metadata):
     REMOTE_FILENAME = "u.user"
     REMOTE_ZIPNAME = "ml-100k"
 
-    METADATA_URL = "http://files.grouplens.org/datasets/movielens"
+    METADATA_URL = "https://files.grouplens.org/datasets/movielens"
 
     # Column names
     USER_IX = "userId"

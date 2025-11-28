@@ -36,5 +36,11 @@ The following example demonstrates how to load the metadata from the MovieLens10
 
 """
 
-from streamsight.metadata.base import Metadata
-from streamsight.metadata.movielens import MovieLens100kUserMetadata, MovieLens100kItemMetadata
+from .amazon import (
+    AmazonBookItemMetadata,
+    AmazonMovieItemMetadata,
+    AmazonMusicItemMetadata,
+)
+from .base import Metadata
+from .lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
+from .movielens import MovieLens100kItemMetadata, MovieLens100kUserMetadata
