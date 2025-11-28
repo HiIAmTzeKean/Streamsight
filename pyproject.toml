@@ -1,6 +1,6 @@
 [project]
 name = "streamsight"
-version = "1.0.1"
+version = "2.0.1"
 description = "A toolkit for offline evaluation of Recommender Systems."
 requires-python = ">=3.12"
 readme = "README.md"
