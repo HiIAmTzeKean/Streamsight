@@ -45,10 +45,15 @@ wrappers:
 
 from .amazon import (
     AmazonBookDatasetConfig,
+    AmazonBooksItemMetadataConfig,
     AmazonDatasetConfig,
+    AmazonDigitalMusicItemMetadataConfig,
+    AmazonItemMetadataConfig,
     AmazonMovieDatasetConfig,
+    AmazonMoviesAndTVItemMetadataConfig,
     AmazonMusicDatasetConfig,
     AmazonSubscriptionBoxesDatasetConfig,
+    AmazonSubscriptionBoxesItemMetadataConfig,
 )
 from .base import DatasetConfig, MetadataConfig
 from .lastfm import LastFMDatasetConfig
