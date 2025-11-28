@@ -12,7 +12,7 @@ from streamsight.datasets.config import (
     AmazonMusicConfig,
     AmazonSubscriptionBoxesConfig,
 )
-from streamsight.metadata.amazon import (
+from .metadata.amazon import (
     AmazonBookItemMetadata,
     AmazonMovieItemMetadata,
     AmazonMusicItemMetadata,
