@@ -1,5 +1,5 @@
 """
-.. currentmodule:: streamsight.metadata
+.. currentmodule:: streamsight.datasets.metadata
 
 Dataset
 -------------
@@ -21,6 +21,9 @@ and load the metadata while loading the dataset.
     Metadata
     MovieLens100KUserMetadata
     MovieLens100KItemMetadata
+    AmazonBookItemMetadata
+    AmazonMovieItemMetadata
+    AmazonMusicItemMetadata
 
 Example
 ~~~~~~~~~
