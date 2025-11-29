@@ -54,7 +54,7 @@ class AlgorithmEntry(NamedTuple):
     the parameters that the algorithm should take. Mainly this is used during
     the building phase of the evaluator pipeline in `Builder`.
 
-    Args:
+    Attributes:
         name: Name of the algorithm.
         params: Parameters that do not require optimization as key-value
             pairs, where the key is the hyperparameter name and the value is
@@ -87,7 +87,7 @@ class AlgorithmStatusEntry:
     identifier, current state, associated data segment, and an optional
     pointer to the algorithm object.
 
-    Args:
+    Attributes:
         name: Name of the algorithm.
         algo_id: Unique identifier for the algorithm.
         state: State of the algorithm.

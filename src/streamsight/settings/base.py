@@ -26,27 +26,31 @@ class EOWSettingError(Exception):
 class Setting(ABC):
     """Base class for defining an evaluation setting.
 
-    Core attribute
-    ====================
-    - :attr:`background_data`: Data used for training the model. Interval is `[0, background_t)`.
-    - :attr:`unlabeled_data`: list of unlabeled data. Each element is a :class:`InteractionMatrix`
-      object of interval `[0, t)`.
-    - :attr:`ground_truth_data`: list of ground truth data. Each element is a :class:`InteractionMatrix` object of
-      interval `[t, t + window_size)`.
-    - :attr:`incremental_data`: list of data that is used to incrementally update the model.
-      Each element is a :class:`InteractionMatrix` object of interval `[t, t + window_size)`.
-      Unique to :class:`SlidingWindowSetting`.
-    - :attr:`data_timestamp_limit`: list of timestamps that the splitter will slide over the data.
+    Core Attributes:
 
-    :param seed: Seed for randomisation parts of the setting.
-        Defaults to None, so random seed will be generated.
-    :type seed: int, optional
+        background_data: Data used for training the model. Interval is [0, background_t).
+        unlabeled_data: List of unlabeled data. Each element is an InteractionMatrix
+            object of interval [0, t).
+        ground_truth_data: List of ground truth data. Each element is an
+            InteractionMatrix object of interval [t, t + window_size).
+        incremental_data: List of data used to incrementally update the model.
+            Each element is an InteractionMatrix object of interval [t, t + window_size).
+            Unique to SlidingWindowSetting.
+        data_timestamp_limit: List of timestamps that the splitter will slide over.
+
+    Args:
+        seed: Seed for randomization. If None, a random seed will be generated.
     """
 
     def __init__(
         self,
         seed: Optional[int] = None,
-    ):
+    ) -> None:
+        """Initialize the setting.
+
+        Args:
+            seed: Random seed for reproducibility.
+        """
         if seed is None:
             # Set seed if it was not set before.
             seed = np.random.get_state()[1][0]
@@ -76,10 +80,10 @@ class Setting(ABC):
 
     @property
     def name(self) -> str:
-        """Name of the setting.
+        """Get the name of the setting.
 
-        :return: Name of the setting.
-        :rtype: str
+        Returns:
+            Name of the setting class.
         """
         return self.__class__.__name__
 
@@ -105,31 +109,27 @@ class Setting(ABC):
 
     @abstractmethod
     def _split(self, data: InteractionMatrix) -> None:
-        """Abstract method to be implemented by the setting.
+        """Split data according to the setting.
 
-        The concrete class should implement this method to split the data into
-        :attr:`background_data`, :attr:`ground_truth_data`, :attr:`unlabeled_data`.
+        This abstract method must be implemented by concrete setting classes
+        to split data into background_data, ground_truth_data, and unlabeled_data.
 
-        :param data: Interaction matrix to be split.
-        :type data: InteractionMatrix
+        Args:
+            data: Interaction matrix to be split.
         """
 
     def split(self, data: InteractionMatrix) -> None:
-        """Splits :param:`data` according to the setting.
+        """Split data according to the setting.
 
-        Calling this method will change the state of the setting object to be ready
-        for evaluation. The method will split the data into :attr:`background_data`,
-        :attr:`ground_truth_data`, :attr:`unlabeled_data`.
+        Calling this method changes the state of the setting object to be ready
+        for evaluation. The method splits data into background_data, ground_truth_data,
+        and unlabeled_data.
 
-        This method will perform a basic check on the split to ensure that the
-        split did not result in any empty or unusually small datasets.
+        Note:
+            SlidingWindowSetting will have an additional attribute incremental_data.
 
-        .. note::
-            :class:`SlidingWindowSetting` will have additional attribute
-            :attr:`incremental_data`.
-
-        :param data: Interaction matrix that should be split.
-        :type data: InteractionMatrix
+        Args:
+            data: Interaction matrix to be split.
         """
         logger.debug("Splitting data...")
         self._num_full_interactions = data.num_interactions
@@ -144,87 +144,82 @@ class Setting(ABC):
         self._split_complete = True
         logger.info(f"{self.name} data split complete.")
 
-    def _check_split_complete(self):
-        """Check if the setting is ready to be used for evaluation.
+    def _check_split_complete(self) -> None:
+        """Check if the setting is ready for evaluation.
 
-        :raises KeyError: If the setting is not ready to be used for evaluation.
+        Raises:
+            KeyError: If the setting has not been split yet.
         """
         if not self.is_ready:
-            raise KeyError(f"Setting has not been split yet. Call split() method before accessing the property.")
+            raise KeyError(
+                "Setting has not been split yet. Call split() method before "
+                "accessing the property."
+            )
 
     @property
     def num_split(self) -> int:
-        """Number of splits created from dataset.
+        """Get number of splits created from dataset.
 
-        This property defaults to 1 (no splits on training set) on a typical setting.
-        Usually for the :class:`SlidingWindowSetting` this property will be greater than 1
-        if there are multiple splits created from the sliding window on the dataset.
+        This property defaults to 1 (no splits on training set) for typical settings.
+        For SlidingWindowSetting, this is typically greater than 1 if there are
+        multiple splits created from the sliding window.
 
-        :return: Number of splits created from dataset.
-        :rtype: int
+        Returns:
+            Number of splits created from dataset.
         """
         return self._num_split_set
 
     @property
     def is_ready(self) -> bool:
-        """Flag on setting if it is ready to be used for evaluation.
+        """Check if setting is ready for evaluation.
 
-        :return: If the setting is ready to be used for evaluation.
-        :rtype: bool
+        Returns:
+            True if the setting has been split and is ready to use.
         """
         return self._split_complete
 
     @property
     def is_sliding_window_setting(self) -> bool:
-        """Flag to indicate if the setting is :class:`SlidingWindowSetting`.
+        """Check if setting is SlidingWindowSetting.
 
-        :return: If the setting is :class:`SlidingWindowSetting`.
-        :rtype: bool
+        Returns:
+            True if this is a SlidingWindowSetting instance.
         """
         return self._sliding_window_setting
 
     @property
     def background_data(self) -> InteractionMatrix:
-        """Background data provided for the model for the initial training.
+        """Get background data for initial model training.
 
-        This data is used as the initial set of interactions to train the model.
-
-        :return: Interaction Matrix of training interactions.
-        :rtype: InteractionMatrix
+        Returns:
+            InteractionMatrix of training interactions.
         """
         self._check_split_complete()
-
         return self._background_data
 
     @property
     def t_window(self) -> Union[None, int, list[int]]:
-        """The upper timestamp of the window in split.
+        """Get the upper timestamp of the window in split.
 
-        In settings that respect the global timeline, a timestamp value will
-        be returned. In the case of :class:`SlidingWindowSetting`, a list of
-        timestamp values will be returned.
+        In settings that respect the global timeline, returns a timestamp value.
+        In `SlidingWindowSetting`, returns a list of timestamp values.
+        In settings like `LeaveNOutSetting`, returns None.
 
-        Settings such as :class:`LeaveNOutSetting` will return None since there
-        is no split with respect to time.
-
-        :return: timestamp limit for the data.
-        :rtype: Union[int, list[int]]
+        Returns:
+            Timestamp limit for the data (int, list of ints, or None).
         """
         self._check_split_complete()
-
         return self._t_window
 
     @property
     def unlabeled_data(self) -> Union[InteractionMatrix, list[InteractionMatrix]]:
-        """Unlabeled data for the model to make predictions on.
+        """Get unlabeled data for model predictions.
 
         Contains the user/item ID for prediction along with previous sequential
-        interactions of user-item on items if it exists. This data is used to
-        make predictions on the ground truth data.
+        interactions. Used to make predictions on ground truth data.
 
-        :return: Either a single InteractionMatrix or a list of InteractionMatrix
-            if the setting is a sliding window setting.
-        :rtype: Union[InteractionMatrix, list[InteractionMatrix]]
+        Returns:
+            Single InteractionMatrix or list of InteractionMatrix for sliding window setting.
         """
         self._check_split_complete()
 
@@ -234,13 +229,12 @@ class Setting(ABC):
 
     @property
     def ground_truth_data(self) -> Union[InteractionMatrix, list[InteractionMatrix]]:
-        """Ground truth data to evaluate the model's predictions on.
+        """Get ground truth data for model evaluation.
 
-        Contains the actual interactions of the user-item interaction that the
-        model is supposed to predict.
+        Contains the actual interactions of user-item that the model should predict.
 
-        :return: _description_
-        :rtype: Union[InteractionMatrix, list[InteractionMatrix]]
+        Returns:
+            Single InteractionMatrix or list of InteractionMatrix for sliding window.
         """
         self._check_split_complete()
 
@@ -250,12 +244,15 @@ class Setting(ABC):
 
     @property
     def incremental_data(self) -> list[InteractionMatrix]:
-        """Data that is used to incrementally update the model.
+        """Get data for incrementally updating the model.
 
-        Unique to sliding window setting.
+        Only available for SlidingWindowSetting.
 
-        :return: _description_
-        :rtype: list[InteractionMatrix]
+        Returns:
+            List of InteractionMatrix objects for incremental updates.
+
+        Raises:
+            AttributeError: If setting is not SlidingWindowSetting.
         """
         self._check_split_complete()
 
@@ -323,12 +320,13 @@ class Setting(ABC):
         logger.debug("Size of split sets are checked.")
 
     def _create_generator(self, attribute: str) -> Any:
-        """Creates generator for provided attribute name
+        """Create generator for the specified attribute.
 
-        :param attribute: the attribute name to be used to create the generator
-        :type attribute: str
-        :yield: Data return from the attribute
-        :rtype: Any
+        Args:
+            attribute: Name of the attribute to generate.
+
+        Yields:
+            Data from the attribute.
         """
         if not self._sliding_window_setting:
             yield getattr(self, attribute)
@@ -343,7 +341,7 @@ class Setting(ABC):
         sliding window setting, then it will iterate over the list of unlabeled
         data.
 
-        .. note::
+        Note:
             A private method is specifically created to abstract the creation of
             the generator and to allow for easy resetting when needed.
         """
@@ -356,20 +354,20 @@ class Setting(ABC):
         sliding window setting, then it will iterate over the list of incremental
         data.
 
-        .. note::
+        Note:
             A private method is specifically created to abstract the creation of
             the generator and to allow for easy resetting when needed.
         """
         self.incremental_data_iter: Generator[InteractionMatrix] = self._create_generator("_incremental_data")
 
-    def _ground_truth_data_generator(self):
+    def _ground_truth_data_generator(self) -> None:
         """Generates ground truth data.
 
         Allow for iteration over the ground truth data. If the setting is a
         sliding window setting, then it will iterate over the list of ground
         truth data.
 
-        .. note::
+        Note:
             A private method is specifically created to abstract the creation of
             the generator and to allow for easy resetting when needed.
         """
@@ -382,7 +380,7 @@ class Setting(ABC):
         sliding window setting, then it will iterate over the list of data
         timestamp limit.
 
-        .. note::
+        Note:
             A private method is specifically created to abstract the creation of
             the generator and to allow for easy resetting when needed.
         """
@@ -395,11 +393,14 @@ class Setting(ABC):
         If the setting is a sliding window setting, then it will iterate over
         the list of unlabeled data.
 
-        :param reset: To reset the generator, defaults to False
-        :type reset: bool, optional
-        :raises EOWSettingError: If there is no more unlabeled data to iterate over.
-        :return: The next unlabeled data for the corresponding split.
-        :rtype: InteractionMatrix
+        Args:
+            reset: Whether to reset the generator. Defaults to False.
+
+        Returns:
+            Next unlabeled data for the corresponding split.
+
+        Raises:
+            EOWSettingError: If there is no more data to iterate over.
         """
         if reset or not hasattr(self, "unlabeled_data_iter"):
             self._unlabeled_data_generator()
@@ -416,11 +417,14 @@ class Setting(ABC):
         If the setting is a sliding window setting, then it will iterate over
         the list of ground truth data.
 
-        :param reset: To reset the generator, defaults to False
-        :type reset: bool, optional
-        :raises EOWSettingError: If there is no more ground truth data to iterate over.
-        :return: The next ground truth data for the corresponding split.
-        :rtype: InteractionMatrix
+        Args:
+            reset: Whether to reset the generator. Defaults to False.
+
+        Returns:
+            Next ground truth data for the corresponding split.
+
+        Raises:
+            EOWSettingError: If there is no more data to iterate over.
         """
         if reset or not hasattr(self, "ground_truth_data_iter"):
             self._ground_truth_data_generator()
@@ -437,12 +441,15 @@ class Setting(ABC):
         If the setting is a sliding window setting, then it will iterate over
         the list of incremental data.
 
-        :param reset: To reset the generator, defaults to False
-        :type reset: bool, optional
-        :raises AttributeError: If the setting is not a sliding window setting.
-        :raises EOWSettingError: If there is no more incremental data to iterate over.
-        :return: The next incremental data for the corresponding split.
-        :rtype: InteractionMatrix
+        Args:
+            reset: Whether to reset the generator. Defaults to False.
+
+        Returns:
+            Next incremental data for the corresponding split.
+
+        Raises:
+            AttributeError: If setting is not SlidingWindowSetting.
+            EOWSettingError: If there is no more data to iterate over.
         """
         if not self._sliding_window_setting:
             raise AttributeError("Incremental data is only available for sliding window setting.")
@@ -462,11 +469,14 @@ class Setting(ABC):
         If the setting is a sliding window setting, then it will iterate over
         the list of timestamps that specify the timestamp cut off for the data.
 
-        :param reset: To reset the generator, defaults to False
-        :type reset: bool, optional
-        :raises EOWSettingError: If there is no more data timestamp limit to iterate over.
-        :return: The next t_window for the corresponding split.
-        :rtype: int
+        Args:
+            reset: Whether to reset the generator. Defaults to False.
+
+        Returns:
+            Next timestamp window for the corresponding split.
+
+        Raises:
+            EOWSettingError: If there is no more data to iterate over.
         """
         if reset or not hasattr(self, "t_window_iter"):
             self._next_t_window_generator()
@@ -515,8 +525,8 @@ class Setting(ABC):
         number :param:`n`. If :param:`n` is not provided, then it will restore
         the data generators to the beginning of the data series.
 
-        :param n: iteration number to restore generator to, defaults to int
-        :type n: int, optional
+        Args:
+            n: Iteration number to restore to. If None, restores to beginning.
         """
         if n is None:
             n = 0

@@ -1,8 +1,4 @@
-"""
-.. currentmodule:: streamsight.settings
-
-Setting
-------------
+"""Settings module for data splitting strategies.
 
 The setting module contains classes that define how the data is split. To
 generalize the splitting of the data, the interactions are first sorted in
@@ -12,26 +8,23 @@ single time point setting and the sliding window setting. The single time point
 setting is analogous to Setting 3 of :cite:`Sun_2023`. The sliding window setting
 is analogous to Setting 1 of :cite:`Sun_2023`.
 
-.. image:: /_static/data_split_definition.png
-    :align: center
-    :scale: 40 %
-    :alt: Setting 1 diagram
+![data_split_definition](../assets/_static/data_split_definition.png)
 
 Observe the diagram below where the data split for Setting 1 is shown below. The
 unlabeled data will contain interactions that are masked which occurs after the
 current timestamp. The ground truth data will contain the actual interactions
 which will be used for evaluation and then released to the algorithm.
 
-.. image:: /_static/setting1_no_seq.png
-    :align: center
-    :scale: 100 %
-    :alt: Setting 1 diagram
+![setting1_no_seq](../assets/_static/setting1_no_seq.png)
 
 While the this setting allows us to test the algorithm in a real-world scenario,
 there are times when the algorithm might require some sequential data before
 a prediction can be made. While it is not the role of the evaluating platform
-to provide this data, we have included the option to provide the last n interactions
+to provide this data, we have included the option to provide the last n interactions.
 
+## Data Components
+
+Each split produces three data components:
 
 - **background_data**: Data that is used to train the algorithm before the first
   split.
@@ -47,98 +40,87 @@ to provide this data, we have included the option to provide the last n interact
   is a subset of the ground truth to ensure that there is an actual corresponding
   value to evaluate the prediction against.
 
-.. autosummary::
-    :toctree: generated/
 
-    Setting
-    SingleTimePointSetting
-    SlidingWindowSetting
+## Available Settings
 
-A setting is stateful. Thus, the initialization of the setting object only stores
-the parameters that are passed. Calling of :attr:`Setting.split` is necessary
-such that the attributes :attr:`Setting.background_data`, :attr:`Setting.unlabeled_data`
-and :attr:`Setting.ground_truth_data` are populated.
+- `Setting`: Base class for data splitting settings
+- `SingleTimePointSetting`: Single time point splitting strategy
+- `SlidingWindowSetting`: Sliding window splitting strategy
+- `LeaveNOutSetting`: Leave-N-out cross-validation strategy
 
-Example
-~~~~~~~~~
+## Usage
 
-If the file specified does not exist, the dataset is downloaded and written into this file.
-Subsequent loading of the dataset will not require downloading the dataset again,
-and will be obtained from the file in the directory.
+Settings are stateful. Thus, the initialization of the setting object only stores
+the parameters that are passed. Calling of `Setting.split` is necessary
+such that the attributes `Setting.background_data`, `Setting.unlabeled_data`
+and `Setting.ground_truth_data` are populated.
 
-.. code-block:: python
+```python
+from streamsight.datasets import AmazonMovieDataset
+from streamsight.settings import SlidingWindowSetting
 
-    from streamsight.datasets import AmazonMovieDataset
-    from streamsight.settings import SlidingWindowSetting
+dataset = AmazonMovieDataset(use_default_filters=False)
+data = dataset.load()
 
-    dataset = AmazonMovieDataset(use_default_filters=False)
-    data = dataset.load()
-    setting_sliding = SlidingWindowSetting(
-        background_t=1530000000,
-        window_size=60 * 60 * 24 * 30, # day times N
-        n_seq_data=1,
-        top_K=k
-    )
-    setting_sliding.split(data)
+setting = SlidingWindowSetting(
+    background_t=1530000000,
+    window_size=60 * 60 * 24 * 30,  # 30 days
+    n_seq_data=1,
+    top_K=10
+)
 
-Splitters
-------------
+setting.split(data)
+```
 
-Splitters are stateless and can be reused across different settings. The role of
-the splitter is to split the data into two parts. That is :attr:`past_interaction`
-and :attr:`future_interaction`. The naming is chosen such that data returned is
-easily understood as dataset being dealt with will always contain timestamps as
-in our assumption for this project.
+## Splitters
 
-Implementation of other settings is possible by implementing new splitters to
-define the split such that there is no need to redefine the entire architecture
-of the setting.
+Splitters are stateless utilities that split data into past and future interactions.
+They abstract splitting logic from the setting architecture, enabling flexible
+implementations.
 
-For eg. the sliding window setting can be implemented by using a splitter that
-may split using a different or additional criteria other than timestamp. The
-programmer instead of redefining the entire setting can just implement a new
-splitter and reuse the existing setting.
+### Available Splitters
 
-.. autosummary::
-    :toctree: generated/
+- `TimestampSplitter`: Split data by timestamp
+- `NPastInteractionTimestampSplitter`: Split using N past interactions and timestamp
+- `NLastInteractionSplitter`: Split using N last interactions
 
-    TimestampSplitter
-    NPastInteractionTimestampSplitter
+## Processors
 
-Processor
-------------
-The processor module contains classes that are used to process the data. In the
-current implementation, the processor is used to mask the data that is to be
-predicted and inject it into the unlabeled data. The programmer may define
-other processor that is required to do any further processing of the data for
-the data created in the setting.
+Processors handle data transformation. The current implementation masks prediction
+data and injects it into unlabeled data. Custom processors can implement additional
+transformations.
 
-.. autosummary::
-    :toctree: generated/
+### Available Processors
 
-    Processor
-    PredictionDataProcessor
+- `Processor`: Base class for data processors
+- `PredictionDataProcessor`: Masks and injects prediction data
 
-Exception
-------------
-The exception class :class:`EOWSettingError` is used to raise an exception when the
-end of window is reached. Note that this exception is declared the base file.
+## Exceptions
 
-.. autosummary::
-    :toctree: generated/
-
-    EOWSettingError
+- `EOWSettingError`: Raised when end of window is reached
 """
 
 from streamsight.settings.base import EOWSettingError, Setting
 from streamsight.settings.leave_n_out_setting import LeaveNOutSetting
 from streamsight.settings.processor import PredictionDataProcessor, Processor
-from streamsight.settings.single_time_point_setting import (
-    SingleTimePointSetting,
-)
+from streamsight.settings.single_time_point_setting import SingleTimePointSetting
 from streamsight.settings.sliding_window_setting import SlidingWindowSetting
 from streamsight.settings.splitters import (
     NLastInteractionSplitter,
     NPastInteractionTimestampSplitter,
     TimestampSplitter,
 )
+
+
+__all__ = [
+    "Setting",
+    "SingleTimePointSetting",
+    "SlidingWindowSetting",
+    "LeaveNOutSetting",
+    "Processor",
+    "PredictionDataProcessor",
+    "TimestampSplitter",
+    "NPastInteractionTimestampSplitter",
+    "NLastInteractionSplitter",
+    "EOWSettingError",
+]

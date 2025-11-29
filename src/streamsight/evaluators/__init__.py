@@ -99,11 +99,13 @@ some of the common functionalities used in the evaluator module.
     AlgorithmStatusWarning
 """
 
+from streamsight.evaluators.accumulator import MetricAccumulator
 from streamsight.evaluators.base import EvaluatorBase
-from streamsight.evaluators.evaluator_builder import Builder, EvaluatorPipelineBuilder, EvaluatorStreamerBuilder
+from streamsight.evaluators.evaluator_builder import (
+    Builder,
+    EvaluatorPipelineBuilder,
+    EvaluatorStreamerBuilder,
+)
 from streamsight.evaluators.evaluator_pipeline import EvaluatorPipeline
 from streamsight.evaluators.evaluator_stream import EvaluatorStreamer
-from streamsight.evaluators.util import MetricLevelEnum, UserItemBaseStatus, AlgorithmStatusWarning
-from streamsight.evaluators.accumulator import (
-    MetricAccumulator
-)
+from streamsight.evaluators.util import AlgorithmStatusWarning, MetricLevelEnum, UserItemBaseStatus

@@ -1,42 +1,38 @@
-"""
-.. currentmodule:: streamsight.datasets.metadata
+"""Metadata module for dataset information.
 
-Dataset
--------------
+This module allows users to include metadata information corresponding to datasets.
+Metadata classes are built on top of the `Metadata` base class, allowing for easy
+extension and customization.
 
-The metadata module allows users to include metadata information corresponding to the dataset.
-The metadata classes are built on top of the :class:`Metadata`
-allowing for easy extension and customization. In this module, we provide
-the a few metadata that is available from public sources. The programmer is free to add more
-metadatas as they see fit by defining the abstract methods that must be implemented.
+## Important Notes
 
-It is important to note that userId and itemId in the metadata module is mapped according to
-Streamsight's own internal mapping and not the original userId and itemId in the metadata.
-Hence, developers should not load the metadata from source but instead implement the metadata class
-and load the metadata while loading the dataset.
+User and item IDs in the metadata module are mapped according to Streamsight's
+internal mapping, not the original IDs. Developers should not load metadata from
+source separately. Instead, implement the metadata class and load metadata while
+loading the dataset.
 
-.. autosummary::
-    :toctree: generated/
+## Available Metadata
 
-    Metadata
-    MovieLens100KUserMetadata
-    MovieLens100KItemMetadata
-    AmazonBookItemMetadata
-    AmazonMovieItemMetadata
-    AmazonMusicItemMetadata
+- `Metadata`: Abstract base class for metadata implementations
+- `MovieLens100kUserMetadata`: User metadata from MovieLens 100K dataset
+- `MovieLens100kItemMetadata`: Item metadata from MovieLens 100K dataset
+- `AmazonBookItemMetadata`: Item metadata from Amazon Books dataset
+- `AmazonMovieItemMetadata`: Item metadata from Amazon Movies dataset
+- `AmazonMusicItemMetadata`: Item metadata from Amazon Music dataset
+- `LastFMUserMetadata`: User metadata from Last.FM dataset
+- `LastFMItemMetadata`: Item metadata from Last.FM dataset
+- `LastFMTagMetadata`: Tag metadata from Last.FM dataset
 
-Example
-~~~~~~~~~
+## Example
 
-The following example demonstrates how to load the metadata from the MovieLens100K dataset.
+Load metadata from the MovieLens 100K dataset:
 
-.. code-block:: python
+```python
+from streamsight.datasets.movielens import MovieLens100K
 
-    from streamsight.datasets.movielens import MovieLens100K
-
-    dataset = MovieLens100K(fetch_dataset=True)
-    data = dataset.load()
-
+dataset = MovieLens100K(fetch_dataset=True)
+data = dataset.load()
+```
 """
 
 from .amazon import (
@@ -47,3 +43,16 @@ from .amazon import (
 from .base import Metadata
 from .lastfm import LastFMItemMetadata, LastFMTagMetadata, LastFMUserMetadata
 from .movielens import MovieLens100kItemMetadata, MovieLens100kUserMetadata
+
+
+__all__ = [
+    "Metadata",
+    "MovieLens100kUserMetadata",
+    "MovieLens100kItemMetadata",
+    "AmazonBookItemMetadata",
+    "AmazonMovieItemMetadata",
+    "AmazonMusicItemMetadata",
+    "LastFMUserMetadata",
+    "LastFMItemMetadata",
+    "LastFMTagMetadata",
+]

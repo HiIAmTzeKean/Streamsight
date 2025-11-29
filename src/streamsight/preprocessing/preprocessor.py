@@ -1,3 +1,9 @@
+"""Data preprocessing module.
+
+This module provides the DataFramePreprocessor class for converting pandas
+DataFrames into InteractionMatrix objects with optional filtering.
+"""
+
 import logging
 from typing import Literal
 
@@ -11,41 +17,33 @@ logger = logging.getLogger(__name__)
 
 
 class DataFramePreprocessor:
-    """Preprocesses a pandas DataFrame into an InteractionMatrix object.
+    """Preprocesses pandas DataFrames into InteractionMatrix objects.
 
-    The DataFramePreprocessor class allows the programmer to add filters for data
-    preprocessing before transforming the data into an InteractionMatrix object.
-    The preprocessor class after applying the filters, updates the item and user
-    ID mappings into internal ID to reduce the computation load and allows for
-    easy representation of the matrix.
+    Allows adding filters for data preprocessing before transforming data into
+    an InteractionMatrix object. After applying filters, updates item and user
+    ID mappings to internal IDs to reduce computation load and enable easy
+    matrix representation.
 
-    :param item_ix: Name of the column in which item identifiers are listed.
-    :type item_ix: str
-    :param user_ix: Name of the column in which user identifiers are listed.
-    :type user_ix: str
-    :param timestamp_ix: Name of the column in which timestamps are listed.
-    :type timestamp_ix: str
+    Args:
+        item_ix: Column name containing item identifiers.
+        user_ix: Column name containing user identifiers.
+        timestamp_ix: Column name containing timestamps.
     """
 
     def __init__(self, item_ix: str, user_ix: str, timestamp_ix: str) -> None:
         self._item_id_mapping = dict()
         self._user_id_mapping = dict()
-
         self.item_ix = item_ix
         self.user_ix = user_ix
         self.timestamp_ix = timestamp_ix
-
         self.filters: list[Filter] = []
 
     @property
     def item_id_mapping(self) -> pd.DataFrame:
         """Map from original item IDs to internal item IDs.
 
-        Pandas DataFrame containing mapping from original item IDs to internal
-        (consecutive) item IDs as columns.
-
-        :return: DataFrame containing the mapping from original item IDs to internal
-        :rtype: pd.DataFrame
+        Returns:
+            DataFrame with columns for internal item IDs and original item IDs.
         """
         return pd.DataFrame.from_records(
             list(self._item_id_mapping.items()),
@@ -56,11 +54,8 @@ class DataFramePreprocessor:
     def user_id_mapping(self) -> pd.DataFrame:
         """Map from original user IDs to internal user IDs.
 
-        Pandas DataFrame containing mapping from original user IDs to internal
-        (consecutive) user IDs as columns.
-
-        :return: DataFrame containing the mapping from original item IDs to internal
-        :rtype: pd.DataFrame
+        Returns:
+            DataFrame with columns for internal user IDs and original user IDs.
         """
         return pd.DataFrame.from_records(
             list(self._user_id_mapping.items()),
@@ -68,16 +63,14 @@ class DataFramePreprocessor:
         )
 
     def add_filter(self, filter: Filter) -> None:
-        """Add a preprocessing filter to be applied
+        """Add a preprocessing filter to be applied.
 
-        This filter will be applied before transforming to a
-        :class:`InteractionMatrix` object.
+        The filter will be applied before transforming to an InteractionMatrix
+        object. Filters are applied in order of addition and different orderings
+        can lead to different results.
 
-        Filters are applied in order of addition, different orderings can lead to
-        different results!
-
-        :param filter: The filter to be applied
-        :type filter: Filter
+        Args:
+            filter: The filter to be applied.
         """
         self.filters.append(filter)
 
@@ -87,32 +80,30 @@ class DataFramePreprocessor:
         stage: Literal["preprocess", "filter"],
         df: pd.DataFrame,
     ) -> None:
-        """Logging for change tracking.
+        """Log preprocessing progress.
 
-        Prints a log message with the number of interactions, items and users
-        in the DataFrame.
+        Prints a log message with the number of interactions, items, and users
+        in the DataFrame at the current stage.
 
-        :param step: To indicate if the log message is before or after the preprocessing
-        :type step: Literal[&quot;before&quot;, &quot;after&quot;]
-        :param stage: The current stage of the preprocessing
-        :type stage: Literal[&quot;preprocess&quot;, &quot;filter&quot;]
-        :param df: The dataframe being processed
-        :type df: pd.DataFrame
+        Args:
+            step: Indicates whether log is before or after preprocessing.
+            stage: Current stage of preprocessing (preprocess or filter).
+            df: The DataFrame being processed.
         """
         logger.debug(f"\tinteractions {step} {stage}: {len(df.index)}")
         logger.debug(f"\titems {step} {stage}: {df[self.item_ix].nunique()}")
         logger.debug(f"\tusers {step} {stage}: {df[self.user_ix].nunique()}")
 
     def _update_id_mappings(self, df: pd.DataFrame) -> None:
-        """Update the internal ID mappings for users and items.
+        """Update internal ID mappings for users and items.
 
-        The internal ID mappings are updated to reduce the computation load and
-        allow for easy representation of the matrix.
+        Internal ID mappings are updated to reduce computation load and enable
+        easy matrix representation. IDs are assigned by timestamp order.
 
-        :param df: DataFrame to update the ID mappings
-        :type df: pd.DataFrame
+        Args:
+            df: DataFrame to update ID mappings for.
         """
-        # sort by timestamp to incrementally assign user and item ids by timestamp
+        # Sort by timestamp to incrementally assign user and item ids by timestamp
         df.sort_values(by=[self.timestamp_ix], inplace=True, ignore_index=True)
         user_index = pd.CategoricalIndex(df[self.user_ix], categories=df[self.user_ix].unique())
         self._user_id_mapping = dict(enumerate(user_index.drop_duplicates()))
@@ -123,6 +114,14 @@ class DataFramePreprocessor:
         df[self.item_ix] = item_index.codes
 
     def process(self, df: pd.DataFrame) -> InteractionMatrix:
+        """Process DataFrame through filters and convert to InteractionMatrix.
+
+        Args:
+            df: DataFrame to process.
+
+        Returns:
+            InteractionMatrix object created from processed DataFrame.
+        """
         self._print_log_message("before", "preprocess", df)
 
         for filter_obj in self.filters:
@@ -131,10 +130,8 @@ class DataFramePreprocessor:
             self._print_log_message("after", "filter", df)
 
         self._update_id_mappings(df)
-
         self._print_log_message("after", "preprocess", df)
 
         # Convert input data into internal data objects
         interaction_m = InteractionMatrix(df, self.item_ix, self.user_ix, self.timestamp_ix)
-
         return interaction_m

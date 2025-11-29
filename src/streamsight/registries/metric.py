@@ -46,7 +46,7 @@ class MetricEntry(NamedTuple):
     Mainly this will happen during the building phase of the evaluator
     pipeline in :class:`Builder`.
 
-    Args:
+    Attributes:
         name: Name of the algorithm.
         K: Top-K value for the metric.
     """
