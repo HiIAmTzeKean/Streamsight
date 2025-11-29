@@ -1,70 +1,79 @@
-"""
-.. currentmodule:: streamsight.registries
+"""Registries for algorithms, metrics, and datasets.
 
-Registry
-----------------
+This module provides registries for storing and managing algorithms, metrics,
+and datasets used in experiments. Registries help keep track of valid classes
+and enable easy instantiation of components.
 
-Registry for algorithms, metrics and datasets. These registries are used to store
-the algorithms, metrics and datasets that are used in the experiments. The registries
-aid the programmer to keep track of valid classes and to easily instantiate them.
+## Registries
 
-Contains the streamsight algorithms by default, and allows registration of
-new algorithms via the `register` function.
+Registries store algorithms, metrics, and datasets by default and allow
+registration of new components via the `register` function.
 
-Example::
-    
-        from streamsight.pipelines import ALGORITHM_REGISTRY
-        from streamsight.algorithms import ItemKNNStatic
-    
-        algo = ALGORITHM_REGISTRY.get('ItemKNNStatic')(K=10)
-        ALGORITHM_REGISTRY.register('algo_1', ItemKNNStatic)
+Example:
+    ```python
+    from streamsight.pipelines import ALGORITHM_REGISTRY
+    from streamsight.algorithms import ItemKNNStatic
 
-.. autosummary::
-    :toctree: generated/
+    algo = ALGORITHM_REGISTRY.get("ItemKNNStatic")(K=10)
+    ALGORITHM_REGISTRY.register("algo_1", ItemKNNStatic)
+    ```
 
-    ALGORITHM_REGISTRY
-    DATASET_REGISTRY
-    METRIC_REGISTRY
-    AlgorithmRegistry
-    DatasetRegistry
-    MetricRegistry
-    
-Entries
-----------------
+### Available Registries
 
-Entries for algorithms and metrics. These entries are used to store the algorithms
-and metrics in the registries. The entries are used to store the class and the
-parameters that are used to instantiate the class. These entires will be used
-in :class:`EvaluatorPipeline` to instantiate the algorithms and metrics.
+- `ALGORITHM_REGISTRY`: Registry for algorithms
+- `DATASET_REGISTRY`: Registry for datasets
+- `METRIC_REGISTRY`: Registry for metrics
+- `AlgorithmRegistry`: Class for creating algorithm registries
+- `DatasetRegistry`: Class for creating dataset registries
+- `MetricRegistry`: Class for creating metric registries
 
-.. autosummary::
-    :toctree: generated/
-    
-    AlgorithmEntry
-    MetricEntry
-    
-Status Registry
-----------------
+## Entries
 
-Registry for algorithm status. This registry is used to store the status of the
-algorithms. The status of the algorithms are stored in the registry and can be
-accessed by the user. The status of the algorithms are used to keep track of the
-state of the algorithms.
+Entries store algorithms and metrics in registries. They maintain the class
+and parameters used to instantiate each component. These entries are used by
+`EvaluatorPipeline` to instantiate algorithms and metrics.
 
-.. autosummary::
-    :toctree: generated/
-    
-    AlgorithmStateEnum
-    AlgorithmStatusEntry
-    AlgorithmStatusRegistry
+### Available Entries
 
+- `AlgorithmEntry`: Entry for algorithms
+- `MetricEntry`: Entry for metrics
+
+## Status Registry
+
+Status registry maintains algorithm status during the streaming process. It
+tracks the state of algorithms and keeps state counts for monitoring.
+
+### Status Components
+
+- `AlgorithmStateEnum`: Enum for algorithm states
+- `AlgorithmStatusEntry`: Entry for algorithm status
+- `AlgorithmStatusRegistry`: Registry for algorithm status
 """
 
-from streamsight.registries.registry import (ALGORITHM_REGISTRY,
-                                             DATASET_REGISTRY, METRIC_REGISTRY,
-                                             AlgorithmRegistry,
-                                             DatasetRegistry, MetricRegistry,
-                                             AlgorithmEntry, MetricEntry,
-                                             AlgorithmStateEnum,
-                                             AlgorithmStatusEntry,
-                                             AlgorithmStatusRegistry)
+from .algorithm import (
+    ALGORITHM_REGISTRY,
+    AlgorithmEntry,
+    AlgorithmRegistry,
+    AlgorithmStateEnum,
+    AlgorithmStatusEntry,
+    AlgorithmStatusRegistry,
+)
+from .base import Registry
+from .dataset import DATASET_REGISTRY, DatasetRegistry
+from .metric import METRIC_REGISTRY, MetricEntry, MetricRegistry
+
+
+__all__ = [
+    "ALGORITHM_REGISTRY",
+    "DATASET_REGISTRY",
+    "METRIC_REGISTRY",
+    "AlgorithmRegistry",
+    "DatasetRegistry",
+    "MetricRegistry",
+    "AlgorithmEntry",
+    "MetricEntry",
+    "AlgorithmStateEnum",
+    "AlgorithmStatusEntry",
+    "AlgorithmStatusRegistry",
+    "Registry",
+]
