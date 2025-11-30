@@ -1,67 +1,66 @@
-"""
-.. currentmodule:: streamsight.datasets
+"""Dataset module for public datasets in streaming experiments.
 
-Dataset
--------------
+This module provides easy access to publicly available datasets for use in streaming
+experiments. Dataset classes are built on top of the `Dataset` base class, allowing
+for easy extension and customization.
 
-The dataset module allows users to easily use to publicly available datasets
-in their experiments. The dataset class are built on top of the :class:`Dataset`
-allowing for easy extension and customization. In this module, we provide
-the a few dataset that is available from public sources. The programmer is free to add more
-datasets as they see fit by defining the abstract methods that must be implemented.
+## Dataset Overview
 
-Other than the publicly available datasets, we also provide a test dataset
-that can be used for testing purposes. The test dataset is a simple dataset
-that can be used to test the functionality of the algorithms.
+Multiple public datasets are available from various sources. Additionally, a
+lightweight test dataset is provided for testing algorithm functionality.
 
-While the MovieLens100K dataset is available in the module, we recommend that
-the programmer use the other publicly available datasets as the data are not
-chunked into "blocks". The setting of a global timeline to split the data
-could potentially cause a chuck of data to be lost.
+### Data Chunking Note
 
-.. autosummary::
-    :toctree: generated/
+The MovieLens 100K dataset is available but not chunked into "blocks". Setting
+a global timeline to split the data could potentially cause a chunk of data to
+be lost. Other publicly available datasets are recommended.
 
-    Dataset
-    TestDataset
-    AmazonBookDataset
-    AmazonSubscriptionBoxesDataset
-    AmazonMovieDataset
-    AmazonMusicDataset
-    YelpDataset
-    LastFMDataset
-    MovieLens100K
+## Available Datasets
 
-Example
-~~~~~~~~~
+- `AmazonBookDataset`: Amazon Books reviews
+- `AmazonMovieDataset`: Amazon Movies reviews
+- `AmazonMusicDataset`: Amazon Music reviews
+- `AmazonSubscriptionBoxesDataset`: Amazon Subscription Boxes reviews
+- `LastFMDataset`: Last.FM music listening history
+- `MovieLens100K`: MovieLens 100K rating dataset
+- `YelpDataset`: Yelp business reviews
+- `TestDataset`: Lightweight dataset for testing algorithms
 
-If the file specified does not exist, the dataset is downloaded and written into this file.
-Subsequent loading of the dataset will not require downloading the dataset again,
-and will be obtained from the file in the directory.
+## Loading Datasets
 
-.. code-block:: python
+Basic loading:
 
-    from streamsight.datasets import AmazonMusicDataset
+```python
+from streamsight.datasets import AmazonMusicDataset
 
-    dataset = AmazonMusicDataset()
-    data = dataset.load()
+dataset = AmazonMusicDataset()
+data = dataset.load()
+```
 
+If the file does not exist, it will be downloaded and written. Subsequent loads
+will retrieve the file from disk without downloading again.
 
-Each dataset can be loaded with default filters that are applied to the dataset.
-To use the default filters, set `use_default_filters` parameter to True.
-The dataset can also be loaded without filters and preprocessing of ID by
-calling the :meth:`load` method with the parameter `apply_filters` set to False.
-The recommended loading is with filters applied to ensure that the user and item
-ids are incrementing in the order of time.
+### Using Default Filters
 
-.. code-block:: python
+```python
+from streamsight.datasets import AmazonMusicDataset
 
-    from streamsight.datasets import AmazonMusicDataset
+dataset = AmazonMusicDataset(use_default_filters=True)
+data = dataset.load(apply_filters=False)
+```
 
-    dataset = AmazonMusicDataset(use_default_filters=True)
-    data = dataset.load(apply_filters=False)
+Each dataset can be loaded with default filters applied. Default filters ensure
+that user and item IDs increment in the order of time. **This is the recommended
+loading approach.**
 
-For an overview of available filters see :mod:`streamsight.preprocessing`
+## Extending the Framework
+
+To add custom datasets, inherit from `Dataset` and implement all abstract methods.
+Refer to the base class documentation for implementation details.
+
+## Related Modules
+
+- `streamsight.preprocessing`: Data preprocessing and filtering utilities
 """
 
 from streamsight.datasets.amazon import (
@@ -75,3 +74,16 @@ from streamsight.datasets.lastfm import LastFMDataset
 from streamsight.datasets.movielens import MovieLens100K
 from streamsight.datasets.test import TestDataset
 from streamsight.datasets.yelp import YelpDataset
+
+
+__all__ = [
+    "AmazonBookDataset",
+    "AmazonMovieDataset",
+    "AmazonMusicDataset",
+    "AmazonSubscriptionBoxesDataset",
+    "LastFMDataset",
+    "MovieLens100K",
+    "YelpDataset",
+    "TestDataset",
+    "Dataset",
+]

@@ -10,17 +10,18 @@ from streamsight.evaluators.accumulator import MetricAccumulator
 from streamsight.evaluators.util import MetricLevelEnum, UserItemBaseStatus
 from streamsight.matrix import InteractionMatrix
 from streamsight.registries import MetricEntry
-from streamsight.settings import Setting
-from streamsight.settings.base import EOWSettingError
+from streamsight.settings import EOWSettingError, Setting
+
 
 logger = logging.getLogger(__name__)
 
+
 class EvaluatorBase(object):
     """Base class for evaluator.
-    
+
     Provides the common methods and attributes for the evaluator classes. Should
     there be a need to create a new evaluator, it should inherit from this class.
-    
+
     :param metric_entries: List of metric entries to compute
     :type metric_entries: List[MetricEntry]
     :param setting: Setting object
@@ -30,6 +31,7 @@ class EvaluatorBase(object):
     :param ignore_unknown_item: Ignore unknown items, defaults to True
     :type ignore_unknown_item: bool, optional
     """
+
     def __init__(
         self,
         metric_entries: List[MetricEntry],
@@ -37,7 +39,7 @@ class EvaluatorBase(object):
         metric_k: int,
         ignore_unknown_user: bool = True,
         ignore_unknown_item: bool = True,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
     ):
         self.metric_entries = metric_entries
         self.setting = setting
@@ -61,19 +63,19 @@ class EvaluatorBase(object):
 
         self._run_step = 0
         self._current_timestamp: int
-    
+
     def _get_evaluation_data(self) -> Tuple[InteractionMatrix, InteractionMatrix, int]:
         """Get the evaluation data for the current step.
-        
+
         Internal method to get the evaluation data for the current step. The
         evaluation data consists of the unlabeled data, ground truth data, and
         the current timestamp which will be returned as a tuple. The shapes
         are masked based through :attr:`user_item_base`. The unknown users in
         the ground truth data are also updated in :attr:`user_item_base`.
-        
+
         .. note::
             :attr:`_current_timestamp` is updated with the current timestamp.
-        
+
         :return: Tuple of unlabeled data, ground truth data, and current timestamp
         :rtype: Tuple[csr_matrix, csr_matrix, int]
         :raises EOWSettingError: If there is no more data to be processed
@@ -85,7 +87,7 @@ class EvaluatorBase(object):
             self._current_timestamp = current_timestamp
         except EOWSettingError:
             raise EOWSettingError("There is no more data to be processed, EOW reached")
-        
+
         self.user_item_base._update_unknown_user_item_base(ground_truth_data)
 
         # unlabeled data will respect the unknown user and item
@@ -97,10 +99,12 @@ class EvaluatorBase(object):
         # unknown items need to be dropped as it is impossible to recommend an unknown item
         with warnings.catch_warnings(action="ignore"):
             unlabeled_data.mask_shape(self.user_item_base.known_shape)
-        ground_truth_data.mask_shape(self.user_item_base.known_shape,
-                                        # drop_unknown_user=self.ignore_unknown_user,
-                                        drop_unknown_item=self.ignore_unknown_item,
-                                        inherit_max_id=True)
+        ground_truth_data.mask_shape(
+            self.user_item_base.known_shape,
+            # drop_unknown_user=self.ignore_unknown_user,
+            drop_unknown_item=self.ignore_unknown_item,
+            inherit_max_id=True,
+        )
         return unlabeled_data, ground_truth_data, current_timestamp
 
     def _prediction_shape_handler(
@@ -123,10 +127,7 @@ class EvaluatorBase(object):
         if X_pred.shape != X_true_shape:
             # We cannot expect the algorithm to predict an unknown item, so we
             # only check user dimension
-            if (
-                X_pred.shape[0] < X_true_shape[0]
-                and not self.ignore_unknown_user
-            ):
+            if X_pred.shape[0] < X_true_shape[0] and not self.ignore_unknown_user:
                 raise ValueError(
                     "Prediction matrix shape, user dimension, is less than the ground truth matrix shape."
                 )
@@ -202,22 +203,20 @@ class EvaluatorBase(object):
         if filter_timestamp:
             timestamp = filter_timestamp
 
-        return self._acc.df_metric(filter_algo=filter_algo,
-                             filter_timestamp=timestamp,
-                             level=level)
+        return self._acc.df_metric(filter_algo=filter_algo, filter_timestamp=timestamp, level=level)
 
     def restore(self) -> None:
         """Restore the generators before pickling.
-        
+
         This method is used to restore the generators after loading the object
         from a pickle file.
         """
         self.setting.restore_generators(self._run_step)
         logger.debug("Generators restored")
-    
+
     def prepare_dump(self) -> None:
         """Prepare evaluator for pickling.
-        
+
         This method is used to prepare the evaluator for pickling. The method
         will destruct the generators to avoid pickling issues.
         """
@@ -226,10 +225,8 @@ class EvaluatorBase(object):
 
     def current_step(self) -> int:
         """Return the current step of the evaluator.
-        
+
         :return: Current step of the evaluator
         :rtype: int
         """
         return self._run_step
-    
-    

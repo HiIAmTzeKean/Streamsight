@@ -35,7 +35,7 @@ def get_superset_of_column_names_from_file(json_file_path):
     return column_names
 
 
-def get_column_names(line_contents, parent_key=""):
+def get_column_names(line_contents, parent_key="") -> dict:
     """Return a list of flattened key names given a dict.
 
     Example:

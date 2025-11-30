@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 
 
 class AmazonDataset(Dataset):
+    """Base class for Amazon datasets.
+
+    Other Amazon datasets should inherit from this class.
+    """
     ITEM_METADATA = None
 
     config: ClassVar[AmazonDatasetConfig] = AmazonDatasetConfig()

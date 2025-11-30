@@ -14,10 +14,15 @@ from streamsight.evaluators.base import EvaluatorBase
 from streamsight.evaluators.util import AlgorithmStatusWarning
 from streamsight.matrix import InteractionMatrix
 from streamsight.metrics import Metric
-from streamsight.registries import (METRIC_REGISTRY, AlgorithmStateEnum,
-                                    AlgorithmStatusEntry,
-                                    AlgorithmStatusRegistry, MetricEntry)
+from streamsight.registries import (
+    METRIC_REGISTRY,
+    AlgorithmStateEnum,
+    AlgorithmStatusEntry,
+    AlgorithmStatusRegistry,
+    MetricEntry,
+)
 from streamsight.settings import EOWSettingError, Setting
+
 
 logger = logging.getLogger(__name__)
 

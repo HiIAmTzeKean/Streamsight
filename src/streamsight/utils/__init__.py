@@ -1,57 +1,66 @@
-"""
-.. currentmodule:: streamsight.utils
+"""Utility module for Streamsight library.
 
-Utility
--------------
-The utility module provides a set of utility functions that are used in the
-Streamsight library. These function are general functions that are not class
-specific and also contains functions that are used in the top level such as
-preparing the logger and creating the configuration file.
+This module provides a set of general utility functions used throughout Streamsight.
+It includes utilities for file handling, configuration, matrix operations, and logging.
 
-.. autosummary::
-    :toctree: generated/
+## Utility Functions
 
-    create_config_yaml
-    safe_dir
-    add_columns_to_csr_matrix
-    add_rows_to_csr_matrix
-    arg_to_str
-    df_to_sparse
-    prepare_logger
-    to_binary
-    to_tuple
-    ProgressBar
+General-purpose utility functions that support library operations:
 
-Logging
--------------
-The logging module provides functions to control the logging level and
-suppression of warnings.
+- `create_config_yaml`: Create configuration YAML file
+- `safe_dir`: Safely manage directory operations
+- `add_columns_to_csr_matrix`: Add columns to sparse matrix
+- `add_rows_to_csr_matrix`: Add rows to sparse matrix
+- `arg_to_str`: Convert arguments to string representation
+- `df_to_sparse`: Convert DataFrame to sparse matrix
+- `to_binary`: Convert data to binary format
+- `to_tuple`: Convert data to tuple format
+- `ProgressBar`: Progress bar utility for tracking operations
 
-Example
-~~~~~~~~~
+## Path Utilities
 
-.. code-block:: python
+Directory and path management functions:
 
-    import streamsight
+- `get_cache_dir`: Get cache directory path
+- `get_data_dir`: Get data directory path
+- `get_logs_dir`: Get logs directory path
+- `get_repo_root`: Get repository root directory
+- `safe_dir`: Safely create and manage directories
 
-    # Set log level to INFO and suppress warnings
-    streamsight.log_level_by_name("INFO")
-    streamsight.suppress_warnings(suppress=True)
+## Logging Control
 
-    # Log some information
-    logger = logging.getLogger("streamsight")
-    logger.info("This is an informational message.")
+Functions to control logging level and warning suppression:
 
-    # Emit a warning (this will be suppressed)
-    warnings.warn("This warning will not appear.")
+- `log_level`: Get current logging level
+- `log_level_by_name`: Set logging level by name (DEBUG, INFO, WARNING, ERROR)
+- `prepare_logger`: Initialize logger for Streamsight
+- `suppress_warnings`: Suppress all Python warnings
+- `suppress_specific_warnings`: Suppress specific warning types
 
-.. autosummary::
-    :toctree: generated/
+## Logging Example
 
-    log_level
-    log_level_by_name
-    suppress_warnings
-    suppress_specific_warnings
+```python
+import logging
+import warnings
+import streamsight
+
+# Set log level to INFO
+streamsight.log_level_by_name("INFO")
+
+# Suppress all warnings
+streamsight.suppress_warnings(suppress=True)
+
+# Log information
+logger = logging.getLogger("streamsight")
+logger.info("This is an informational message.")
+
+# Warnings will be suppressed
+warnings.warn("This warning will not appear.")
+```
+
+## Configuration
+
+- `create_config_yaml`: Generate configuration YAML file for Streamsight
 """
 
 from streamsight.utils.logging_tools import (
@@ -78,3 +87,25 @@ from streamsight.utils.util import (
     to_tuple,
 )
 from streamsight.utils.yaml_tool import create_config_yaml
+
+
+__all__ = [
+    "create_config_yaml",
+    "safe_dir",
+    "add_columns_to_csr_matrix",
+    "add_rows_to_csr_matrix",
+    "arg_to_str",
+    "df_to_sparse",
+    "prepare_logger",
+    "to_binary",
+    "to_tuple",
+    "ProgressBar",
+    "log_level",
+    "log_level_by_name",
+    "suppress_warnings",
+    "suppress_specific_warnings",
+    "get_cache_dir",
+    "get_data_dir",
+    "get_logs_dir",
+    "get_repo_root",
+]

@@ -23,16 +23,21 @@ def get_repo_root(
         "requirements.txt",
     ),
 ) -> Path:
-    """Get the repository root directory.
+    """Find and return the repository root directory.
 
-    Searches upward from the current file location to find the repository root
-    by looking for common marker files. Results are cached for performance.
+    The function searches upward from the current file's directory looking for
+    common repository marker files (for example, `.git` or `pyproject.toml`).
+    The result is cached to avoid repeated filesystem traversal.
 
-    :param marker_files: Tuple of filenames that indicate repo root
-    :type marker_files: tuple[str, ...]
-    :return: Path to repository root
-    :rtype: Path
-    :raises RuntimeError: If repo root cannot be found
+    Args:
+        marker_files: Tuple of filenames that indicate the repository root.
+
+    Returns:
+        Path to the repository root directory.
+
+    Raises:
+        RuntimeError: If the repository root cannot be located and the
+            `STREAMSIGHT_ROOT` environment variable is not set or invalid.
     """
     global _REPO_ROOT_CACHE
 
@@ -69,12 +74,13 @@ def get_repo_root(
 
 
 def get_data_dir(subdir: str = "") -> Path:
-    """Get the data directory at repo root.
+    """Return the `data/` directory inside the repository.
 
-    :param subdir: Optional subdirectory within data/
-    :type subdir: str
-    :return: Path to data directory
-    :rtype: Path
+    Args:
+        subdir: Optional subdirectory within `data/` to append.
+
+    Returns:
+        Path to the data directory (with `subdir` appended when provided).
     """
     data_dir = get_repo_root() / "data"
     if subdir:
@@ -83,12 +89,13 @@ def get_data_dir(subdir: str = "") -> Path:
 
 
 def get_logs_dir(subdir: str = "") -> Path:
-    """Get the logs directory at repo root.
+    """Return the `logs/` directory inside the repository.
 
-    :param subdir: Optional subdirectory within logs/
-    :type subdir: str
-    :return: Path to logs directory
-    :rtype: Path
+    Args:
+        subdir: Optional subdirectory within `logs/` to append.
+
+    Returns:
+        Path to the logs directory (with `subdir` appended when provided).
     """
     logs_dir = get_repo_root() / "logs"
     if subdir:
@@ -97,12 +104,13 @@ def get_logs_dir(subdir: str = "") -> Path:
 
 
 def get_cache_dir(subdir: str = "") -> Path:
-    """Get the cache directory at repo root.
+    """Return the `cache/` directory inside the repository.
 
-    :param subdir: Optional subdirectory within cache/
-    :type subdir: str
-    :return: Path to cache directory
-    :rtype: Path
+    Args:
+        subdir: Optional subdirectory within `cache/` to append.
+
+    Returns:
+        Path to the cache directory (with `subdir` appended when provided).
     """
     cache_dir = get_repo_root() / "cache"
     if subdir:
@@ -111,12 +119,13 @@ def get_cache_dir(subdir: str = "") -> Path:
 
 
 def safe_dir(path: Path | str) -> Path:
-    """Ensure directory exists, create if needed.
+    """Ensure the given directory exists, creating it if necessary.
 
-    :param path: Directory path
-    :type path: Path | str
-    :return: Path object
-    :rtype: Path
+    Args:
+        path: Directory path as a :class:`pathlib.Path` or string.
+
+    Returns:
+        The directory path (created if it did not exist).
     """
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
@@ -124,14 +133,16 @@ def safe_dir(path: Path | str) -> Path:
 
 
 def resolve_path(path: str | Path, relative_to_root: bool = True) -> Path:
-    """Resolve a path, optionally relative to repo root.
+    """Resolve a path to an absolute :class:`pathlib.Path`.
 
-    :param path: Path to resolve
-    :type path: str | Path
-    :param relative_to_root: If True and path is relative, resolve to repo root
-    :type relative_to_root: bool
-    :return: Resolved absolute path
-    :rtype: Path
+    Args:
+        path: Path to resolve, either a string or :class:`pathlib.Path`.
+        relative_to_root: If True and `path` is relative, resolve it relative to
+            the repository root. If False, resolve it relative to the current
+            working directory.
+
+    Returns:
+        The resolved absolute path.
     """
     path = Path(path)
 

@@ -10,17 +10,12 @@ dependencies = [
     "colorlog>=6.10.1",
     "deprecation>=2.1.0",
     "httpx>=0.28.1",
-    "numpy>=1.26.4",
-    "pandas>=2.3.3",
-    "progressbar>=2.5",
-    "pyarrow>=22.0.0",
     "pyfiglet>=1.0.4",
-    "recpack>=0.3.6",
-    "scikit-learn>=1.7.2",
     "simplejson>=3.20.2",
     "tqdm>=4.67.1",
     "typing-extensions>=4.15.0",
     "urllib3>=2.5.0",
+    "progressbar>=2.5",
 ]
 
 [dependency-groups]
@@ -30,23 +25,29 @@ dev = [
     "jupyter>=1.1.1",
     "pytest>=9.0.1",
 ]
+data = [
+    "numpy>=1.26.4",
+    "pandas>=2.3.3",
+    "pyarrow>=22.0.0",
+]
+ml = [
+    "recpack>=0.3.6",
+    "scikit-learn>=1.7.2",
+]
 docs = [
-    "sphinx>=7.3.6",
-    "sphinxcontrib-bibtex>=2.6.5",
-    "sphinx-rtd-theme>=1.2.2",
-    "sphinxcontrib-pdfembed",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.0",
     "mkdocstrings[python]>=1.0.0",
+    "mkdocs-bibtex>=4.4.0",
+    "mkdocs-gen-files>=0.6.0",
+    "mkdocs-literate-nav>=0.6.2",
+    "mkdocs-section-index>=0.3.10",
+    "ruff>=0.14.7",
 ]
 
 [tool.uv]
-default-groups = "all"
 package = true
 
 [build-system]
 requires = ["uv_build>=0.9.11,<0.10.0"]
 build-backend = "uv_build"
-
-[tool.uv.sources]
-sphinxcontrib-pdfembed = { git = "https://github.com/SuperKogito/sphinxcontrib-pdfembed" }
