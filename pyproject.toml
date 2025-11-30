@@ -31,13 +31,14 @@ dev = [
     "pytest>=9.0.1",
 ]
 docs = [
-    "sphinx>=7.3.6",
-    "sphinxcontrib-bibtex>=2.6.5",
-    "sphinx-rtd-theme>=1.2.2",
-    "sphinxcontrib-pdfembed",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.7.0",
     "mkdocstrings[python]>=1.0.0",
+    "mkdocs-bibtex>=4.4.0",
+    "mkdocs-gen-files>=0.6.0",
+    "mkdocs-literate-nav>=0.6.2",
+    "mkdocs-section-index>=0.3.10",
+    "ruff>=0.14.7",
 ]
 
 [tool.uv]
@@ -47,6 +48,3 @@ package = true
 [build-system]
 requires = ["uv_build>=0.9.11,<0.10.0"]
 build-backend = "uv_build"
-
-[tool.uv.sources]
-sphinxcontrib-pdfembed = { git = "https://github.com/SuperKogito/sphinxcontrib-pdfembed" }
