@@ -5,17 +5,17 @@ generalize the splitting of the data, the interactions are first sorted in
 temporal order, and then the split is performed based on the setting. As this
 library only considers dataset with timestamp, we will consider the case of the
 single time point setting and the sliding window setting. The single time point
-setting is analogous to Setting 3 of :cite:`Sun_2023`. The sliding window setting
-is analogous to Setting 1 of :cite:`Sun_2023`.
+setting is analogous to Setting 3 of [@sun2023]. The sliding window setting
+is analogous to Setting 1 of [@sun2023].
 
-![data_split_definition](../assets/_static/data_split_definition.png)
+![data_split_definition](../../../assets/_static/data_split_definition.png)
 
 Observe the diagram below where the data split for Setting 1 is shown below. The
 unlabeled data will contain interactions that are masked which occurs after the
 current timestamp. The ground truth data will contain the actual interactions
 which will be used for evaluation and then released to the algorithm.
 
-![setting1_no_seq](../assets/_static/setting1_no_seq.png)
+![setting1_no_seq](../../../assets/_static/setting1_no_seq.png)
 
 While the this setting allows us to test the algorithm in a real-world scenario,
 there are times when the algorithm might require some sequential data before
@@ -81,7 +81,7 @@ implementations.
 ### Available Splitters
 
 - `TimestampSplitter`: Split data by timestamp
-- `NPastInteractionTimestampSplitter`: Split using N past interactions and timestamp
+- `NLastInteractionTimestampSplitter`: Split using N past interactions and timestamp
 - `NLastInteractionSplitter`: Split using N last interactions
 
 ## Processors
@@ -107,7 +107,7 @@ from streamsight.settings.single_time_point_setting import SingleTimePointSettin
 from streamsight.settings.sliding_window_setting import SlidingWindowSetting
 from streamsight.settings.splitters import (
     NLastInteractionSplitter,
-    NPastInteractionTimestampSplitter,
+    NLastInteractionTimestampSplitter,
     TimestampSplitter,
 )
 
@@ -120,7 +120,7 @@ __all__ = [
     "Processor",
     "PredictionDataProcessor",
     "TimestampSplitter",
-    "NPastInteractionTimestampSplitter",
+    "NLastInteractionTimestampSplitter",
     "NLastInteractionSplitter",
     "EOWSettingError",
 ]

@@ -23,15 +23,26 @@ class LogLevel(Enum):
 
     @classmethod
     def from_string(cls, level: str) -> "LogLevel":
-        """Case-insensitive lookup from string."""
+        """Return a LogLevel member from a case-insensitive string.
+
+        Args:
+            level: Name of the log level (case-insensitive).
+
+        Returns:
+            The corresponding :class:`LogLevel` enum member.
+        """
         return cls[level.upper()]
 
 
 def log_level(level: int | str | LogLevel) -> None:
-    """
-    Change the logging level for root logger.
+    """Change the logging level for the root logger.
 
-    :param level: LogLevel enum, level name (case-insensitive), or int.
+    Args:
+        level: The logging level to set. May be a :class:`LogLevel` enum,
+            a level name (str, case-insensitive), or an integer logging level.
+
+    Returns:
+        None
     """
     if isinstance(level, str):
         level = LogLevel.from_string(level)
@@ -48,25 +59,49 @@ log_level_by_name = log_level  # Alias for convenience
 
 
 def suppress_warnings() -> None:
-    """Suppress all warnings."""
+    """Suppress all Python warnings.
+
+    This will disable warning output by filtering all warnings and
+    disabling logging's capture of warnings.
+
+    Returns:
+        None
+    """
     logging.captureWarnings(False)
     warnings.filterwarnings("ignore")
 
 
 def enable_warnings() -> None:
-    """Enable warnings (reset to default behavior)."""
+    """Enable Python warnings (reset to default behavior).
+
+    This re-enables warning capture and resets any filters previously set.
+
+    Returns:
+        None
+    """
     logging.captureWarnings(True)
     warnings.resetwarnings()
 
 
 def suppress_specific_warnings(category: type[Warning]) -> None:
-    """Suppress specific warning category."""
+    """Suppress warnings of a specific category.
+
+    Args:
+        category: Warning class/type to suppress (for example, :class:`DeprecationWarning`).
+
+    Returns:
+        None
+    """
     warnings.filterwarnings("ignore", category=category)
 
 
 @contextmanager
 def warnings_suppressed() -> Generator:
-    """Temporarily suppress warnings within a context."""
+    """Context manager that temporarily suppresses all warnings.
+
+    Yields:
+        None: Warnings are suppressed inside the context block.
+    """
     logging.captureWarnings(False)
     warnings.filterwarnings("ignore")
     try:
@@ -77,15 +112,23 @@ def warnings_suppressed() -> Generator:
 
 
 def prepare_logger(log_config_filename: str) -> dict:
-    """Prepare the logger.
+    """Prepare and configure logging from a YAML file.
 
-    Prepare the logger by reading the configuration file and setting up the logger.
-    If the configuration file does not exist, it will be created.
+    This function locates or creates a logging configuration YAML file using
+    :func:`streamsight.utils.yaml_tool.create_config_yaml`, ensures the
+    directory for the configured log file exists, writes an ASCII art header
+    to the log file, and configures the Python logging system using
+    :func:`logging.config.dictConfig`.
 
-    :param log_config_filename: Name of configuration file.
-    :type log_config_filename: str
-    :return: Configuration dictionary.
-    :rtype: dict
+    Args:
+        log_config_filename: Name of the logging configuration YAML file.
+
+    Returns:
+        dict: The parsed logging configuration dictionary.
+
+    Raises:
+        FileNotFoundError: If the resolved YAML configuration file cannot be found.
+        ValueError: If there is an error parsing the YAML content.
     """
     _, yaml_file_path = create_config_yaml(log_config_filename)
     try:

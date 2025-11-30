@@ -6,7 +6,7 @@ import numpy as np
 from streamsight.matrix import InteractionMatrix, TimestampAttributeMissingError
 from streamsight.settings import Setting
 from streamsight.settings.splitters import (
-    NPastInteractionTimestampSplitter,
+    NLastInteractionTimestampSplitter,
     TimestampSplitter,
 )
 
@@ -17,19 +17,25 @@ logger = logging.getLogger(__name__)
 class SingleTimePointSetting(Setting):
     """Single time point setting for data split.
 
-    :param background_t: Time point to split the data into background and evaluation data. Split will be from ``[0, t)``
-    :type background_t: int
-    :param n_seq_data: Number of last sequential interactions to provide as data for model to make prediction.
-    :type n_seq_data: int, optional
-    :param top_K: Number of interaction per user that should be selected for evaluation purposes.
-    :type top_K: int, optional
-    :param t_upper: Upper bound on the timestamp of interactions.
-        Defaults to maximal integer value (acting as infinity).
-    :type t_upper: int, optional
-    :param seed: Seed for randomization parts of the scenario.
-        Timed scenario is deterministic, so changing seed should not matter.
-        Defaults to None, so random seed will be generated.
-    :type seed: int, optional
+    Splits an interaction dataset at a single timestamp into background
+    (training) data and evaluation data. The evaluation data can be
+    further processed to produce unlabeled inputs and ground-truth
+    targets for model evaluation.
+
+    Args:
+        background_t: Time point to split the data. The background
+            split covers interactions with timestamps in `[0, background_t)`.
+        n_seq_data: Number of last sequential interactions
+            to provide as input for prediction. Defaults to `1`.
+        top_K: Number of interactions per user to select for
+            evaluation purposes. Defaults to `1`.
+        t_upper: Upper bound on the timestamp of
+            interactions included in evaluation. Defaults to the maximum
+            32-bit integer value (acts like infinity).
+        include_all_past_data: If True, include all past
+            interactions when constructing input sequences. Defaults to False.
+        seed: Random seed for reproducible behavior.
+            If None, a seed will be generated.
     """
 
     def __init__(
@@ -56,7 +62,7 @@ class SingleTimePointSetting(Setting):
             None,
             t_upper,
         )
-        self._splitter = NPastInteractionTimestampSplitter(
+        self._splitter = NLastInteractionTimestampSplitter(
             background_t,
             t_upper,
             n_seq_data,
@@ -65,11 +71,18 @@ class SingleTimePointSetting(Setting):
         self._t_window = background_t
 
     def _split(self, data: InteractionMatrix) -> None:
-        """Splits your dataset into a training, validation and test dataset
-            based on the timestamp of the interaction.
+        """Split the dataset by timestamp into background and evaluation sets.
 
-        :param data: Interaction matrix to be split. Must contain timestamps.
-        :type data: InteractionMatrix
+        The method raises :class:`TimestampAttributeMissingError` when the
+        provided :class:`InteractionMatrix` does not contain timestamp
+        information. It will warn if the chosen split time is before the
+        earliest timestamp in the data.
+
+        Args:
+            data: Interaction matrix to split. Must have timestamps.
+
+        Raises:
+            TimestampAttributeMissingError: If `data` has no timestamp attribute.
         """
         if not data.has_timestamps:
             raise TimestampAttributeMissingError()
@@ -89,7 +102,11 @@ class SingleTimePointSetting(Setting):
 
     @property
     def params(self) -> dict[str, int]:
-        """Parameters of the setting."""
+        """Return a dictionary of the setting's parameters.
+
+        Returns:
+            Mapping of parameter names to their values.
+        """
         return {
             "background_t": self.t,
             "t_upper": self.t_upper,

@@ -8,19 +8,10 @@ import numpy as np
 
 from streamsight.matrix import InteractionMatrix
 from streamsight.settings.processor import PredictionDataProcessor
+from .base import EOWSettingError
 
 
 logger = logging.getLogger(__name__)
-
-
-class EOWSettingError(Exception):
-    """End of Window Setting Exception."""
-
-    def __init__(self, message: str | None = None) -> None:
-        if not message:
-            message = "End of Window reached for the setting."
-        self.message = message
-        super().__init__(self.message)
 
 
 class Setting(ABC):
@@ -152,8 +143,7 @@ class Setting(ABC):
         """
         if not self.is_ready:
             raise KeyError(
-                "Setting has not been split yet. Call split() method before "
-                "accessing the property."
+                "Setting has not been split yet. Call split() method before accessing the property."
             )
 
     @property
@@ -345,7 +335,9 @@ class Setting(ABC):
             A private method is specifically created to abstract the creation of
             the generator and to allow for easy resetting when needed.
         """
-        self.unlabeled_data_iter: Generator[InteractionMatrix] = self._create_generator("_unlabeled_data")
+        self.unlabeled_data_iter: Generator[InteractionMatrix] = self._create_generator(
+            "_unlabeled_data"
+        )
 
     def _incremental_data_generator(self) -> None:
         """Generates incremental data.
@@ -358,7 +350,9 @@ class Setting(ABC):
             A private method is specifically created to abstract the creation of
             the generator and to allow for easy resetting when needed.
         """
-        self.incremental_data_iter: Generator[InteractionMatrix] = self._create_generator("_incremental_data")
+        self.incremental_data_iter: Generator[InteractionMatrix] = self._create_generator(
+            "_incremental_data"
+        )
 
     def _ground_truth_data_generator(self) -> None:
         """Generates ground truth data.
@@ -371,7 +365,9 @@ class Setting(ABC):
             A private method is specifically created to abstract the creation of
             the generator and to allow for easy resetting when needed.
         """
-        self.ground_truth_data_iter: Generator[InteractionMatrix] = self._create_generator("_ground_truth_data")
+        self.ground_truth_data_iter: Generator[InteractionMatrix] = self._create_generator(
+            "_ground_truth_data"
+        )
 
     def _next_t_window_generator(self) -> None:
         """Generates t_window data.
@@ -386,7 +382,7 @@ class Setting(ABC):
         """
         self.t_window_iter: Generator[int] = self._create_generator("_t_window")
 
-    def next_unlabeled_data(self, reset=False) -> InteractionMatrix:
+    def next_unlabeled_data(self, reset: bool = False) -> InteractionMatrix:
         """Get the next unlabeled data.
 
         Get the next unlabeled data for the corresponding split.
@@ -410,7 +406,7 @@ class Setting(ABC):
         except StopIteration:
             raise EOWSettingError()
 
-    def next_ground_truth_data(self, reset=False) -> InteractionMatrix:
+    def next_ground_truth_data(self, reset: bool = False) -> InteractionMatrix:
         """Get the next ground truth data.
 
         Get the next ground truth data for the corresponding split.
@@ -434,7 +430,7 @@ class Setting(ABC):
         except StopIteration:
             raise EOWSettingError()
 
-    def next_incremental_data(self, reset=False) -> InteractionMatrix:
+    def next_incremental_data(self, reset: bool = False) -> InteractionMatrix:
         """Get the next incremental data.
 
         Get the next incremental data for the corresponding split.
@@ -462,7 +458,7 @@ class Setting(ABC):
             raise EOWSettingError()
 
     # ? t_window_data
-    def next_t_window(self, reset=False) -> int:
+    def next_t_window(self, reset: bool = False) -> int:
         """Get the next data timestamp limit.
 
         Get the next upper timestamp limit for the corresponding split.
