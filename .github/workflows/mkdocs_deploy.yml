@@ -26,17 +26,8 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Set up Python environment
-        run: uv python install 3.13
-        shell: bash
-
       - name: Install dependencies
-        run: uv sync --frozen
+        run: uv sync --group docs --frozen
         shell: bash
 
       - name: Build MkDocs
